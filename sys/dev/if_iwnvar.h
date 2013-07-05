@@ -330,6 +330,9 @@ struct iwn_softc {
 
 	struct iwn_rx_radiotap_header sc_rxtap;
 	struct iwn_tx_radiotap_header sc_txtap;
+	
+	/* For specifique params */
+	struct iwn_base_params *base_params;
 };
 
 #define IWN_LOCK_INIT(_sc) \
@@ -340,3 +343,5 @@ struct iwn_softc {
 #define IWN_UNLOCK(_sc)			mtx_unlock(&(_sc)->sc_mtx)
 #define IWN_LOCK_DESTROY(_sc)		mtx_destroy(&(_sc)->sc_mtx)
 #define IWN_UC_PAN_PRESENT		1
+
+

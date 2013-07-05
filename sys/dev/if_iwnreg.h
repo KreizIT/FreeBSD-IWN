@@ -17,6 +17,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+ 
 
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
@@ -76,6 +77,7 @@
 #define IWN_GIO			0x03c
 #define IWN_GP_DRIVER		0x050
 #define IWN_UCODE_GP1_CLR	0x05c
+#define IWN_UCODE_DRV_GP2   0x060
 #define IWN_LED			0x094
 #define IWN_DRAM_INT_TBL	0x0a0
 #define IWN_SHADOW_REG_CTRL	0x0a8
@@ -192,6 +194,44 @@
 #define IWN_RESET_LINK_PWR_MGMT_DIS	(1 << 31)
 
 /* Possible flags for register IWN_GP_CNTRL. */
+/*
+ * GP (general purpose) CONTROL REGISTER
+ * Bit fields:
+ *    27:  HW_RF_KILL_SW
+ *         Indicates state of (platform's) hardware RF-Kill switch
+ * 26-24:  POWER_SAVE_TYPE
+ *         Indicates current power-saving mode:
+ *         000 -- No power saving
+ *         001 -- MAC power-down
+ *         010 -- PHY (radio) power-down
+ *         011 -- Error
+ *   9-6:  SYS_CONFIG
+ *         Indicates current system configuration, reflecting pins on chip
+ *         as forced high/low by device circuit board.
+ *     4:  GOING_TO_SLEEP
+ *         Indicates MAC is entering a power-saving sleep power-down.
+ *         Not a good time to access device-internal resources.
+ *     3:  MAC_ACCESS_REQ
+ *         Host sets this to request and maintain MAC wakeup, to allow host
+ *         access to device-internal resources.  Host must wait for
+ *         MAC_CLOCK_READY (and !GOING_TO_SLEEP) before accessing non-CSR
+ *         device registers.
+ *     2:  INIT_DONE
+ *         Host sets this to put device into fully operational D0 power mode.
+ *         Host resets this after SW_RESET to put device into low power mode.
+ *     0:  MAC_CLOCK_READY
+ *         Indicates MAC (ucode processor, etc.) is powered up and can run.
+ *         Internal resources are accessible.
+ *         NOTE:  This does not indicate that the processor is actually running.
+ *         NOTE:  This does not indicate that device has completed
+ *                init or post-power-down restore of internal SRAM memory.
+ *                Use CSR_UCODE_DRV_GP1_BIT_MAC_SLEEP as indication that
+ *                SRAM is restored and uCode is in normal operation mode.
+ *                Later devices (5xxx/6xxx/1xxx) use non-volatile SRAM, and
+ *                do not need to save/restore it.
+ *         NOTE:  After device reset, this bit remains "0" until host sets
+ *                INIT_DONE
+ */
 #define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
 #define IWN_GP_CNTRL_MAC_CLOCK_READY	(1 << 0)
 #define IWN_GP_CNTRL_INIT_DONE		(1 << 2)
@@ -443,7 +483,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_GET_STATISTICS		156
 #define IWN_CMD_SET_CRITICAL_TEMP	164
 #define IWN_CMD_SET_SENSITIVITY		168
-#define IWN_CMD_PHY_CALIB		176
+#define IWN_CMD_PHY_CALIB		    176
 #define IWN_CMD_BT_COEX_PRIOTABLE	204
 #define IWN_CMD_BT_COEX_PROT		205
 
@@ -1548,6 +1588,11 @@ static const struct iwn_chan_band {
 	{ 11, { 36, 44, 52, 60, 100, 108, 116, 124, 132, 149, 157 } }
 };
 
+/* OTP */
+/* lower blocks contain EEPROM image and calibration data */
+#define OTP_LOW_IMAGE_SIZE		(2 * 512 * sizeof(int)) /* 2 KB */
+
+
 #define IWN1000_OTP_NBLOCKS	3 
 #define IWN6000_OTP_NBLOCKS	4 
 #define IWN6050_OTP_NBLOCKS	7
@@ -1739,18 +1784,6 @@ static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
 	100
 };
 
-/* Get value from linux kernel 3.2.+ in Drivers/net/wireless/iwlwifi/iwl-2000.c*/
-static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
-    105,110,
-    128,232,
-	80,145,
-	128,232,
-	125,175,
-	160,310,
-	97,
-	97,
-	110
-};
 
 /* Map TID to TX scheduler's FIFO. */
 static const uint8_t iwn_tid2fifo[] = {
@@ -1835,3 +1868,57 @@ static const char * const iwn_fw_errmsg[] = {
 #define IWN_BARRIER_READ_WRITE(sc)					\
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
+
+		
+/*
+ * @max_ll_items: max number of OTP blocks
+ * @shadow_ram_support: shadow support for OTP memory
+ * @led_compensation: compensate on the led on/off time per HW according
+ *	to the deviation to achieve the desired led frequency.
+ *	The detail algorithm is described in iwl-led.c
+ * @chain_noise_num_beacons: number of beacons used to compute chain noise
+ * @adv_thermal_throttle: support advance thermal throttle
+ * @support_ct_kill_exit: support ct kill exit condition
+ * @support_wimax_coexist: support wimax/wifi co-exist
+ * @plcp_delta_threshold: plcp error rate threshold used to trigger
+ *	radio tuning when there is a high receiving plcp error rate
+ * @chain_noise_scale: default chain noise scale used for gain computation
+ * @wd_timeout: TX queues watchdog timeout
+ * @max_event_log_size: size of event log buffer size for ucode event logging
+ * @shadow_reg_enable: HW shadhow register bit
+ * @no_idle_support: do not support idle mode
+ * @hd_v2: v2 of enhanced sensitivity value, used for 2000 series and up
+ * wd_disable: disable watchdog timer
+ */
+struct iwn_base_params {
+	int eeprom_size;
+	uint32_t pll_cfg_val;
+	const uint16_t max_ll_items;
+	const bool shadow_ram_support;
+	uint16_t led_compensation;
+	bool adv_thermal_throttle;
+	bool support_ct_kill_exit;
+	uint8_t plcp_delta_threshold;
+	int chain_noise_scale;
+	unsigned int wd_timeout;
+	uint32_t max_event_log_size;
+	const bool shadow_reg_enable;
+	const bool hd_v2;
+};
+
+		
+static struct iwn_base_params iwn_default_base_params = {
+	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
+	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
+	/*.max_ll_items = */0, /*OTP_MAX_LL_ITEMS_2x00,*/
+	/*.shadow_ram_support = */true,
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	/*.shadow_reg_enable = */false, 
+	/*.hd_v2 = */true
+};
