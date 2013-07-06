@@ -75,6 +75,7 @@ __FBSDID("$FreeBSD$");
 #include <dev/iwn/if_iwnvar.h>
 
 #include "dev/iwn/if_iwnreg_2000.c"
+#include "dev/iwn/if_iwnreg_6000.c"
 
 struct iwn_ident {
 	uint16_t	vendor;
@@ -323,7 +324,7 @@ static void	iwn_scan_curchan(struct ieee80211_scan_state *, unsigned long);
 static void	iwn_scan_mindwell(struct ieee80211_scan_state *);
 static void	iwn_hw_reset(void *, int);
 static void iwn_debug_register(struct iwn_softc *sc);
-
+static int iwn_config_specific(struct iwn_softc *sc,uint16_t pid);
 
 #define IWN_DEBUG
 #ifdef IWN_DEBUG
@@ -504,7 +505,8 @@ iwn_attach(device_t dev)
 	IWN_LOCK_INIT(sc);
 
 	/* Read hardware revision and attach. */
-	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0xf;	
+	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0xf;
+	sc->subdevice_id=pci_get_subdevice(dev);
 	if (sc->hw_type == IWN_HW_REV_TYPE_4965)
 		error = iwn4965_attach(sc, pci_get_device(dev));
 	else
@@ -780,6 +782,7 @@ iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 	sc->reset_noise_gain = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
 	sc->noise_gain = IWN5000_PHY_CALIB_NOISE_GAIN;
 
+	/* Nota: Switch will be removed when all specific config will put in iwn_config_specific */
 	switch (sc->hw_type) {
 	case IWN_HW_REV_TYPE_5100:
 		sc->limits = &iwn5000_sensitivity_limits;
@@ -829,14 +832,12 @@ iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
 		if (pid != 0x0082 && pid != 0x0085) {
 			sc->fwname = "iwn6000g2bfw";
-			sc->sc_flags |= IWN_FLAG_ADV_BTCOEX;
+			sc->sc_flags |= IWN_FLAG_ADV_BTCOEX; /* should be replace by base_params advanced_bt_coexist */
 		} else
 			sc->fwname = "iwn6000g2afw";
 		break;
 	case IWN_HW_REV_TYPE_2230:
-		sc->limits = &iwn2030_sensitivity_limits;
-		sc->base_params = &iwn2030_base_params; 
-		sc->fwname = "iwn2030fw";
+		return iwn_config_specific(sc,pid);
 		break;
 	default:
 		device_printf(sc->sc_dev, "adapter type %d not supported\n",
@@ -3285,7 +3286,7 @@ iwn_intr(void *arg)
 	}
 
 	DPRINTF(sc, IWN_DEBUG_INTR, "interrupt reg1=%x reg2=%x\n", r1, r2);
-
+	iwn_debug_register(sc);
 	if (r1 == 0 && r2 == 0)
 		goto done;	/* Interrupt not for us. */
 
@@ -5081,26 +5082,63 @@ iwn_send_advanced_btcoex(struct iwn_softc *sc)
 		0xcc00ff28, 0x0000aaaa, 0xcc00aaaa, 0x0000aaaa,
 		0xc0004000, 0x00004000, 0xf0005000, 0xf0005000,
 	};
+
 	struct iwn6000_btcoex_config btconfig;
+	struct iwn2000_btcoex_config btconfig2k;
 	struct iwn_btcoex_priotable btprio;
 	struct iwn_btcoex_prot btprot;
 	int error, i;
-
+	uint8_t		flags;
+	
 	memset(&btconfig, 0, sizeof btconfig);
-	btconfig.flags = 145;
-	btconfig.max_kill = 5;
-	btconfig.bt3_t7_timer = 1;
-	btconfig.kill_ack = htole32(0xffff0000);
-	btconfig.kill_cts = htole32(0xffff0000);
-	btconfig.sample_time = 2;
-	btconfig.bt3_t2_timer = 0xc;
-	for (i = 0; i < 12; i++)
-		btconfig.lookup_table[i] = htole32(btcoex_3wire[i]);
-	btconfig.valid = htole16(0xff);
-	btconfig.prio_boost = 0xf0;
-	DPRINTF(sc, IWN_DEBUG_RESET,
-	    "%s: configuring advanced bluetooth coexistence\n", __func__);
-	error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig, sizeof(btconfig), 1);
+	memset(&btconfig2k, 0, sizeof btconfig2k);
+	
+	flags = IWN_BT_FLAG_COEX6000_MODE_3W << IWN_BT_FLAG_COEX6000_MODE_SHIFT; // Done as is in linux kernel 3.2
+	
+	if (sc->base_params->bt_sco_disable)
+		flags &= ~IWN_BT_FLAG_SYNC_2_BT_DISABLE; 
+	else
+		flags |= IWN_BT_FLAG_SYNC_2_BT_DISABLE; 
+			
+	flags |= IWN_BT_FLAG_COEX6000_CHAN_INHIBITION;
+	
+		
+	/* Default flags result is 145 as old value */
+	
+	/* Flags value has to be review. Values must change if we which to disable it */
+	if (sc->base_params->bt_session_2) {
+		btconfig2k.flags = flags; 
+		btconfig2k.max_kill = 5;
+		btconfig2k.bt3_t7_timer = 1;
+		btconfig2k.kill_ack = htole32(0xffff0000);
+		btconfig2k.kill_cts = htole32(0xffff0000);
+		btconfig2k.sample_time = 2;
+		btconfig2k.bt3_t2_timer = 0xc;
+	
+		for (i = 0; i < 12; i++)
+			btconfig2k.lookup_table[i] = htole32(btcoex_3wire[i]);
+		btconfig2k.valid = htole16(0xff);
+		btconfig2k.prio_boost = htole32(0xf0);
+		DPRINTF(sc, IWN_DEBUG_RESET,
+			"%s: configuring advanced bluetooth coexistence session 2, flags : 0X%x\n", __func__,flags);
+		error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig2k, sizeof(btconfig2k), 1);
+	} else {
+		btconfig.flags = flags;
+		btconfig.max_kill = 5;
+		btconfig.bt3_t7_timer = 1;
+		btconfig.kill_ack = htole32(0xffff0000);
+		btconfig.kill_cts = htole32(0xffff0000);
+		btconfig.sample_time = 2;
+		btconfig.bt3_t2_timer = 0xc;
+	
+		for (i = 0; i < 12; i++)
+			btconfig.lookup_table[i] = htole32(btcoex_3wire[i]);
+		btconfig.valid = htole16(0xff);
+		btconfig.prio_boost = 0xf0;
+		DPRINTF(sc, IWN_DEBUG_RESET,
+			"%s: configuring advanced bluetooth coexistence, flags : 0X%x\n", __func__,flags);
+		error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig, sizeof(btconfig), 1);
+	}
 	if (error != 0)
 		return error;
 
@@ -5190,10 +5228,11 @@ iwn_config(struct iwn_softc *sc)
 	}
 
 	/* Configure bluetooth coexistence. */
-	if (sc->sc_flags & IWN_FLAG_ADV_BTCOEX)
+	if (sc->base_params->advanced_bt_coexist) 
 		error = iwn_send_advanced_btcoex(sc);
 	else
 		error = iwn_send_btcoex(sc);
+
 	if (error != 0) {
 		device_printf(sc->sc_dev,
 		    "%s: could not configure bluetooth coexistence, error %d\n",
@@ -7259,4 +7298,34 @@ iwn_debug_register(struct iwn_softc *sc)
 	DPRINTF(sc,IWN_DEBUG_RESET,"GP CNTRL: 0x%08x GP1_CLR: 0x%08x RESET: 0x%08x\n",	IWN_READ(sc,IWN_GP_CNTRL),	IWN_READ(sc,IWN_UCODE_GP1_CLR),	IWN_READ(sc,IWN_RESET));
 }
 
-
+/* Define specific configuration based on device id and subdevice id */
+/* pid : PCI device id */
+static int
+iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
+{
+	switch(pid) {
+/* 2x30 Series */
+	case IWN_DID_2x30_1:
+	case IWN_DID_2x30_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_2x30_1:
+			case IWN_SDID_2x30_2:
+			case IWN_SDID_2x30_3:
+			case IWN_SDID_2x30_4:
+			case IWN_SDID_2x30_5:
+			case IWN_SDID_2x30_6:
+				sc->limits = &iwn2030_sensitivity_limits;
+				sc->base_params = &iwn2030_base_params; 
+				sc->fwname = "iwn2030fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+	default:
+			device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev 0x%08x not supported (device) \n",pid,sc->subdevice_id,sc->hw_type);
+			return ENOTSUP;
+	}
+	return 0;		
+}

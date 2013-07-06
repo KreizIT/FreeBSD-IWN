@@ -1,0 +1,146 @@
+Jul  6 18:00:00 Test newsyslog[1755]: logfile turned over due to size>100K
+Jul  6 21:27:10 Test kernel: iwn0: <Intel Centrino Wireless-N 2230> mem 0xf7c00000-0xf7c01fff irq 18 at device 0.0 on pci4
+Jul  6 21:27:16 Test kernel: iwn_init_locked begin
+Jul  6 21:27:16 Test kernel: iwn_hw_prepare start
+Jul  6 21:27:16 Test kernel: FW: "2030 fw v18.168.6.1 build 0
+Jul  6 21:27:16 Test kernel: ", build 0x0
+Jul  6 21:27:16 Test kernel: using alternative 0
+Jul  6 21:27:16 Test kernel: TLV type 16 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 17 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 6 reconized but not handled
+Jul  6 21:27:16 Test kernel: PAN Support found : 1
+Jul  6 21:27:16 Test kernel: TLV type 18 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 8 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 9 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 10 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 11 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 12 reconized but not handled
+Jul  6 21:27:16 Test kernel: TLV type 13 reconized but not handled
+Jul  6 21:27:16 Test kernel: iwn_hw_init start
+Jul  6 21:27:16 Test kernel: ISR int 0x00000000, mask (enable) 0x00000000, fh_int 0x00000000 IF CONFIG: 0x00c00000 
+Jul  6 21:27:16 Test kernel: GP CNTRL: 0x080003d0 GP1_CLR: 0x00000000 RESET: 0x00000001
+Jul  6 21:27:16 Test kernel: iwn_apm_init begin
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_apm_init end
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn5000_nic_config start
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: interrupt reg1=8000000 reg2=1
+Jul  6 21:27:16 Test kernel: ISR int 0x08000000, mask (enable) 0x00000000, fh_int 0x00000001 IF CONFIG: 0x00c00302 
+Jul  6 21:27:16 Test kernel: GP CNTRL: 0x080403c5 GP1_CLR: 0x00000000 RESET: 0x00000001
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: interrupt reg1=8000000 reg2=1
+Jul  6 21:27:16 Test kernel: ISR int 0x08000000, mask (enable) 0x00000000, fh_int 0x00000001 IF CONFIG: 0x00c00302 
+Jul  6 21:27:16 Test kernel: GP CNTRL: 0x080403c5 GP1_CLR: 0x00000000 RESET: 0x00000001
+Jul  6 21:27:16 Test kernel: interrupt reg1=80000001 reg2=40010000
+Jul  6 21:27:16 Test kernel: ISR int 0x80000001, mask (enable) 0x00000000, fh_int 0x40010000 IF CONFIG: 0x00c00302 
+Jul  6 21:27:16 Test kernel: GP CNTRL: 0x080403c5 GP1_CLR: 0x00000000 RESET: 0x00000000
+Jul  6 21:27:16 Test kernel: iwn_notif_intr: qid 0 idx 0 flags 0 type 1(UC_READY) len 36
+Jul  6 21:27:16 Test kernel: microcode alive notification version=18.168 subtype=9 alive=1
+Jul  6 21:27:16 Test kernel: iwn5000_post_alive start
+Jul  6 21:27:16 Test kernel: iwn5000_ict_reset: enabling ICT
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn5000_send_wimax_coex: Configuring WiMAX coexistence
+Jul  6 21:27:16 Test kernel: iwn_cmd: IWN5000_CMD_WIMAX_COEX (0x5a) flags 0 qid 9 idx 0
+Jul  6 21:27:16 Test kernel: interrupt reg1=80000000 reg2=0
+Jul  6 21:27:16 Test kernel: ISR int 0x04000000, mask (enable) 0x00000000, fh_int 0x00000000 IF CONFIG: 0x00c00302 
+Jul  6 21:27:16 Test kernel: GP CNTRL: 0x080403c5 GP1_CLR: 0x00000000 RESET: 0x00000000
+Jul  6 21:27:16 Test kernel: iwn_notif_intr: qid 9 idx 0 flags 0 type 90(IWN5000_CMD_WIMAX_COEX) len 4
+Jul  6 21:27:16 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  6 21:27:16 Test kernel: iwn_notif_intr: Interrupt type:90 without action behind (could be OK)
+Jul  6 21:27:16 Test kernel: Doing calib in iwn5000_post_alive
+Jul  6 21:27:16 Test kernel: sending crystal calibration 127, 127
+Jul  6 21:27:16 Test kernel: iwn_cmd: IWN_CMD_PHY_CALIB (0xb0) flags 0 qid 9 idx 1
+Jul  6 21:27:16 Test kernel: interrupt reg1=2000000 reg2=0
+Jul  6 21:27:16 Test kernel: ISR int 0x04000000, mask (enable) 0x00000000, fh_int 0x00000000 IF CONFIG: 0x00c00302 
+Jul  6 21:27:16 Test kernel: GP CNTRL: 0x080403c5 GP1_CLR: 0x00000000 RESET: 0x00000000
+Jul  6 21:27:16 Test kernel: iwn0: iwn_intr: fatal firmware error
+Jul  6 21:27:16 Test kernel: iwn_fatal_intr start
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: firmware error log:
+Jul  6 21:27:16 Test kernel: error type      = "UNKNOWN" (0x000019B4)
+Jul  6 21:27:16 Test kernel: program counter = 0x00015498
+Jul  6 21:27:16 Test kernel: source line     = 0x00000171
+Jul  6 21:27:16 Test kernel: error data      = 0xFFFFF4F000000171
+Jul  6 21:27:16 Test kernel: branch link     = 0x0001548800015488
+Jul  6 21:27:16 Test kernel: interrupt link  = 0x0000CF7600000000
+Jul  6 21:27:16 Test kernel: time            = 32525
+Jul  6 21:27:16 Test kernel: driver status:
+Jul  6 21:27:16 Test kernel: tx ring  0: qid=0  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  1: qid=1  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  2: qid=2  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  3: qid=3  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  4: qid=4  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  5: qid=5  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  6: qid=6  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  7: qid=7  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  8: qid=8  cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring  9: qid=9  cur=2   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 10: qid=10 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 11: qid=11 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 12: qid=12 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 13: qid=13 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 14: qid=14 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 15: qid=15 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 16: qid=16 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 17: qid=17 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 18: qid=18 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: tx ring 19: qid=19 cur=0   queued=0  
+Jul  6 21:27:16 Test kernel: rx ring: cur=2
+Jul  6 21:27:16 Test kernel: iwn_stop_locked begin
+Jul  6 21:27:16 Test kernel: iwn_hw_stop begin
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:16 Test kernel: iwn_nic_lock ok
+Jul  6 21:27:16 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:16 Test kernel: iwn_apm_stop begin
+Jul  6 21:27:16 Test kernel: ISR int 0x00000000, mask (enable) 0x00000000, fh_int 0x00000000 IF CONFIG: 0x00800000 
+Jul  6 21:27:16 Test kernel: GP CNTRL: 0x080003d0 GP1_CLR: 0x00000000 RESET: 0x00000001
+Jul  6 21:27:16 Test kernel: iwn_apm_stop end
+Jul  6 21:27:16 Test kernel: iwn_hw_stop end
+Jul  6 21:27:16 Test kernel: iwn_stop_locked end
+Jul  6 21:27:17 Test kernel: iwn0: iwn5000_post_alive: crystal calibration failed, error 35
+Jul  6 21:27:17 Test kernel: iwn0: iwn_init_locked: could not initialize hardware, error 35
+Jul  6 21:27:17 Test kernel: iwn_init_locked failed
+Jul  6 21:27:17 Test kernel: iwn_stop_locked begin
+Jul  6 21:27:17 Test kernel: iwn_hw_stop begin
+Jul  6 21:27:17 Test kernel: iwn_nic_unlock release nic lock
+Jul  6 21:27:17 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:17 Test kernel: iwn_nic_lock timeout
+Jul  6 21:27:17 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:17 Test kernel: iwn_nic_lock timeout
+Jul  6 21:27:17 Test kernel: iwn_nic_lock request nic lock
+Jul  6 21:27:17 Test kernel: iwn_nic_lock timeout
+Jul  6 21:27:17 Test kernel: iwn_apm_stop begin
+Jul  6 21:27:17 Test kernel: ISR int 0x00000000, mask (enable) 0x00000000, fh_int 0x00000000 IF CONFIG: 0x00800000 
+Jul  6 21:27:17 Test kernel: GP CNTRL: 0x080003d0 GP1_CLR: 0x00000000 RESET: 0x00000001
+Jul  6 21:27:17 Test kernel: iwn_apm_stop end
+Jul  6 21:27:17 Test kernel: iwn_hw_stop end
+Jul  6 21:27:17 Test kernel: iwn_stop_locked end

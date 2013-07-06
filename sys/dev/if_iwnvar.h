@@ -213,6 +213,8 @@ struct iwn_softc {
 #define IWN_FLAG_ADV_BTCOEX	(1 << 8)
 
 	uint8_t 		hw_type;
+	/* subdevice_id will be used to adjust configuration */
+	uint16_t			subdevice_id; 
 
 	struct iwn_ops		ops;
 	const char		*fwname;

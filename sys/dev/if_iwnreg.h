@@ -499,6 +499,7 @@ struct iwn_tx_cmd {
 #define IWN_ANT_C	(1 << 2)
 /* Shortcuts. */
 #define IWN_ANT_AB	(IWN_ANT_A | IWN_ANT_B)
+#define IWN_ANT_AC	(IWN_ANT_A | IWN_ANT_C)
 #define IWN_ANT_BC	(IWN_ANT_B | IWN_ANT_C)
 #define IWN_ANT_ABC	(IWN_ANT_A | IWN_ANT_B | IWN_ANT_C)
 
@@ -907,8 +908,20 @@ struct iwn_bluetooth {
 	uint32_t	kill_cts;
 } __packed;
 
+/* Structures for enhanced command IWN_CMD_BLUETOOTH. */
 struct iwn6000_btcoex_config {
 	uint8_t		flags;
+#define IWN_BT_FLAG_COEX6000_CHAN_INHIBITION	1
+#define IWN_BT_FLAG_COEX6000_MODE_MASK			( (1 << 3) | (1 << 4) | (1 <<5 ))
+#define IWN_BT_FLAG_COEX6000_MODE_SHIFT			3
+#define IWN_BT_FLAG_COEX6000_MODE_DISABLED		0
+#define IWN_BT_FLAG_COEX6000_MODE_LEGACY_2W		1
+#define IWN_BT_FLAG_COEX6000_MODE_3W			2
+#define IWN_BT_FLAG_COEX6000_MODE_4W			3
+
+#define IWN_BT_FLAG_UCODE_DEFAULT		(1 << 6)
+/* Disable Sync PSPoll on SCO/eSCO */
+#define IWN_BT_FLAG_SYNC_2_BT_DISABLE	(1 << 7)
 	uint8_t		lead_time;
 	uint8_t		max_kill;
 	uint8_t		bt3_t7_timer;
@@ -924,6 +937,29 @@ struct iwn6000_btcoex_config {
 	uint8_t		tx_prio_boost;
 	uint16_t	rx_prio_boost;
 } __packed;
+
+/* Structures for enhanced command IWN_CMD_BLUETOOTH for 2000 Series. */
+struct iwn2000_btcoex_config {
+	uint8_t		flags; // Cf Flags in iwn6000_btcoex_config
+	uint8_t		lead_time;
+	uint8_t		max_kill;
+	uint8_t		bt3_t7_timer;
+	uint32_t	kill_ack;
+	uint32_t	kill_cts;
+	uint8_t		sample_time;
+	uint8_t		bt3_t2_timer;
+	uint16_t	bt4_reaction;
+	uint32_t	lookup_table[12];
+	uint16_t	bt4_decision;
+	uint16_t	valid;
+	
+	uint32_t	prio_boost; // size change prior to iwn6000_btcoex_config
+	uint8_t		reserved; // added prior to iwn6000_btcoex_config
+	
+	uint8_t		tx_prio_boost;
+	uint16_t	rx_prio_boost;
+} __packed;
+
 
 struct iwn_btcoex_priotable {
 	uint8_t		calib_init1;
@@ -1772,17 +1808,6 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	 95
 };
 
-static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
-	105, 110,
-	192, 232,
-	 80, 145,
-	128, 232,
-	125, 175,
-	160, 310,
-	 97,
-	 97,
-	100
-};
 
 
 /* Map TID to TX scheduler's FIFO. */
@@ -1904,6 +1929,9 @@ struct iwn_base_params {
 	uint32_t max_event_log_size;
 	const bool shadow_reg_enable;
 	const bool hd_v2;
+	const bool advanced_bt_coexist;
+	const bool bt_session_2;
+	const bool bt_sco_disable;
 };
 
 		
@@ -1920,5 +1948,8 @@ static struct iwn_base_params iwn_default_base_params = {
 	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
 	/*.max_event_log_size =*/ 512,
 	/*.shadow_reg_enable = */false, 
-	/*.hd_v2 = */true
+	/*.hd_v2 = */true,
+	/* advanced_bt_coexist */ false,
+	/* bt_session_2 */ false,
+	/* bt_sco_disable */ true
 };
