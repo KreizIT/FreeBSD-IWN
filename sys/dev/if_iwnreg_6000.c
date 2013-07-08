@@ -89,6 +89,7 @@
 	// /*.shadow_reg_enable = */ false, 
 	// /*.hd_v2 = */ false,
 	// /* advanced_bt_coexist */ true,
+	// /* additional_nic_config */ true,
 // };
 
 /*#define IWL_DEVICE_6030						\

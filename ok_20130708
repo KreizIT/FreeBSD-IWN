@@ -1,0 +1,401 @@
+Jul  8 15:37:38 Test kernel: iwn0: <Intel Centrino Wireless-N 2230> mem 0xf7c00000-0xf7c01fff irq 18 at device 0.0 on pci4
+Jul  8 15:37:38 Test kernel: iwn0: Enabling early debug
+Jul  8 15:37:38 Test kernel: OTPROM found
+Jul  8 15:37:38 Test kernel: SKU capabilities=0x0150
+Jul  8 15:37:38 Test kernel: radio config=0x3302
+Jul  8 15:37:38 Test kernel: add chan 1 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 2 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 3 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 4 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 5 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 6 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 7 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 8 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 9 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 10 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 11 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 12 flags 0x61 maxpwr 0
+Jul  8 15:37:38 Test kernel: add chan 13 flags 0x61 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 14 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 183 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 184 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 185 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 187 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 188 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 189 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 192 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 196 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 7 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 8 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 11 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 12 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 16 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 34 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 36 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 38 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 40 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 42 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 44 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 46 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 48 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 52 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 56 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 60 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 64 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 100 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 104 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 108 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 112 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 116 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 120 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 124 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 128 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 132 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 136 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 140 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 145 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 149 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 153 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 157 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 161 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 165 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: add ht40 chan 1 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add ht40 chan 2 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add ht40 chan 3 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add ht40 chan 4 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add ht40 chan 5 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add ht40 chan 6 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: add ht40 chan 7 flags 0x6f maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 36 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 44 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 52 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 60 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 100 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 108 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 116 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 124 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 132 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 149 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: skip chan 157 flags 0x0 maxpwr 0
+Jul  8 15:37:38 Test kernel: channel 1(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 2(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 3(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 4(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 5(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 6(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 7(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 8(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 9(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 10(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 11(a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 12(2002a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 13(2002a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 1(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 1(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 2(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 2(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 3(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 3(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 4(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 4(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 5(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 5(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 6(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 6(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 7(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 7(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 8(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 8(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 9(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 9(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 10(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 10(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 11(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 11(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 12(200680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 12(210680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 13(200680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 13(210680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 1(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 1(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 2(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 2(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 3(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 3(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 4(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 4(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 5(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 5(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 6(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 6(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 7(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 7(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 8(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 8(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 9(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 9(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 10(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 10(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 11(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 11(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 12(200680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 12(210680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 13(200680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 13(210680), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 1(20480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 2(20480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 3(20480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 4(20480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 5(20480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 5(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 6(20480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 6(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 7(20480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 7(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 8(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 9(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 10(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 11(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 1(a0), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 1(480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 1(10480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 1(480), maxpwr 12
+Jul  8 15:37:38 Test kernel: channel 1(10480), maxpwr 12
+Jul  8 15:37:38 Test kernel: channel 2(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 2(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 2(480), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 2(10480), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 10(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 10(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 10(480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 10(10480), maxpwr 15
+Jul  8 15:37:38 Test kernel: channel 11(480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 11(10480), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 11(480), maxpwr 12
+Jul  8 15:37:38 Test kernel: channel 11(10480), maxpwr 12
+Jul  8 15:37:38 Test kernel: channel 13(2002a0), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 13(200680), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 13(210680), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 13(200680), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 13(210680), maxpwr 13
+Jul  8 15:37:38 Test kernel: channel 3(20480), maxpwr 9
+Jul  8 15:37:38 Test kernel: channel 4(20480), maxpwr 10
+Jul  8 15:37:38 Test kernel: channel 5(20480), maxpwr 11
+Jul  8 15:37:38 Test kernel: channel 5(40480), maxpwr 11
+Jul  8 15:37:38 Test kernel: channel 7(20480), maxpwr 12
+Jul  8 15:37:38 Test kernel: channel 7(40480), maxpwr 12
+Jul  8 15:37:38 Test kernel: channel 8(40480), maxpwr 11
+Jul  8 15:37:38 Test kernel: channel 9(40480), maxpwr 9
+Jul  8 15:37:38 Test kernel: channel 10(40480), maxpwr 14
+Jul  8 15:37:38 Test kernel: channel 11(40480), maxpwr 13
+Jul  8 15:37:38 Test kernel: iwn5000_read_eeprom: calib version=6 pa type=0 voltage=3372
+Jul  8 15:37:38 Test kernel: crystal calibration 0x007f007f
+Jul  8 15:37:45 Test kernel: FW: "2030 fw v18.168.6.1 build 0
+Jul  8 15:37:45 Test kernel: ", build 0x0
+Jul  8 15:37:45 Test kernel: using alternative 0
+Jul  8 15:37:45 Test kernel: TLV type 16 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 17 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 6 reconized but not handled
+Jul  8 15:37:45 Test kernel: PAN Support found : 1
+Jul  8 15:37:45 Test kernel: TLV type 18 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 8 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 9 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 10 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 11 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 12 reconized but not handled
+Jul  8 15:37:45 Test kernel: TLV type 13 reconized but not handled
+Jul  8 15:37:45 Test kernel: CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)
+Jul  8 15:37:45 Test kernel: IWN_HW_IF_CONFIG: 0x00c00000   IWN_INT_COALESCING: 0x00000000      IWN_INT: 0x00000000 
+Jul  8 15:37:45 Test kernel: IWN_INT_MASK: 0x00000000   IWN_FH_INT: 0x00000000   IWN_GPIO_IN: 0x00000000 
+Jul  8 15:37:45 Test kernel: IWN_RESET: 0x00000001   IWN_GP_CNTRL: 0x080003d0   IWN_HW_REV: 0x000000c8 
+Jul  8 15:37:45 Test kernel: IWN_EEPROM: 0x00000000   IWN_EEPROM_GP: 0x90000801   IWN_OTP_GP: 0x00030001 
+Jul  8 15:37:45 Test kernel: IWN_GIO: 0x00080046   INW_GP_UCODE: 0x00000000   IWN_GP_DRIVER: 0x00000000 
+Jul  8 15:37:45 Test kernel: IWN_GP1_DRIVER: 0x00000000   IWN_UCODE_DRV_GP2: 0x00000000      IWN_LED: 0x00000018 
+Jul  8 15:37:45 Test kernel: IWN_DRAM_INT_TBL: 0x00000000   IWN_GIO_CHICKEN: 0x29800200   IWN_ANA_PLL: 0x00000000 
+Jul  8 15:37:45 Test kernel: IWN_HW_REV_WA: 0x0001001a   IWN_DBG_HPET_MEM: 0x82000500 
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x80000001 reg2=0x40010000
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x80000001 reg2=0x40010000
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: qid 0 idx 0 flags 0 type 1(UC_READY) len 36
+Jul  8 15:37:45 Test kernel: microcode alive notification version=18.168 subtype=9 alive=1
+Jul  8 15:37:45 Test kernel: iwn5000_ict_reset: enabling ICT
+Jul  8 15:37:45 Test kernel: iwn5000_send_wimax_coex: Configuring WiMAX coexistence
+Jul  8 15:37:45 Test kernel: Sending IWN5000_CMD_WIMAX_COEX (0x5a) flags 0 qid 9 idx 0
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: qid 9 idx 0 flags 0 type 90(IWN5000_CMD_WIMAX_COEX) len 4
+Jul  8 15:37:45 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: Interrupt type:90 without action behind (could be OK)
+Jul  8 15:37:45 Test kernel: Doing calib in iwn5000_post_alive
+Jul  8 15:37:45 Test kernel: sending crystal calibration 127, 127
+Jul  8 15:37:45 Test kernel: Sending IWN_CMD_PHY_CALIB (0xb0) flags 0 qid 9 idx 1
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: qid 0 idx 1 flags 0 type 98(TEMPERATURE_NOTIFICATION) len 8
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: Interrupt type:98 without action behind (could be OK)
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: qid 9 idx 1 flags 0 type 176(IWN_CMD_PHY_CALIB) len 4
+Jul  8 15:37:45 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: Interrupt type:176 without action behind (could be OK)
+Jul  8 15:37:45 Test kernel: iwn5000_query_calibration: sending calibration query
+Jul  8 15:37:45 Test kernel: Sending IWN5000_CMD_CALIB_CONFIG (0x65) flags 0 qid 9 idx 2
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: qid 9 idx 2 flags 0 type 101(IWN5000_CMD_CALIB_CONFIG) len 8
+Jul  8 15:37:45 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: Interrupt type:101 without action behind (could be OK)
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: qid 0 idx 2 flags 0 type 102(IWN5000_CMD_CALIB_RESULT) len 12
+Jul  8 15:37:45 Test kernel: saving calibration result code=16 len=8
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: iwn_notif_intr: qid 0 idx 3 flags 0 type 102(IWN5000_CMD_CALIB_RESULT) len 520
+Jul  8 15:37:45 Test kernel: saving calibration result code=8 len=516
+Jul  8 15:37:45 Test kernel: interrupt reg1=0x10000000 reg2=0x00000000
+Jul  8 15:37:45 Test kernel: Acked interupt reg1=0x10000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 0 idx 4 flags 0 type 102(IWN5000_CMD_CALIB_RESULT) len 1352
+Jul  8 15:37:46 Test kernel: saving calibration result code=9 len=1348
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x10000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x10000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 0 idx 5 flags 0 type 102(IWN5000_CMD_CALIB_RESULT) len 92
+Jul  8 15:37:46 Test kernel: saving calibration result code=11 len=88
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 0 idx 6 flags 0 type 103(IWN5000_CMD_CALIB_COMPLETE) len 8
+Jul  8 15:37:46 Test kernel: CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)
+Jul  8 15:37:46 Test kernel: IWN_HW_IF_CONFIG: 0x00800000   IWN_INT_COALESCING: 0x00000000      IWN_INT: 0x00000000 
+Jul  8 15:37:46 Test kernel: IWN_INT_MASK: 0x00000000   IWN_FH_INT: 0x00000000   IWN_GPIO_IN: 0x00000000 
+Jul  8 15:37:46 Test kernel: IWN_RESET: 0x00000001   IWN_GP_CNTRL: 0x080003d0   IWN_HW_REV: 0x000000c8 
+Jul  8 15:37:46 Test kernel: IWN_EEPROM: 0x00000000   IWN_EEPROM_GP: 0x90000801   IWN_OTP_GP: 0x00030001 
+Jul  8 15:37:46 Test kernel: IWN_GIO: 0x00080046   INW_GP_UCODE: 0x00000000   IWN_GP_DRIVER: 0x00000000 
+Jul  8 15:37:46 Test kernel: IWN_GP1_DRIVER: 0x00000000   IWN_UCODE_DRV_GP2: 0x00000000      IWN_LED: 0x00000018 
+Jul  8 15:37:46 Test kernel: IWN_DRAM_INT_TBL: 0x00000000   IWN_GIO_CHICKEN: 0x29800200   IWN_ANA_PLL: 0x00000000 
+Jul  8 15:37:46 Test kernel: IWN_HW_REV_WA: 0x0001001a   IWN_DBG_HPET_MEM: 0x82000500 
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x08000000 reg2=0x00000001
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000001 reg2=0x40010000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000001 reg2=0x40010000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 0 idx 0 flags 0 type 1(UC_READY) len 36
+Jul  8 15:37:46 Test kernel: microcode alive notification version=18.168 subtype=1 alive=1
+Jul  8 15:37:46 Test kernel: iwn5000_ict_reset: enabling ICT
+Jul  8 15:37:46 Test kernel: iwn5000_send_wimax_coex: Configuring WiMAX coexistence
+Jul  8 15:37:46 Test kernel: Sending IWN5000_CMD_WIMAX_COEX (0x5a) flags 0 qid 9 idx 0
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 0 flags 0 type 90(IWN5000_CMD_WIMAX_COEX) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:90 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: send calibration result idx=0 len=516
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_PHY_CALIB (0xb0) flags 0 qid 9 idx 1
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 0 idx 1 flags 0 type 98(TEMPERATURE_NOTIFICATION) len 8
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:98 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 1 flags 0 type 176(IWN_CMD_PHY_CALIB) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:176 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: send calibration result idx=1 len=1348
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_PHY_CALIB (0xb0) flags 0 qid 9 idx 2
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 2 flags 0 type 176(IWN_CMD_PHY_CALIB) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:176 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: send calibration result idx=2 len=88
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_PHY_CALIB (0xb0) flags 0 qid 9 idx 3
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 3 flags 0 type 176(IWN_CMD_PHY_CALIB) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:176 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: send calibration result idx=4 len=8
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_PHY_CALIB (0xb0) flags 0 qid 9 idx 4
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 4 flags 0 type 176(IWN_CMD_PHY_CALIB) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:176 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: iwn_config: configuring valid TX chains 0x3
+Jul  8 15:37:46 Test kernel: Sending IWN5000_CMD_TX_ANT_CONFIG (0x98) flags 0 qid 9 idx 5
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 5 flags 0 type 152(IWN5000_CMD_TX_ANT_CONFIG) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:152 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: iwn_send_advanced_btcoex: configuring advanced bluetooth coexistence session 2, flags : 0X11
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_BT_COEX (0x9b) flags 0 qid 9 idx 6
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_BT_COEX_PRIOTABLE (0xcc) flags 0 qid 9 idx 7
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_BT_COEX_PROT (0xcd) flags 0 qid 9 idx 8
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_BT_COEX_PROT (0xcd) flags 0 qid 9 idx 9
+Jul  8 15:37:46 Test kernel: iwn_config: setting configuration
+Jul  8 15:37:46 Test kernel: Sending IWN_CMD_RXON (0x10) flags 0 qid 9 idx 10
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x80000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 6 flags 0 type 155(IWN_CMD_BT_COEX) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:155 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 7 flags 0 type 204(IWN_CMD_BT_COEX_PRIOTABLE) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:204 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 8 flags 0 type 205(IWN_CMD_BT_COEX_PROT) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:205 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: qid 9 idx 9 flags 0 type 205(IWN_CMD_BT_COEX_PROT) len 4
+Jul  8 15:37:46 Test kernel: iwn_cmd_done: qid: 9 PAN Active : 1
+Jul  8 15:37:46 Test kernel: iwn_notif_intr: Interrupt type:205 without action behind (could be OK)
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x00000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: interrupt reg1=0x02000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: Acked interupt reg1=0x02000000 reg2=0x00000000
+Jul  8 15:37:46 Test kernel: iwn0: iwn_intr: fatal firmware error
+Jul  8 15:37:46 Test kernel: CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)
+Jul  8 15:37:46 Test kernel: IWN_HW_IF_CONFIG: 0x00800302   IWN_INT_COALESCING: 0x0000ff40      IWN_INT: 0x04000000 
+Jul  8 15:37:46 Test kernel: IWN_INT_MASK: 0x00000000   IWN_FH_INT: 0x00000000   IWN_GPIO_IN: 0x00000000 
+Jul  8 15:37:46 Test kernel: IWN_RESET: 0x00000000   IWN_GP_CNTRL: 0x080403c5   IWN_HW_REV: 0x000000c8 
+Jul  8 15:37:46 Test kernel: IWN_EEPROM: 0x08450ffd   IWN_EEPROM_GP: 0x90000801   IWN_OTP_GP: 0x00030001 
+Jul  8 15:37:46 Test kernel: IWN_GIO: 0x00080044   INW_GP_UCODE: 0x00000006   IWN_GP_DRIVER: 0x00000080 
+Jul  8 15:37:46 Test kernel: IWN_GP1_DRIVER: 0x00000000   IWN_UCODE_DRV_GP2: 0x00000000      IWN_LED: 0x00000018 
+Jul  8 15:37:46 Test kernel: IWN_DRAM_INT_TBL: 0x880096cc   IWN_GIO_CHICKEN: 0x29800200   IWN_ANA_PLL: 0x00000000 
+Jul  8 15:37:46 Test kernel: IWN_HW_REV_WA: 0x0001001a   IWN_DBG_HPET_MEM: 0xffff0000 
+Jul  8 15:37:46 Test kernel: iwn_fatal_intr start
+Jul  8 15:37:46 Test kernel: firmware error log:
+Jul  8 15:37:46 Test kernel: error type      = "UNKNOWN" (0x00001987)
+Jul  8 15:37:46 Test kernel: program counter = 0x000179B4
+Jul  8 15:37:46 Test kernel: source line     = 0x00000167
+Jul  8 15:37:46 Test kernel: error data      = 0x0000000000000000
+Jul  8 15:37:46 Test kernel: branch link     = 0x0001798200017982
+Jul  8 15:37:46 Test kernel: interrupt link  = 0x0000EC7A00000000
+Jul  8 15:37:46 Test kernel: time            = 53
+Jul  8 15:37:46 Test kernel: driver status:
+Jul  8 15:37:46 Test kernel: tx ring  0: qid=0  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  1: qid=1  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  2: qid=2  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  3: qid=3  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  4: qid=4  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  5: qid=5  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  6: qid=6  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  7: qid=7  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  8: qid=8  cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring  9: qid=9  cur=11  queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 10: qid=10 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 11: qid=11 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 12: qid=12 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 13: qid=13 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 14: qid=14 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 15: qid=15 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 16: qid=16 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 17: qid=17 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 18: qid=18 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: tx ring 19: qid=19 cur=0   queued=0  
+Jul  8 15:37:46 Test kernel: rx ring: cur=12
+Jul  8 15:37:46 Test kernel: iwn0: iwn_config: RXON command failed
+Jul  8 15:37:46 Test kernel: iwn0: iwn_init_locked: could not configure device, error 35
+Jul  8 15:37:46 Test kernel: iwn_init_locked failed
+Jul  8 15:37:46 Test kernel: iwn_nic_lock timeout
+Jul  8 15:37:46 Test last message repeated 2 times

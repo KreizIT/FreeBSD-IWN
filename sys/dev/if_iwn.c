@@ -22,6 +22,13 @@
  * Driver for Intel WiFi Link 4965 and 1000/5000/6000 Series 802.11 network
  * adapters.
  */
+ 
+/* Activate debug */
+#define IWN_DEBUG
+
+
+#define IWN_DEBUG_START /* Activate immedialty debug (for printing during attach, probe etc.. */
+#define IWN_DEBUG_START_LEVEL (0xffffffff & ~IWN_DEBUG_TRACE) /* At which we start debug. After, we have sysctl for adjustement */
 
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD$");
@@ -323,10 +330,11 @@ static void	iwn_set_channel(struct ieee80211com *);
 static void	iwn_scan_curchan(struct ieee80211_scan_state *, unsigned long);
 static void	iwn_scan_mindwell(struct ieee80211_scan_state *);
 static void	iwn_hw_reset(void *, int);
+static char *iwn_get_csr_string(int csr);
 static void iwn_debug_register(struct iwn_softc *sc);
 static int iwn_config_specific(struct iwn_softc *sc,uint16_t pid);
 
-#define IWN_DEBUG
+
 #ifdef IWN_DEBUG
 enum {
 	IWN_DEBUG_XMIT		= 0x00000001,	/* basic xmit operation */
@@ -342,6 +350,8 @@ enum {
 	IWN_DEBUG_NODE		= 0x00000400,	/* node management */
 	IWN_DEBUG_LED		= 0x00000800,	/* led management */
 	IWN_DEBUG_CMD		= 0x00001000,	/* cmd submission */
+	IWN_DEBUG_REGISTER	= 0x00002000,	/* print chipset register */
+	IWN_DEBUG_TRACE		= 0x00004000,	/* Print begin and start driver function */
 	IWN_DEBUG_FATAL		= 0x80000000,	/* fatal errors */
 	IWN_DEBUG_ANY		= 0xffffffff
 };
@@ -391,6 +401,9 @@ iwn_intr_str(uint8_t cmd)
 	case IWN_CMD_SET_CRITICAL_TEMP:	return "IWN_CMD_SET_CRITICAL_TEMP";
 	case IWN_CMD_SET_SENSITIVITY:	return "IWN_CMD_SET_SENSITIVITY";
 	case IWN_CMD_PHY_CALIB:		return "IWN_CMD_PHY_CALIB";
+	case IWN_CMD_BT_COEX_PRIOTABLE: return "IWN_CMD_BT_COEX_PRIOTABLE";
+	case IWN_CMD_BT_COEX_PROT:	return "IWN_CMD_BT_COEX_PROT";
+
 	}
 	return "UNKNOWN INTR NOTIF/CMD";
 }
@@ -451,7 +464,15 @@ iwn_attach(device_t dev)
 	uint8_t macaddr[IEEE80211_ADDR_LEN];
 
 	sc->sc_dev = dev;
+#ifdef IWN_DEBUG_START
+	device_printf(dev, "Enabling early debug\n");
+	#ifdef IWN_DEBUG_START_LEVEL
+		sc->sc_debug=IWN_DEBUG_START_LEVEL;
+		DPRINTF(sc, IWN_DEBUG_TRACE, "Early debug defined at 0x%08x level\n",IWN_DEBUG_START_LEVEL);
+	#endif
+#endif
 	
+	DPRINTF(sc, IWN_DEBUG_TRACE, "%s: begin\n",__func__);
 
 	/*
 	 * Get the offset of the PCI Express Capability Structure in PCI
@@ -688,7 +709,7 @@ iwn_attach(device_t dev)
 	TASK_INIT(&sc->sc_radioon_task, 0, iwn_radio_on, sc);
 	TASK_INIT(&sc->sc_radiooff_task, 0, iwn_radio_off, sc);
 
-	/* Before that we cannot use debug info from iwn */
+	
 	iwn_sysctlattach(sc);
 
 	/*
@@ -704,9 +725,11 @@ iwn_attach(device_t dev)
 
 	if (bootverbose)
 		ieee80211_announce(ic);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "%s: end\n",__func__);
 	return 0;
 fail:
 	iwn_detach(dev);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "%s: end in error\n",__func__);
 	return error;
 }
 
@@ -754,7 +777,7 @@ static int
 iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 {
 	struct iwn_ops *ops = &sc->ops;
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	
 	ops->load_firmware = iwn5000_load_firmware;
 	ops->read_eeprom = iwn5000_read_eeprom;
 	ops->post_alive = iwn5000_post_alive;
@@ -855,12 +878,13 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 {
 	struct ifnet *ifp = sc->sc_ifp;
 	struct ieee80211com *ic = ifp->if_l2com;
-DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	ieee80211_radiotap_attach(ic,
 	    &sc->sc_txtap.wt_ihdr, sizeof(sc->sc_txtap),
 		IWN_TX_RADIOTAP_PRESENT,
 	    &sc->sc_rxtap.wr_ihdr, sizeof(sc->sc_rxtap),
 		IWN_RX_RADIOTAP_PRESENT);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 }
 
 static void
@@ -870,7 +894,15 @@ iwn_sysctlattach(struct iwn_softc *sc)
 	struct sysctl_oid *tree = device_get_sysctl_tree(sc->sc_dev);
 
 #ifdef IWN_DEBUG
-	sc->sc_debug = 0;
+	#ifdef IWN_DEBUG_START
+		#ifdef IWN_DEBUG_START_LEVEL
+			sc->sc_debug = IWN_DEBUG_START_LEVEL;
+		#else
+			sc->sc_debug = 0;
+		#endif
+	#else
+		sc->sc_debug = 0;
+	#endif
 	SYSCTL_ADD_INT(ctx, SYSCTL_CHILDREN(tree), OID_AUTO,
 	    "debug", CTLFLAG_RW, &sc->sc_debug, 0, "control debugging printfs");
 #endif
@@ -922,7 +954,7 @@ iwn_detach(device_t dev)
 	struct ifnet *ifp = sc->sc_ifp;
 	struct ieee80211com *ic;
 	int qid;
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "%s begin\n", __func__);
 	if (ifp != NULL) {
 		ic = ifp->if_l2com;
 
@@ -1004,7 +1036,6 @@ iwn_nic_lock(struct iwn_softc *sc)
 {
 	int ntries;
 	
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s request nic lock\n", __func__);
 	/* Request exclusive access to NIC. */
 	IWN_SETBITS(sc, IWN_GP_CNTRL, IWN_GP_CNTRL_MAC_ACCESS_REQ);
 
@@ -1013,19 +1044,18 @@ iwn_nic_lock(struct iwn_softc *sc)
 		if ((IWN_READ(sc, IWN_GP_CNTRL) &
 		     (IWN_GP_CNTRL_MAC_ACCESS_ENA | IWN_GP_CNTRL_SLEEP)) ==
 		    IWN_GP_CNTRL_MAC_ACCESS_ENA) {
-				DPRINTF(sc, IWN_DEBUG_RESET, "%s ok\n", __func__);
 				return 0;
 		}
 		DELAY(10);
 	}
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s timeout\n", __func__);
+
 	return ETIMEDOUT;
 }
 
 static __inline void
 iwn_nic_unlock(struct iwn_softc *sc)
 {
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s release nic lock\n", __func__);
 	IWN_CLRBITS(sc, IWN_GP_CNTRL, IWN_GP_CNTRL_MAC_ACCESS_REQ);
 }
 
@@ -1128,6 +1158,7 @@ iwn_eeprom_lock(struct iwn_softc *sc)
 			DELAY(10);
 		}
 	}
+	DPRINTF(sc, IWN_DEBUG_RESET, "%s timeout\n", __func__);
 	return ETIMEDOUT;
 }
 
@@ -1147,6 +1178,8 @@ iwn_init_otprom(struct iwn_softc *sc)
 	uint16_t prev, base, next;
 	int count, error;
 
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
+	
 	/* Wait for clock stabilization before accessing prph. */
 	if ((error = iwn_clock_wait(sc)) != 0)
 		return error;
@@ -1159,7 +1192,7 @@ iwn_init_otprom(struct iwn_softc *sc)
 	iwn_nic_unlock(sc);
 
 	/* Set auto clock gate disable bit for HW with OTP shadow RAM. */
-	if (sc->hw_type != IWN_HW_REV_TYPE_1000) {
+	if (sc->base_params->shadow_ram_support) {
 		IWN_SETBITS(sc, IWN_DBG_LINK_PWR_MGMT,
 		    IWN_RESET_LINK_PWR_MGMT_DIS);
 	}
@@ -1172,11 +1205,11 @@ iwn_init_otprom(struct iwn_softc *sc)
 	 * Find the block before last block (contains the EEPROM image)
 	 * for HW without OTP shadow RAM.
 	 */
-	if (sc->hw_type == IWN_HW_REV_TYPE_1000) {
+	if (!(sc->base_params->shadow_ram_support)) {
 		/* Switch to absolute addressing mode. */
 		IWN_CLRBITS(sc, IWN_OTP_GP, IWN_OTP_GP_RELATIVE_ACCESS);
 		base = prev = 0;
-		for (count = 0; count < IWN1000_OTP_NBLOCKS; count++) {
+		for (count = 0; count < sc->base_params->max_ll_items; count++) {
 			error = iwn_read_prom_data(sc, base, &next, 2);
 			if (error != 0)
 				return error;
@@ -1185,11 +1218,12 @@ iwn_init_otprom(struct iwn_softc *sc)
 			prev = base;
 			base = le16toh(next);
 		}
-		if (count == 0 || count == IWN1000_OTP_NBLOCKS)
+		if (count == 0 || count == sc->base_params->max_ll_items)
 			return EIO;
 		/* Skip "next" word. */
 		sc->prom_base = prev + 1;
 	}
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 	return 0;
 }
 
@@ -1608,6 +1642,8 @@ static void
 iwn5000_ict_reset(struct iwn_softc *sc)
 {
 	
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
+	
 	/* Disable interrupts. */
 	IWN_WRITE(sc, IWN_INT_MASK, 0);
 
@@ -1628,6 +1664,9 @@ iwn5000_ict_reset(struct iwn_softc *sc)
 	/* Re-enable interrupts. */
 	IWN_WRITE(sc, IWN_INT, 0xffffffff);
 	IWN_WRITE(sc, IWN_INT_MASK, sc->int_mask);
+	
+	
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 }
 
 static int
@@ -1637,8 +1676,8 @@ iwn_read_eeprom(struct iwn_softc *sc, uint8_t macaddr[IEEE80211_ADDR_LEN])
 	uint16_t val;
 	int error;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
-
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
+	
 	/* Check whether adapter has an EEPROM or an OTPROM. */
 	if (sc->hw_type >= IWN_HW_REV_TYPE_1000 &&
 	    (IWN_READ(sc, IWN_OTP_GP) & IWN_OTP_GP_DEV_SEL_OTP))
@@ -1673,6 +1712,7 @@ iwn_read_eeprom(struct iwn_softc *sc, uint8_t macaddr[IEEE80211_ADDR_LEN])
 	}
 
 	iwn_read_prom_data(sc, IWN_EEPROM_SKU_CAP, &val, 2);
+	
 	DPRINTF(sc, IWN_DEBUG_RESET, "SKU capabilities=0x%04x\n", le16toh(val));
 	/* Check if HT support is bonded out. */
 	if (val & htole16(IWN_EEPROM_SKU_CAP_11N))
@@ -1696,8 +1736,9 @@ iwn_read_eeprom(struct iwn_softc *sc, uint8_t macaddr[IEEE80211_ADDR_LEN])
 	iwn_apm_stop(sc);	/* Power OFF adapter. */
 
 	iwn_eeprom_unlock(sc);
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
 
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
+	
 	return 0;
 }
 
@@ -1792,7 +1833,7 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 	uint16_t val;
 	int i;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	/* Read regulatory domain (4 ASCII characters). */
 	iwn_read_prom_data(sc, IWN5000_EEPROM_REG, &val, 2);
 	base = le16toh(val);
@@ -1800,7 +1841,7 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 	    sc->eeprom_domain, 4);
 
 	/* Read the list of authorized channels (20MHz ones only). */
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < (IWN_NBANDS - 1); i++) {
 		if (sc->hw_type >= IWN_HW_REV_TYPE_6000)
 			addr = base + iwn6000_regulatory_bands[i];
 		else
@@ -1836,7 +1877,7 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 		DPRINTF(sc, IWN_DEBUG_CALIBRATE, "crystal calibration 0x%08x\n",
 		    le32toh(sc->eeprom_crystal));
 	}
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 
 }
 
@@ -2575,7 +2616,7 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct iwn_phy_calib *calib = (struct iwn_phy_calib *)(desc + 1);
 	int len, idx = -1;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	/* Runtime firmware should not send such a notification. */
 	if (sc->sc_flags & IWN_FLAG_CALIB_DONE)
 		return;
@@ -2623,6 +2664,7 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	    "saving calibration result code=%d len=%d\n", calib->code, len);
 	sc->calibcmd[idx].len = len;
 	memcpy(sc->calibcmd[idx].buf, calib, len);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 }
 
 /*
@@ -3205,6 +3247,16 @@ iwn_fatal_intr(struct iwn_softc *sc)
 	/* Force a complete recalibration on next init. */
 	sc->sc_flags &= ~IWN_FLAG_CALIB_DONE;
 
+/*	iwl_write32(bus, HBUS_TARG_MEM_RADDR, addr);
+	rmb();
+
+	for (offs = 0; offs < words; offs++)
+		vals[offs] = iwl_read32(bus, HBUS_TARG_MEM_RDAT);
+
+	iwl_release_nic_access(bus);
+	spin_unlock_irqrestore(&bus->reg_lock, flags);	
+*/
+	
 	/* Check that the error log address is valid. */
 	if (sc->errptr < IWN_FW_DATA_BASE ||
 	    sc->errptr + sizeof (dump) >
@@ -3285,8 +3337,8 @@ iwn_intr(void *arg)
 		r2 = IWN_READ(sc, IWN_FH_INT);
 	}
 
-	DPRINTF(sc, IWN_DEBUG_INTR, "interrupt reg1=%x reg2=%x\n", r1, r2);
-	iwn_debug_register(sc);
+	DPRINTF(sc, IWN_DEBUG_INTR, "interrupt reg1=0x%08x reg2=0x%08x\n", r1, r2);
+	
 	if (r1 == 0 && r2 == 0)
 		goto done;	/* Interrupt not for us. */
 
@@ -3294,6 +3346,10 @@ iwn_intr(void *arg)
 	IWN_WRITE(sc, IWN_INT, r1);
 	if (!(sc->sc_flags & IWN_FLAG_USE_ICT))
 		IWN_WRITE(sc, IWN_FH_INT, r2);
+
+
+	DPRINTF(sc, IWN_DEBUG_INTR, "Acked interupt reg1=0x%08x reg2=0x%08x\n", r1, r2);
+
 
 	if (r1 & IWN_INT_RF_TOGGLED) {
 		iwn_rftoggle_intr(sc);
@@ -3306,6 +3362,7 @@ iwn_intr(void *arg)
 	if (r1 & (IWN_INT_SW_ERR | IWN_INT_HW_ERR)) {
 		device_printf(sc->sc_dev, "%s: fatal firmware error\n",
 		    __func__);
+		iwn_debug_register(sc);
 		/* Dump firmware error log and stop. */
 		iwn_fatal_intr(sc);
 		ifp->if_flags &= ~IFF_UP;
@@ -4080,8 +4137,8 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 	desc->segs[0].addr = htole32(IWN_LOADDR(paddr));
 	desc->segs[0].len  = htole16(IWN_HIADDR(paddr) | totlen << 4);
 
-	DPRINTF(sc, IWN_DEBUG_CMD, "%s: %s (0x%x) flags %d qid %d idx %d\n",
-	    __func__, iwn_intr_str(cmd->code), cmd->code,
+	DPRINTF(sc, IWN_DEBUG_CMD, "Sending %s (0x%x) flags %d qid %d idx %d\n",
+	    iwn_intr_str(cmd->code), cmd->code,
 	    cmd->flags, cmd->qid, cmd->idx);
 
 	if (size > sizeof cmd->data) {
@@ -6140,7 +6197,7 @@ iwn5000_post_alive(struct iwn_softc *sc)
 {
 	int error, qid;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 
 	/* Switch to using ICT interrupt mode. */
 	iwn5000_ict_reset(sc);
@@ -6241,6 +6298,7 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		/* Send calibration results to runtime firmware. */
 		error = iwn5000_send_calibration(sc);
 	}
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 	return error;
 }
 
@@ -6680,7 +6738,7 @@ iwn_apm_init(struct iwn_softc *sc)
 	uint32_t reg;
 	int error;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 
 	/* Disable L0s exit timer (NMI bug workaround). */
 	IWN_SETBITS(sc, IWN_GIO_CHICKEN, IWN_GIO_CHICKEN_DIS_L0S_TIMER);
@@ -6725,7 +6783,7 @@ iwn_apm_init(struct iwn_softc *sc)
 	iwn_prph_setbits(sc, IWN_APMG_PCI_STT, IWN_APMG_PCI_STT_L1A_DIS);
 	iwn_nic_unlock(sc);
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 
 	return 0;
 }
@@ -6748,7 +6806,7 @@ iwn_apm_stop_master(struct iwn_softc *sc)
 static void
 iwn_apm_stop(struct iwn_softc *sc)
 {
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 
 	iwn_apm_stop_master(sc);
 
@@ -6758,8 +6816,8 @@ iwn_apm_stop(struct iwn_softc *sc)
 	DELAY(10);
 	/* Clear "initialization complete" bit. */
 	IWN_CLRBITS(sc, IWN_GP_CNTRL, IWN_GP_CNTRL_INIT_DONE);
-	iwn_debug_register(sc);
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
+
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 
 	
 }
@@ -6789,7 +6847,7 @@ iwn5000_nic_config(struct iwn_softc *sc)
 	uint32_t tmp;
 	int error;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	if (IWN_RFCFG_TYPE(sc->rfcfg) < 3) {
 		IWN_SETBITS(sc, IWN_HW_IF_CONFIG,
 		    IWN_RFCFG_TYPE(sc->rfcfg) |
@@ -6820,13 +6878,16 @@ iwn5000_nic_config(struct iwn_softc *sc)
 		/* Use internal power amplifier only. */
 		IWN_WRITE(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_2X2_IPA);
 	}
-	if ((sc->hw_type == IWN_HW_REV_TYPE_6050 ||
-	     sc->hw_type == IWN_HW_REV_TYPE_6005) && sc->calib_ver >= 6) {
+	if (sc->base_params->additional_nic_config && sc->calib_ver >= 6) {
 		/* Indicate that ROM calibration version is >=6. */
 		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_CALIB_VER6);
+	
+		if (sc->hw_type == IWN_HW_REV_TYPE_6005)
+			IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_6050_1X2);
 	}
-	if (sc->hw_type == IWN_HW_REV_TYPE_6005)
-		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_6050_1X2);
+	if (sc->base_params->iq_invert) 
+		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 	return 0;
 }
 
@@ -6838,24 +6899,23 @@ iwn_hw_prepare(struct iwn_softc *sc)
 {
 	int ntries;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	
 	/*
 	 * Reset the on-board processor just in case it is in a
 	 * strange state ...
 	
 	IWN_WRITE(sc, IWN_RESET, IWN_RESET_NEVO);
-	DELAY(10);
-	IWN_WRITE(sc, IWN_RESET, 0);
-	DELAY(10);
 	*/
 	
 	/* Check if hardware is ready. */
 	IWN_SETBITS(sc, IWN_HW_IF_CONFIG, IWN_HW_IF_CONFIG_NIC_READY);
 	for (ntries = 0; ntries < 5; ntries++) {
 		if (IWN_READ(sc, IWN_HW_IF_CONFIG) &
-		    IWN_HW_IF_CONFIG_NIC_READY)
-			return 0;
+		    IWN_HW_IF_CONFIG_NIC_READY) {
+				DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
+				return 0;
+			}
 		DELAY(10);
 	}
 
@@ -6867,18 +6927,24 @@ iwn_hw_prepare(struct iwn_softc *sc)
 			break;
 		DELAY(10);
 	}
-	if (ntries == 15000)
+	if (ntries == 15000) {
+		DPRINTF(sc, IWN_DEBUG_RESET, "->%s end timeout\n", __func__);
 		return ETIMEDOUT;
+	}
 
 	/* Hardware should be ready now. */
 	IWN_SETBITS(sc, IWN_HW_IF_CONFIG, IWN_HW_IF_CONFIG_NIC_READY);
 	for (ntries = 0; ntries < 5; ntries++) {
 		if (IWN_READ(sc, IWN_HW_IF_CONFIG) &
-		    IWN_HW_IF_CONFIG_NIC_READY)
-			return 0;
+		    IWN_HW_IF_CONFIG_NIC_READY) {
+				DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
+				return 0;
+			}
 		DELAY(10);
 	}
+	DPRINTF(sc, IWN_DEBUG_RESET, "->%s end timeout\n", __func__);
 	return ETIMEDOUT;
+	
 }
 
 static int
@@ -6887,7 +6953,7 @@ iwn_hw_init(struct iwn_softc *sc)
 	struct iwn_ops *ops = &sc->ops;
 	int error, chnl, qid;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "%s start\n", __func__);
 	/* Clear pending interrupts. */
 	IWN_WRITE(sc, IWN_INT, 0xffffffff);
 	
@@ -6997,7 +7063,7 @@ iwn_hw_stop(struct iwn_softc *sc)
 {
 	int chnl, qid, ntries;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	IWN_WRITE(sc, IWN_RESET, IWN_RESET_NEVO);
 
 	/* Disable interrupts. */
@@ -7041,7 +7107,7 @@ iwn_hw_stop(struct iwn_softc *sc)
 	DELAY(5);
 	/* Power OFF adapter. */
 	iwn_apm_stop(sc);
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 
 }
 
@@ -7084,7 +7150,7 @@ iwn_init_locked(struct iwn_softc *sc)
 	struct ifnet *ifp = sc->sc_ifp;
 	int error;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	IWN_LOCK_ASSERT(sc);
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
@@ -7138,7 +7204,7 @@ iwn_init_locked(struct iwn_softc *sc)
 	ifp->if_drv_flags |= IFF_DRV_RUNNING;
 
 	callout_reset(&sc->watchdog_to, hz, iwn_watchdog, sc);
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 	return;
 
 fail:	
@@ -7167,7 +7233,6 @@ iwn_stop_locked(struct iwn_softc *sc)
 {
 	struct ifnet *ifp = sc->sc_ifp;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
 	IWN_LOCK_ASSERT(sc);
 
 	sc->sc_tx_timer = 0;
@@ -7177,7 +7242,6 @@ iwn_stop_locked(struct iwn_softc *sc)
 
 	/* Power OFF hardware. */
 	iwn_hw_stop(sc);
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
 }
 
 static void
@@ -7291,11 +7355,75 @@ iwn_hw_reset(void *arg0, int pending)
 	iwn_init(sc);
 	ieee80211_notify_radio(ic, 1);
 }
+static char *iwn_get_csr_string(int csr)
+{
+	switch (csr) {
+		IWN_DESC(IWN_HW_IF_CONFIG);	
+		IWN_DESC(IWN_INT_COALESCING);	
+		IWN_DESC(IWN_INT);
+		IWN_DESC(IWN_INT_MASK);
+		IWN_DESC(IWN_FH_INT);
+		IWN_DESC(IWN_GPIO_IN);
+		IWN_DESC(IWN_RESET);
+		IWN_DESC(IWN_GP_CNTRL);
+		IWN_DESC(IWN_HW_REV);	
+		IWN_DESC(IWN_EEPROM	);	
+		IWN_DESC(IWN_EEPROM_GP);
+		IWN_DESC(IWN_OTP_GP);	
+		IWN_DESC(IWN_GIO);
+		IWN_DESC(INW_GP_UCODE);
+		IWN_DESC(IWN_GP_DRIVER);		
+		IWN_DESC(IWN_GP1_DRIVER	);	
+		IWN_DESC(IWN_UCODE_DRV_GP2);   
+		IWN_DESC(IWN_LED);
+		IWN_DESC(IWN_DRAM_INT_TBL);
+		IWN_DESC(IWN_GIO_CHICKEN);	
+		IWN_DESC(IWN_ANA_PLL);	
+		IWN_DESC(IWN_HW_REV_WA);
+		IWN_DESC(IWN_DBG_HPET_MEM);
+	default:
+		return "UNKNOWN CSR";
+	}
+}
+
 static void
 iwn_debug_register(struct iwn_softc *sc)
 {
-	DPRINTF(sc, IWN_DEBUG_RESET, "ISR int 0x%08x, mask (enable) 0x%08x, fh_int 0x%08x IF CONFIG: 0x%08x \n", IWN_READ(sc, IWN_INT), IWN_READ(sc, IWN_INT_MASK), IWN_READ(sc, IWN_FH_INT),IWN_READ(sc, IWN_HW_IF_CONFIG));
-	DPRINTF(sc,IWN_DEBUG_RESET,"GP CNTRL: 0x%08x GP1_CLR: 0x%08x RESET: 0x%08x\n",	IWN_READ(sc,IWN_GP_CNTRL),	IWN_READ(sc,IWN_UCODE_GP1_CLR),	IWN_READ(sc,IWN_RESET));
+	int i;
+	static const uint32_t csr_tbl[] = {
+		IWN_HW_IF_CONFIG,	
+		IWN_INT_COALESCING,	
+		IWN_INT,
+		IWN_INT_MASK,
+		IWN_FH_INT,
+		IWN_GPIO_IN,
+		IWN_RESET,		
+		IWN_GP_CNTRL,		
+		IWN_HW_REV,		
+		IWN_EEPROM	,	
+		IWN_EEPROM_GP,		
+		IWN_OTP_GP,		
+		IWN_GIO,
+		INW_GP_UCODE, 
+		IWN_GP_DRIVER,		
+		IWN_GP1_DRIVER,	
+		IWN_UCODE_DRV_GP2,   
+		IWN_LED,			
+		IWN_DRAM_INT_TBL,
+		IWN_GIO_CHICKEN,		
+		IWN_ANA_PLL,	
+		IWN_HW_REV_WA,	
+		IWN_DBG_HPET_MEM,
+	};
+	DPRINTF(sc, IWN_DEBUG_REGISTER, "CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)%s","\n");
+	for (i = 0; i <  COUNTOF(csr_tbl); i++) {
+		DPRINTF(sc, IWN_DEBUG_REGISTER,"  %10s: 0x%08x ",
+			iwn_get_csr_string(csr_tbl[i]),
+			IWN_READ(sc, csr_tbl[i]));
+		if (!((i+1)%3))
+			DPRINTF(sc, IWN_DEBUG_REGISTER,"%s","\n");
+	}
+	DPRINTF(sc, IWN_DEBUG_REGISTER,"%s","\n");
 }
 
 /* Define specific configuration based on device id and subdevice id */

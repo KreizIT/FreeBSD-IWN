@@ -91,28 +91,40 @@ static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
 #define EEPROM_2000_EEPROM_VERSION	(0x805)
 
 /* OTP */
-#define OTP_MAX_LL_ITEMS_2x00		(4)	/* OTP blocks for 2x00 */
+#define IWN_OTP_MAX_LL_ITEMS_2x00		(4)	/* OTP blocks for 2x00 */
 
-#define IWL_MAX_PLCP_ERR_THRESHOLD_DEF	(50)
+#define IWN_MAX_PLCP_ERR_THRESHOLD_DEF	(50)
 
-#define IWL_LONG_WD_TIMEOUT	(10000)
+#define IWN_LONG_WD_TIMEOUT	(10000)
+
+static const uint32_t iwn2030_regulatory_bands[IWN_NBANDS] = {
+	IWN5000_EEPROM_BAND1,
+	IWN5000_EEPROM_BAND2,
+	IWN5000_EEPROM_BAND3,
+	IWN5000_EEPROM_BAND4,
+	IWN5000_EEPROM_BAND5,
+	IWN6000_EEPROM_BAND6,
+	IWN5000_EEPROM_BAND7
+};
 
 
 static struct iwn_base_params iwn2030_base_params = {
 	/* eeprom_size */ OTP_LOW_IMAGE_SIZE, 
 	/* pll_cfg_val */ 0, 
-	/*.max_ll_items */ OTP_MAX_LL_ITEMS_2x00, 
+	/*.max_ll_items */ IWN_OTP_MAX_LL_ITEMS_2x00, 
 	/*.shadow_ram_support*/  true, 
 	/*.led_compensation = */ 57,
 	/*.adv_thermal_throttle = */ true,
 	/*.support_ct_kill_exit = */ true,
-	/*.plcp_delta_threshold = */ IWL_MAX_PLCP_ERR_THRESHOLD_DEF,
+	/*.plcp_delta_threshold = */ IWN_MAX_PLCP_ERR_THRESHOLD_DEF,
 	/*.chain_noise_scale = */ 1000,
-	/*.wd_timeout = */ IWL_LONG_WD_TIMEOUT,
+	/*.wd_timeout = */ IWN_LONG_WD_TIMEOUT,
 	/*.max_event_log_size = */ 512,
 	/*.shadow_reg_enable = */ false, 
 	/*.hd_v2 = */ true,
 	/* advanced_bt_coexist */ true,
 	/* bt_session_2 */ true,
-	/* bt_sco_disable */ true
+	/* bt_sco_disable */ true,
+	/* additional_nic_config */ false,
+	/* iq_invert */ true,					
 };

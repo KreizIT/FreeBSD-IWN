@@ -68,6 +68,7 @@
 #define IWN_INT			0x008
 #define IWN_INT_MASK		0x00c
 #define IWN_FH_INT		0x010
+#define IWN_GPIO_IN			0x018 /* read external chip pins */
 #define IWN_RESET		0x020
 #define IWN_GP_CNTRL		0x024
 #define IWN_HW_REV		0x028
@@ -75,7 +76,10 @@
 #define IWN_EEPROM_GP		0x030
 #define IWN_OTP_GP		0x034
 #define IWN_GIO			0x03c
+#define INW_GP_UCODE	0x048
 #define IWN_GP_DRIVER		0x050
+#define IWN_GP1_DRIVER		0x054
+#define IWN_UCODE_GP1_SET   0x058
 #define IWN_UCODE_GP1_CLR	0x05c
 #define IWN_UCODE_DRV_GP2   0x060
 #define IWN_LED			0x094
@@ -86,6 +90,7 @@
 #define IWN_HW_REV_WA		0x22c
 #define IWN_DBG_HPET_MEM	0x240
 #define IWN_DBG_LINK_PWR_MGMT	0x250
+// Need nic_lock for use above
 #define IWN_MEM_RADDR		0x40c
 #define IWN_MEM_WADDR		0x410
 #define IWN_MEM_WDATA		0x418
@@ -232,12 +237,12 @@
  *         NOTE:  After device reset, this bit remains "0" until host sets
  *                INIT_DONE
  */
-#define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
+#define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0) 		//x00000001
 #define IWN_GP_CNTRL_MAC_CLOCK_READY	(1 << 0)
-#define IWN_GP_CNTRL_INIT_DONE		(1 << 2)
-#define IWN_GP_CNTRL_MAC_ACCESS_REQ	(1 << 3)
-#define IWN_GP_CNTRL_SLEEP		(1 << 4)
-#define IWN_GP_CNTRL_RFKILL		(1 << 27)
+#define IWN_GP_CNTRL_INIT_DONE		(1 << 2)		//x00000004
+#define IWN_GP_CNTRL_MAC_ACCESS_REQ	(1 << 3)		//x00000008
+#define IWN_GP_CNTRL_SLEEP		(1 << 4)			//x00000010
+#define IWN_GP_CNTRL_RFKILL		(1 << 27)			//x08000000
 
 /* Possible flags for register IWN_HW_REV. */
 #define IWN_HW_REV_TYPE_SHIFT	4
@@ -261,16 +266,20 @@
 #define IWN_GIO_L0S_ENA		(1 << 1)
 
 /* Possible flags for register IWN_GP_DRIVER. */
-#define IWN_GP_DRIVER_RADIO_3X3_HYB	(0 << 0)
-#define IWN_GP_DRIVER_RADIO_2X2_HYB	(1 << 0)
-#define IWN_GP_DRIVER_RADIO_2X2_IPA	(2 << 0)
-#define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
-#define IWN_GP_DRIVER_6050_1X2		(1 << 3)
+#define IWN_GP_DRIVER_RADIO_3X3_HYB				(0 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_HYB				(1 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_IPA				(2 << 0)
+#define IWN_GP_DRIVER_RADIO_MSK					(0x00000003)
+#define IWN_GP_DRIVER_CALIB_VER6				(1 << 2)
+#define IWN_GP_DRIVER_6050_1X2					(1 << 3)
+#define IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT 	(0x00000080)
+
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
 #define IWN_UCODE_GP1_CMD_BLOCKED	(1 << 2)
 #define IWN_UCODE_GP1_CTEMP_STOP_RF	(1 << 3)
+#define IWN_UCODE_GP1_CFG_COMPLETE  (1 << 5)
 
 /* Possible flags/values for register IWN_LED. */
 #define IWN_LED_BSM_CTRL	(1 << 5)
@@ -292,17 +301,18 @@
 #define IWN_BSM_WR_CTRL_START		(1 << 31)
 
 /* Possible flags for register IWN_INT. */
-#define IWN_INT_ALIVE		(1 <<  0)
-#define IWN_INT_WAKEUP		(1 <<  1)
-#define IWN_INT_SW_RX		(1 <<  3)
-#define IWN_INT_CT_REACHED	(1 <<  6)
-#define IWN_INT_RF_TOGGLED	(1 <<  7)
-#define IWN_INT_SW_ERR		(1 << 25)
-#define IWN_INT_SCHED		(1 << 26)
-#define IWN_INT_FH_TX		(1 << 27)
-#define IWN_INT_RX_PERIODIC	(1 << 28)
-#define IWN_INT_HW_ERR		(1 << 29)
-#define IWN_INT_FH_RX		(1 << 31)
+#define IWN_INT_ALIVE		(1 <<  0) // x00000001
+#define IWN_INT_WAKEUP		(1 <<  1) // x00000002
+#define IWN_INT_SW_RX		(1 <<  3) // x00000008
+#define IWN_INT_CT_REACHED	(1 <<  6) // x00000040
+#define IWN_INT_RF_TOGGLED	(1 <<  7) // x00000080
+#define IWN_INT_SW_ERR		(1 << 25) // x02000000
+#define IWN_INT_SCHED		(1 << 26) // x04000000
+#define IWN_INT_FH_TX		(1 << 27) // x08000000
+#define IWN_INT_RX_PERIODIC	(1 << 28) // x10000000
+#define IWN_INT_HW_ERR		(1 << 29) // x20000000
+#define IWN_INT_FH_RX		(1 << 31) // x80000000
+
 
 /* Shortcut. */
 #define IWN_INT_MASK_DEF						\
@@ -1482,8 +1492,8 @@ struct iwn_fw_tlv {
 #define IWN_EEPROM_RFCFG	0x048
 #define IWN4965_EEPROM_DOMAIN	0x060
 #define IWN4965_EEPROM_BAND1	0x063
-#define IWN5000_EEPROM_REG	0x066
-#define IWN5000_EEPROM_CAL	0x067
+#define IWN5000_EEPROM_REG		0x066
+#define IWN5000_EEPROM_CAL		0x067
 #define IWN4965_EEPROM_BAND2	0x072
 #define IWN4965_EEPROM_BAND3	0x080
 #define IWN4965_EEPROM_BAND4	0x08d
@@ -1932,13 +1942,15 @@ struct iwn_base_params {
 	const bool advanced_bt_coexist;
 	const bool bt_session_2;
 	const bool bt_sco_disable;
+	const bool additional_nic_config;
+	const bool iq_invert;					
 };
 
 		
 static struct iwn_base_params iwn_default_base_params = {
 	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
 	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */0, /*OTP_MAX_LL_ITEMS_2x00,*/
+	/*.max_ll_items = */4, /*OTP_MAX_LL_ITEMS_2x00,*/
 	/*.shadow_ram_support = */true,
 	/*.led_compensation = */57,
 	/*.adv_thermal_throttle =*/ true,
@@ -1951,5 +1963,7 @@ static struct iwn_base_params iwn_default_base_params = {
 	/*.hd_v2 = */true,
 	/* advanced_bt_coexist */ false,
 	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true
+	/* bt_sco_disable */ true,
+	/* additional_nic_config */ false,
+	/* iq_invert */ false,
 };
