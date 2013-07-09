@@ -333,6 +333,7 @@ static void	iwn_hw_reset(void *, int);
 static char *iwn_get_csr_string(int csr);
 static void iwn_debug_register(struct iwn_softc *sc);
 static int iwn_config_specific(struct iwn_softc *sc,uint16_t pid);
+//static int iwn_prepare_crystal_calib(struct iwn_softc *sc);
 
 
 #ifdef IWN_DEBUG
@@ -1829,7 +1830,7 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 {
 	struct iwn5000_eeprom_calib_hdr hdr;
 	int32_t volt;
-	uint32_t base, addr;
+	uint32_t base;
 	uint16_t val;
 	int i;
 
@@ -1842,15 +1843,11 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 
 	/* Read the list of authorized channels (20MHz ones only). */
 	for (i = 0; i < (IWN_NBANDS - 1); i++) {
-		if (sc->hw_type >= IWN_HW_REV_TYPE_6000)
-			addr = base + iwn6000_regulatory_bands[i];
-		else
-			addr = base + iwn5000_regulatory_bands[i];
-		iwn_read_eeprom_channels(sc, i, addr);
+		iwn_read_eeprom_channels(sc, i, base+sc->base_params->regulatory_bands[i]);
 	}
 
 	/* Read enhanced TX power information for 6000 Series. */
-	if (sc->hw_type >= IWN_HW_REV_TYPE_6000)
+	if (sc->base_params->enhanced_TX_power)
 		iwn_read_eeprom_enhinfo(sc);
 
 	iwn_read_prom_data(sc, IWN5000_EEPROM_CAL, &val, 2);
@@ -1860,6 +1857,14 @@ iwn5000_read_eeprom(struct iwn_softc *sc)
 	    "%s: calib version=%u pa type=%u voltage=%u\n", __func__,
 	    hdr.version, hdr.pa_type, le16toh(hdr.volt));
 	sc->calib_ver = hdr.version;
+	
+	if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2) {
+		sc->eeprom_voltage = le16toh(hdr.volt);
+		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
+		sc->eeprom_temp_high=le16toh(val);
+		iwn_read_prom_data(sc, base + IWN5000_EEPROM_VOLT, &val, 2);
+		sc->eeprom_temp = le16toh(val);
+	}
 
 	if (sc->hw_type == IWN_HW_REV_TYPE_5150) {
 		/* Compute temperature offset. */
@@ -2626,29 +2631,30 @@ iwn5000_rx_calib_results(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	switch (calib->code) {
 	case IWN5000_PHY_CALIB_DC:
-		if ((sc->sc_flags & IWN_FLAG_INTERNAL_PA) == 0 &&
-		    (sc->hw_type == IWN_HW_REV_TYPE_5150 ||
-		     sc->hw_type >= IWN_HW_REV_TYPE_6000) &&
-		     sc->hw_type != IWN_HW_REV_TYPE_6050)
+		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_DC)
 			idx = 0;
 		break;
 	case IWN5000_PHY_CALIB_LO:
-		idx = 1;
+		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_LO)
+			idx = 1;
 		break;
 	case IWN5000_PHY_CALIB_TX_IQ:
-		idx = 2;
+		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TX_IQ)
+			idx = 2;
 		break;
 	case IWN5000_PHY_CALIB_TX_IQ_PERIODIC:
-		if (sc->hw_type < IWN_HW_REV_TYPE_6000 &&
-		    sc->hw_type != IWN_HW_REV_TYPE_5150)
+		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TX_IQ_PERIODIC)
 			idx = 3;
 		break;
 	case IWN5000_PHY_CALIB_BASE_BAND:
-		idx = 4;
+		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_BASE_BAND)
+			idx = 4;
 		break;
 	}
-	if (idx == -1)	/* Ignore other results. */
+	if (idx == -1)	{	/* Ignore other results. */
+		DPRINTF(sc,IWN_DEBUG_CALIBRATE,"Ignoring calib result %d",calib->code);
 		return;
+	}
 
 	/* Save calibration result. */
 	if (sc->calibcmd[idx].buf != NULL)
@@ -2881,7 +2887,7 @@ iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 	DPRINTF(sc, IWN_DEBUG_CMD, "%s: qid: %d PAN Active : %d\n",
 	    __func__, (desc->qid & 0xf),sc->uc_pan_support );
 		
-	/* CG: May be problem come from mess with command queue */
+	
 	if ((desc->qid & 0xf) != cmd_queue_num)
 		return;	/* Not a command ack. */
 	
@@ -3241,21 +3247,12 @@ iwn_fatal_intr(struct iwn_softc *sc)
 	struct iwn_fw_dump dump;
 	int i;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s start\n", __func__);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 	IWN_LOCK_ASSERT(sc);
 
 	/* Force a complete recalibration on next init. */
 	sc->sc_flags &= ~IWN_FLAG_CALIB_DONE;
 
-/*	iwl_write32(bus, HBUS_TARG_MEM_RADDR, addr);
-	rmb();
-
-	for (offs = 0; offs < words; offs++)
-		vals[offs] = iwl_read32(bus, HBUS_TARG_MEM_RDAT);
-
-	iwl_release_nic_access(bus);
-	spin_unlock_irqrestore(&bus->reg_lock, flags);	
-*/
 	
 	/* Check that the error log address is valid. */
 	if (sc->errptr < IWN_FW_DATA_BASE ||
@@ -3301,6 +3298,7 @@ iwn_fatal_intr(struct iwn_softc *sc)
 		    i, ring->qid, ring->cur, ring->queued);
 	}
 	printf("  rx ring: cur=%d\n", sc->rxq.cur);
+	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 }
 
 static void
@@ -3337,7 +3335,6 @@ iwn_intr(void *arg)
 		r2 = IWN_READ(sc, IWN_FH_INT);
 	}
 
-	DPRINTF(sc, IWN_DEBUG_INTR, "interrupt reg1=0x%08x reg2=0x%08x\n", r1, r2);
 	
 	if (r1 == 0 && r2 == 0)
 		goto done;	/* Interrupt not for us. */
@@ -3350,7 +3347,6 @@ iwn_intr(void *arg)
 
 	DPRINTF(sc, IWN_DEBUG_INTR, "Acked interupt reg1=0x%08x reg2=0x%08x\n", r1, r2);
 
-
 	if (r1 & IWN_INT_RF_TOGGLED) {
 		iwn_rftoggle_intr(sc);
 		goto done;
@@ -3359,6 +3355,7 @@ iwn_intr(void *arg)
 		device_printf(sc->sc_dev, "%s: critical temperature reached!\n",
 		    __func__);
 	}
+	/* Todo : Make separate action for HW Error and SW_error. SW Error maybe require just a restart */
 	if (r1 & (IWN_INT_SW_ERR | IWN_INT_HW_ERR)) {
 		device_printf(sc->sc_dev, "%s: fatal firmware error\n",
 		    __func__);
@@ -5248,8 +5245,9 @@ iwn_config(struct iwn_softc *sc)
 	uint16_t rxchain;
 	int error;
 
+	/* CG: Calibration stuff must be part of HW INIT
 	if (sc->hw_type == IWN_HW_REV_TYPE_6005) {
-		/* Set radio temperature sensor offset. */
+		// Set radio temperature sensor offset. 
 		error = iwn5000_temp_offset_calib(sc);
 		if (error != 0) {
 			device_printf(sc->sc_dev,
@@ -5257,6 +5255,7 @@ iwn_config(struct iwn_softc *sc)
 			return error;
 		}
 	}
+	*/
 
 	if (sc->hw_type == IWN_HW_REV_TYPE_6050) {
 		/* Configure runtime DC calibration. */
@@ -6056,9 +6055,15 @@ iwn5000_send_calibration(struct iwn_softc *sc)
 {
 	int idx, error;
 
-	for (idx = 0; idx < 5; idx++) {
-		if (sc->calibcmd[idx].buf == NULL)
-			continue;	/* No results available. */
+	for (idx = 0; idx < IWN5000_PHY_CALIB_MAX_RESULT  ; idx++) {
+		if (!(sc->base_params->calib_need & (1<<idx))) {
+			DPRINTF(sc,IWN_DEBUG_CALIBRATE, "No need of calib %d\n",idx);
+			continue; /* no need for this calib */
+		}
+		if (sc->calibcmd[idx].buf == NULL) {
+			DPRINTF(sc, IWN_DEBUG_CALIBRATE, "Need calib idx : %d but no available data\n",idx);
+			continue;
+		}
 		DPRINTF(sc, IWN_DEBUG_CALIBRATE,
 		    "send calibration result idx=%d len=%d\n", idx,
 		    sc->calibcmd[idx].len);
@@ -6116,6 +6121,36 @@ iwn5000_crystal_calib(struct iwn_softc *sc)
 	    cmd.cap_pin[0], cmd.cap_pin[1]);
 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
 }
+/*
+static int 
+iwn_prepare_crystal_calib(struct iwn_softc *sc)
+{
+	struct iwn5000_phy_calib_crystal cmd;
+
+	memset(&cmd, 0, sizeof cmd);
+	cmd.code = IWN5000_PHY_CALIB_CRYSTAL;
+	cmd.ngroups = 1;
+	cmd.isvalid = 1;
+	cmd.cap_pin[0] = le32toh(sc->eeprom_crystal) & 0xff;
+	cmd.cap_pin[1] = (le32toh(sc->eeprom_crystal) >> 16) & 0xff;
+	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "prepare crystal calibration %d, %d\n",
+	    cmd.cap_pin[0], cmd.cap_pin[1]);
+	
+	if (sc->calibcmd[IWN_BUF_IX_PHY_CALIB_DC].buf != NULL)
+		free(sc->calibcmd[IWN_BUF_IX_PHY_CALIB_DC].buf, M_DEVBUF);
+	sc->calibcmd[IWN_BUF_IX_PHY_CALIB_DC].buf = malloc(sizeof(cmd), M_DEVBUF, M_NOWAIT);
+	if (sc->calibcmd[IWN_BUF_IX_PHY_CALIB_DC].buf == NULL) {
+		DPRINTF(sc, IWN_DEBUG_CALIBRATE,
+		    "%s : not enough memory for DC calibration \n",
+		    __func__);
+		return ENOMEM;
+	}
+	sc->calibcmd[IWN_BUF_IX_PHY_CALIB_DC].len = sizeof(cmd);
+	memcpy(sc->calibcmd[IWN_BUF_IX_PHY_CALIB_DC].buf, &cmd, sizeof(cmd));
+
+	return 0 ;
+}
+*/
 
 static int
 iwn5000_temp_offset_calib(struct iwn_softc *sc)
@@ -6130,10 +6165,63 @@ iwn5000_temp_offset_calib(struct iwn_softc *sc)
 		cmd.offset = htole16(sc->eeprom_temp);
 	else
 		cmd.offset = htole16(IWN_DEFAULT_TEMP_OFFSET);
+		
 	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "setting radio sensor offset to %d\n",
 	    le16toh(cmd.offset));
-	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
+	
+	if (sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET].buf != NULL)
+		free(sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET].buf, M_DEVBUF);
+	sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET].buf = malloc(sizeof(cmd), M_DEVBUF, M_NOWAIT);
+	if (sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET].buf == NULL) {
+		DPRINTF(sc, IWN_DEBUG_CALIBRATE,
+		    "%s : not enough memory for temp calibration result \n",
+		    __func__);
+		return ENOMEM;
+	}
+	sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET].len = sizeof(cmd);
+	memcpy(sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET].buf, &cmd, sizeof(cmd));
+			
+	return 0;
 }
+
+static int
+iwn5000_temp_offset_calibv2(struct iwn_softc *sc)
+{
+	struct iwn5000_phy_calib_temp_offsetv2 cmd;
+
+	memset(&cmd, 0, sizeof cmd);
+	cmd.code = IWN5000_PHY_CALIB_TEMP_OFFSET;
+	cmd.ngroups = 1;
+	cmd.isvalid = 1;
+	if (sc->eeprom_temp != 0) {
+		cmd.offset_low = htole16(sc->eeprom_temp);
+		cmd.offset_high = htole16(sc->eeprom_temp_high);
+	} else {
+		cmd.offset_low = htole16(IWN_DEFAULT_TEMP_OFFSET);
+		cmd.offset_high = htole16(IWN_DEFAULT_TEMP_OFFSET);
+	}
+	cmd.burntVoltageRef = htole16(sc->eeprom_voltage);
+	
+	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "setting radio sensor low offset to %d, high offset to %d, voltage to %d\n",
+	    le16toh(cmd.offset_low),
+		le16toh(cmd.offset_high),
+		le16toh(cmd.burntVoltageRef));
+	
+	if (sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2].buf != NULL)
+		free(sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2].buf, M_DEVBUF);
+	sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2].buf = malloc(sizeof(cmd), M_DEVBUF, M_NOWAIT);
+	if (sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2].buf == NULL) {
+		DPRINTF(sc, IWN_DEBUG_CALIBRATE,
+		    "%s : not enough memory for temp calibration result v2\n",
+		    __func__);
+		return ENOMEM;
+	}
+	sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2].len = sizeof(cmd);
+	memcpy(sc->calibcmd[IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2].buf, &cmd, sizeof(cmd));
+
+	return 0 ;
+}
+
 
 /*
  * This function is called after the runtime firmware notifies us of its
@@ -6221,7 +6309,7 @@ iwn5000_post_alive(struct iwn_softc *sc)
 	else
 		iwn_prph_write(sc, IWN5000_SCHED_QCHAIN_SEL, 0xfffef);
 
-		iwn_prph_write(sc, IWN5000_SCHED_AGGR_SEL, 0);
+	iwn_prph_write(sc, IWN5000_SCHED_AGGR_SEL, 0);
 
 	for (qid = 0; qid < IWN5000_NTXQUEUES; qid++) {
 		iwn_prph_write(sc, IWN5000_SCHED_QUEUE_RDPTR(qid), 0);
@@ -6265,22 +6353,22 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		    __func__, error);
 		return error;
 	}
-	if (sc->hw_type != IWN_HW_REV_TYPE_5150) {
-		
-		if (!(sc->sc_flags & IWN_FLAG_CALIB_DONE)) {
-			DPRINTF(sc, IWN_DEBUG_RESET, "Doing calib in %s\n",__func__);
+	
+	
+	if (!(sc->sc_flags & IWN_FLAG_CALIB_DONE)) {
+		if (sc->hw_type != IWN_HW_REV_TYPE_5150) {
+			if (!(sc->sc_flags & IWN_FLAG_CALIB_DONE)) {
+				DPRINTF(sc, IWN_DEBUG_RESET, "Doing calib in %s\n",__func__);
 
-			/* Perform crystal calibration if not already done needed*/
-			error = iwn5000_crystal_calib(sc);
-			if (error != 0) {
-				device_printf(sc->sc_dev,
-					"%s: crystal calibration failed, error %d\n",
-					__func__, error);
-				return error;
+				error = iwn5000_crystal_calib(sc);
+				if (error != 0) {
+					device_printf(sc->sc_dev,
+						"%s: crystal calibration failed, error %d\n",
+						__func__, error);
+					return error;
+				}
 			}
 		}
-	}
-	if (!(sc->sc_flags & IWN_FLAG_CALIB_DONE)) {
 		/* Query calibration from the initialization firmware. */
 		if ((error = iwn5000_query_calibration(sc)) != 0) {
 			device_printf(sc->sc_dev,
@@ -6295,6 +6383,36 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		iwn_hw_stop(sc);
 		error = iwn_hw_init(sc);
 	} else {
+		if ((sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET)  && (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2)) {
+			device_printf(sc->sc_dev,"%s: temp_offset and temp_offsetv2 are exclusive each together. Review NIC config file. Conf :  0x%08x Flags :  0x%08x  \n", __func__,sc->base_params->calib_need,(IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET | IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2));
+			return EINVAL;
+		}
+		/* Compute temperature calib if needed. Will be send by send calib */
+		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET) {
+			error = iwn5000_temp_offset_calib(sc);
+			if (error != 0) {
+				device_printf(sc->sc_dev,
+					"%s: could not compute temperature offset\n", __func__);
+				return error;
+			}
+		}
+		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2) {
+			error = iwn5000_temp_offset_calibv2(sc);
+			if (error != 0) {
+				device_printf(sc->sc_dev,
+					"%s: could not compute temperature offset v2\n", __func__);
+				return error;
+			}
+		}
+		/*if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_DC) {
+			error=iwn_prepare_crystal_calib(sc);
+			if (error != 0) {
+				device_printf(sc->sc_dev,
+					"%s: could not prepare runtime calib\n", __func__);
+				return error;
+			}
+		}
+		*/
 		/* Send calibration results to runtime firmware. */
 		error = iwn5000_send_calibration(sc);
 	}

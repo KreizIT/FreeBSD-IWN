@@ -1048,6 +1048,10 @@ struct iwn_enhanced_sensitivity_cmd {
 	uint16_t	reserved;
 } __packed;
 
+/* Define maximal number of calib result send to runtime firmware 
+PS: TEMP_OFFSET count for 2 (std and v2)
+*/
+#define IWN5000_PHY_CALIB_MAX_RESULT	8
 /* Structures for command IWN_CMD_PHY_CALIB. */
 struct iwn_phy_calib {
 	uint8_t	code;
@@ -1068,6 +1072,15 @@ struct iwn_phy_calib {
 	uint8_t	isvalid;
 } __packed;
 
+#define IWN_BUF_IX_PHY_CALIB_DC				0
+#define IWN_BUF_IX_PHY_CALIB_LO			 	1
+#define IWN_BUF_IX_PHY_CALIB_TX_IQ			2
+#define IWN_BUF_IX_PHY_CALIB_CRYSTAL		3
+#define IWN_BUF_IX_PHY_CALIB_BASE_BAND		4
+#define IWN_BUF_IX_PHY_CALIB_TX_IQ_PERIODIC	5
+#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET	6 
+#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2	7
+
 struct iwn5000_phy_calib_crystal {
 	uint8_t	code;
 	uint8_t	group;
@@ -1087,6 +1100,17 @@ struct iwn5000_phy_calib_temp_offset {
 #define IWN_DEFAULT_TEMP_OFFSET	2700
 
 	uint16_t	reserved;
+} __packed;
+
+struct iwn5000_phy_calib_temp_offsetv2 {
+	uint8_t		code;
+	uint8_t		group;
+	uint8_t		ngroups;
+	uint8_t		isvalid;
+	int16_t 	offset_high;
+	int16_t		offset_low;
+	int16_t		burntVoltageRef;
+	int16_t		reserved;
 } __packed;
 
 struct iwn_phy_calib_gain {
@@ -1514,9 +1538,9 @@ struct iwn_fw_tlv {
 #define IWN6000_EEPROM_BAND6	0x040
 #define IWN5000_EEPROM_BAND7	0x049
 #define IWN6000_EEPROM_ENHINFO	0x054
-#define IWN5000_EEPROM_CRYSTAL	0x128
-#define IWN5000_EEPROM_TEMP	0x12a
-#define IWN5000_EEPROM_VOLT	0x12b
+#define IWN5000_EEPROM_CRYSTAL	0x128 //XTAL in linux 3.2
+#define IWN5000_EEPROM_TEMP		0x12a //KELVIN_TEMPERATURE in linux 3.2
+#define IWN5000_EEPROM_VOLT		0x12b //RAW_TEMPERATURE  in linux 3.2
 
 /* Possible flags for IWN_EEPROM_SKU_CAP. */
 #define IWN_EEPROM_SKU_CAP_11N	(1 << 6)
@@ -1904,8 +1928,23 @@ static const char * const iwn_fw_errmsg[] = {
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
+
 		
-/*
+/* Flags for managing calibration result. See calib_need in iwn_base_params struct */
+#define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
+#define IWN_FLG_NEED_PHY_CALIB_LO				(1<<1)
+#define IWN_FLG_NEED_PHY_CALIB_TX_IQ			(1<<2)
+#define IWN_FLG_NEED_PHY_CALIB_CRYSTAL			(1<<3)
+#define IWN_FLG_NEED_PHY_CALIB_BASE_BAND		(1<<4)
+#define IWN_FLG_NEED_PHY_CALIB_TX_IQ_PERIODIC	(1<<5)
+#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET		(1<<6)
+#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2	(1<<7)
+
+		
+/* Define some parameters for managing different NIC.
+ * Refer to linux specific file like iwl-xxxx.c to determine correct value for NIC
+ *
+ *
  * @max_ll_items: max number of OTP blocks
  * @shadow_ram_support: shadow support for OTP memory
  * @led_compensation: compensate on the led on/off time per HW according
@@ -1923,7 +1962,14 @@ static const char * const iwn_fw_errmsg[] = {
  * @shadow_reg_enable: HW shadhow register bit
  * @no_idle_support: do not support idle mode
  * @hd_v2: v2 of enhanced sensitivity value, used for 2000 series and up
- * wd_disable: disable watchdog timer
+ * advanced_bt_coexist : Advanced BT management
+ * bt_sco_disable :
+ * additional_nic_config: For 6005 series
+ * iq_invert : ? But need it for N 2000 series
+ * regulatory_bands :
+ * enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True' if update_enhanced_txpower = iwl_eeprom_enhanced_txpower 
+ * need_temp_offset_calib : Need to compute some temp offset for calibration.
+ * calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which calibration data ucode need. See calib_init_cfg in iwl-xxxx.c linux kernel file
  */
 struct iwn_base_params {
 	int eeprom_size;
@@ -1943,7 +1989,12 @@ struct iwn_base_params {
 	const bool bt_session_2;
 	const bool bt_sco_disable;
 	const bool additional_nic_config;
-	const bool iq_invert;					
+	const bool iq_invert;
+	const uint32_t *regulatory_bands;
+	const bool enhanced_TX_power; // See iwl-xxxx.c file to determine that. 
+	const bool need_temp_offset_calib; 
+	const uint16_t calib_need;
+	
 };
 
 		
@@ -1966,4 +2017,8 @@ static struct iwn_base_params iwn_default_base_params = {
 	/* bt_sco_disable */ true,
 	/* additional_nic_config */ false,
 	/* iq_invert */ false,
+	/* regulatory_bands */ iwn5000_regulatory_bands,
+	/* enhanced_TX_power */ false,
+	/* need_temp_offset_calib */ false,
+	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
 };

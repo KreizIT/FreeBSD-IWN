@@ -277,7 +277,7 @@ struct iwn_softc {
 	struct callout		watchdog_to;
 
 	struct iwn_fw_info	fw;
-	struct iwn_calib_info	calibcmd[5];
+	struct iwn_calib_info	calibcmd[IWN5000_PHY_CALIB_MAX_RESULT];
 	uint32_t		errptr;
 
 	struct iwn_rx_stat	last_rx_stat;
@@ -299,6 +299,7 @@ struct iwn_softc {
 	char			eeprom_domain[4];
 	uint32_t		eeprom_crystal;
 	int16_t			eeprom_temp;
+	int16_t			eeprom_temp_high;
 	int16_t			eeprom_voltage;
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;

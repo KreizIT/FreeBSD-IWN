@@ -90,6 +90,8 @@
 	// /*.hd_v2 = */ false,
 	// /* advanced_bt_coexist */ true,
 	// /* additional_nic_config */ true,
+	// /* enhanced_TX_power */ true,
+	// /* need_temp_offset_calib */ true,
 // };
 
 /*#define IWL_DEVICE_6030						\

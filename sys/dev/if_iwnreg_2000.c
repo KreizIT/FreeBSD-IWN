@@ -126,5 +126,10 @@ static struct iwn_base_params iwn2030_base_params = {
 	/* bt_session_2 */ true,
 	/* bt_sco_disable */ true,
 	/* additional_nic_config */ false,
-	/* iq_invert */ true,					
+	/* iq_invert */ true,
+	/* regulatory_bands */ iwn2030_regulatory_bands,
+	/* enhanced_TX_power */ true, 
+	/* need_temp_offset_calib */ true,
+	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND | IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ),
+
 };
