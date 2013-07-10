@@ -503,6 +503,28 @@ struct iwn_tx_cmd {
 	uint8_t	data[136];
 } __packed;
 
+/*
+ * Structure for IWN_CMD_GET_STATISTICS = (0x9c) 156
+ * all devices identical.
+ *
+ * This command triggers an immediate response containing uCode statistics.
+ * The response is in the same format as IWN_BEACON_STATISTICS (0x9d) 157.
+ *
+ * If the CLEAR_STATS configuration flag is set, uCode will clear its
+ * internal copy of the statistics (counters) after issuing the response.
+ * This flag does not affect IWN_BEACON_STATISTICS after beacons (see below).
+ *
+ * If the DISABLE_NOTIF configuration flag is set, uCode will not issue
+ * IWN_BEACON_STATISTICS after received beacons.  This flag
+ * does not affect the response to the IWN_CMD_GET_STATISTICS 0x9c itself.
+ */
+struct iwn_statistics_cmd {
+	uint32_t configuration_flags;	/* IWN_STATS_CONF_* */
+#define IWN_STATS_CONF_CLEAR_STATS htole32(0x1)	
+#define IWN_STATS_CONF_DISABLE_NOTIF htole32(0x2)
+
+} __packed;
+
 /* Antenna flags, used in various commands. */
 #define IWN_ANT_A	(1 << 0)
 #define IWN_ANT_B	(1 << 1)
@@ -609,7 +631,8 @@ struct iwn_cmd_timing {
 	uint16_t	atim;
 	uint32_t	binitval;
 	uint16_t	lintval;
-	uint16_t	reserved;
+	uint8_t		dtim_period;
+	uint8_t		delta_cp_bss_tbtts;
 } __packed;
 
 /* Structure for command IWN_CMD_ADD_NODE. */
@@ -1994,6 +2017,8 @@ struct iwn_base_params {
 	const bool enhanced_TX_power; // See iwl-xxxx.c file to determine that. 
 	const bool need_temp_offset_calib; 
 	const uint16_t calib_need;
+	const uint32_t running_post_alive_calib;
+#define IWN_POST_ALIVE_CALIB_NONE 0
 	
 };
 
@@ -2021,4 +2046,5 @@ static struct iwn_base_params iwn_default_base_params = {
 	/* enhanced_TX_power */ false,
 	/* need_temp_offset_calib */ false,
 	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
+	/* running_post_alive_calib */ IWN_POST_ALIVE_CALIB_NONE,
 };

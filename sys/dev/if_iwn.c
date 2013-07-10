@@ -334,6 +334,7 @@ static char *iwn_get_csr_string(int csr);
 static void iwn_debug_register(struct iwn_softc *sc);
 static int iwn_config_specific(struct iwn_softc *sc,uint16_t pid);
 //static int iwn_prepare_crystal_calib(struct iwn_softc *sc);
+static int iwn_set_statistics_request(struct iwn_softc *sc,bool enable,bool clear,int async);
 
 
 #ifdef IWN_DEBUG
@@ -2327,12 +2328,7 @@ iwn_calib_timeout(void *arg)
 
 	/* Force automatic TX power calibration every 60 secs. */
 	if (++sc->calib_cnt >= 120) {
-		uint32_t flags = 0;
-
-		DPRINTF(sc, IWN_DEBUG_CALIBRATE, "%s\n",
-		    "sending request for statistics");
-		(void)iwn_cmd(sc, IWN_CMD_GET_STATISTICS, &flags,
-		    sizeof flags, 1);
+		iwn_set_statistics_request(true,false,1)
 		sc->calib_cnt = 0;
 	}
 	callout_reset(&sc->calib_to, msecs_to_ticks(500), iwn_calib_timeout,
@@ -4349,17 +4345,25 @@ iwn_set_timing(struct iwn_softc *sc, struct ieee80211_node *ni)
 {
 	struct iwn_cmd_timing cmd;
 	uint64_t val, mod;
+	uint beacon_int;
 
+	beacon_int= ni ? htole16(ni->ni_intval):200u;
+	
 	memset(&cmd, 0, sizeof cmd);
 	memcpy(&cmd.tstamp, ni->ni_tstamp.data, sizeof (uint64_t));
-	cmd.bintval = htole16(ni->ni_intval);
 	cmd.lintval = htole16(10);
-
+	/* Todo test if asociated and get updated values */ 
+	
+	
+	
+	cmd.bintval = beacon_int ? beacon_int : 200u;
 	/* Compute remaining time until next beacon. */
-	val = (uint64_t)ni->ni_intval * IEEE80211_DUR_TU;
+	val = beacon_int * IEEE80211_DUR_TU;
 	mod = le64toh(cmd.tstamp) % val;
 	cmd.binitval = htole32((uint32_t)(val - mod));
 
+	cmd.dtim_period=1;
+	
 	DPRINTF(sc, IWN_DEBUG_RESET, "timing bintval=%u tstamp=%ju, init=%u\n",
 	    ni->ni_intval, le64toh(cmd.tstamp), (uint32_t)(val - mod));
 
@@ -4687,7 +4691,7 @@ iwn_init_sensitivity(struct iwn_softc *sc)
 	calib->ofdm_mrc_x1 = sc->limits->min_ofdm_mrc_x1;
 	calib->ofdm_x4     = sc->limits->min_ofdm_x4;
 	calib->ofdm_mrc_x4 = sc->limits->min_ofdm_mrc_x4;
-	calib->cck_x4      = 125;
+	calib->cck_x4      = sc->limits->min_cck_x4;
 	calib->cck_mrc_x4  = sc->limits->min_cck_mrc_x4;
 	calib->energy_cck  = sc->limits->energy_cck;
 
@@ -4700,10 +4704,7 @@ iwn_init_sensitivity(struct iwn_softc *sc)
 		return error;
 
 	/* Request statistics at each beacon interval. */
-	flags = 0;
-	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "%s: sending request for statistics\n",
-	    __func__);
-	return iwn_cmd(sc, IWN_CMD_GET_STATISTICS, &flags, sizeof flags, 1);
+	return iwn_set_statistics_request(sc,true,false,1);
 }
 
 /*
@@ -5229,9 +5230,9 @@ iwn5000_runtime_calib(struct iwn_softc *sc)
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.ucode.once.enable = 0xffffffff;
-	cmd.ucode.once.start = IWN5000_CALIB_DC;
+	cmd.ucode.once.start = htole32(sc->base_params->running_post_alive_calib);
 	DPRINTF(sc, IWN_DEBUG_CALIBRATE,
-	    "%s: configuring runtime calibration\n", __func__);
+	    "%s: configuring runtime calibration type 0x%08x\n", __func__,sc->base_params->running_post_alive_calib);
 	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
 }
 
@@ -5257,16 +5258,19 @@ iwn_config(struct iwn_softc *sc)
 	}
 	*/
 
-	if (sc->hw_type == IWN_HW_REV_TYPE_6050) {
-		/* Configure runtime DC calibration. */
-		error = iwn5000_runtime_calib(sc);
-		if (error != 0) {
-			device_printf(sc->sc_dev,
-			    "%s: could not configure runtime calibration\n",
-			    __func__);
-			return error;
-		}
+	/* Configure bluetooth coexistence. */
+	if (sc->base_params->advanced_bt_coexist) 
+		error = iwn_send_advanced_btcoex(sc);
+	else
+		error = iwn_send_btcoex(sc);
+
+	if (error != 0) {
+		device_printf(sc->sc_dev,
+		    "%s: could not configure bluetooth coexistence, error %d\n",
+		    __func__, error);
+		return error;
 	}
+	
 
 	/* Configure valid TX chains for >=5000 Series. */
 	if (sc->hw_type != IWN_HW_REV_TYPE_4965) {
@@ -5283,16 +5287,12 @@ iwn_config(struct iwn_softc *sc)
 		}
 	}
 
-	/* Configure bluetooth coexistence. */
-	if (sc->base_params->advanced_bt_coexist) 
-		error = iwn_send_advanced_btcoex(sc);
-	else
-		error = iwn_send_btcoex(sc);
-
+	
+	/* Request statistics */
+	error=iwn_set_statistics_request(sc,true,true,1);
 	if (error != 0) {
-		device_printf(sc->sc_dev,
-		    "%s: could not configure bluetooth coexistence, error %d\n",
-		    __func__, error);
+		device_printf(sc->sc_dev, "%s: Statistic request command failed\n",
+		    __func__);
 		return error;
 	}
 
@@ -5318,6 +5318,9 @@ iwn_config(struct iwn_softc *sc)
 		/* Should not get there. */
 		break;
 	}
+	/* !! Need to set timing !! */
+	
+	
 	sc->rxon.cck_mask  = 0x0f;	/* not yet negotiated */
 	sc->rxon.ofdm_mask = 0xff;	/* not yet negotiated */
 	sc->rxon.ht_single_mask = 0xff;
@@ -6415,6 +6418,17 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		*/
 		/* Send calibration results to runtime firmware. */
 		error = iwn5000_send_calibration(sc);
+		
+		if (sc->base_params->running_post_alive_calib) {
+			/* Configure runtime DC calibration. */
+			error = iwn5000_runtime_calib(sc);
+			if (error != 0) {
+				device_printf(sc->sc_dev,
+					"%s: could not configure runtime calibration\n",
+					__func__);
+				return error;
+			}
+		}
 	}
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 	return error;
@@ -7574,4 +7588,25 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 			return ENOTSUP;
 	}
 	return 0;		
+}
+/*
+ *	Send IWN_CMD_GET_STATISTICS to ucode.
+ *  @enable: activate sending statistics from uCode
+ *	@clear : ask uCode to clear internal counter
+ *	@async : Sync mode for command (1= ASYNC, 0=SYNC)
+*/
+static int 
+iwn_set_statistics_request(struct iwn_softc *sc,bool enable,bool clear,int async)
+{
+	struct iwn_statistics_cmd cmd;
+	
+	if (enable) 
+		cmd.configuration_flags= clear ? IWN_STATS_CONF_CLEAR_STATS :0;
+	else
+		cmd.configuration_flags= IWN_STATS_CONF_DISABLE_NOTIF;
+		
+	
+	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "%s: sending request for statistics flags : 0x%x\n",
+	    __func__,cmd.configuration_flags);
+	return iwn_cmd(sc, IWN_CMD_GET_STATISTICS, &cmd, sizeof cmd, async ? 1:0);
 }

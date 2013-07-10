@@ -1,0 +1,28 @@
+Workflow
+
+
+* Alive runtime ucode (iwl_alive_start)
+ - Reset ICT
+ - BT config (Switch advanced_bt_coexist) -
+ - Config ANT (iwlagn_send_tx_ant_config) -
+Si associé
+	- Define some priv flags
+Sinon
+	- (iwlagn_set_rxon_chain)
+
+-reset data ds priv (a faire)
+-send request statistic -
+-iwlagn_commit_rxon
+	- iwl_send_rxon_timing si IWL_RXON_CTX_BSS
+	- Si vif->type == NL80211_IFTYPE_AP alors iwlagn_update_beacon
+	- Send cmd
+	- si vif->type == NL80211_IFTYPE_ADHOC alors iwlagn_update_beacon
+	- iwl_init_sensitivity
+	- iwl_set_tx_power
+	- si vif->type == NL80211_IFTYPE_STATION && params=smps_mode (1000 series) alors ieee80211_request_smps
+-iwl_rf_kill_ct_config
+-iwl_power_update_mode
+  -Se_powerCMD	
+
+
+
