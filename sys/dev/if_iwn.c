@@ -619,7 +619,15 @@ iwn_attach(device_t dev)
 		| IEEE80211_C_IBSS		/* ibss/adhoc mode */
 #endif
 		| IEEE80211_C_WME		/* WME */
+		| IEEE80211_C_PMGT		/* power management */
 		;
+	if (sc->hw_type == IWN_HW_REV_TYPE_1000 || sc->hw_type == IWN_HW_REV_TYPE_6000) {
+		ic->ic_caps &= ~IEEE80211_C_HOSTAP ;/* HOSTAP mode not supported  */
+	}
+	else
+	{
+		ic->ic_caps |=IEEE80211_C_HOSTAP ; /* HOSTAP mode supported */
+	}
 
 	/* Read MAC address, channels, etc from EEPROM. */
 	if ((error = iwn_read_eeprom(sc, macaddr)) != 0) {
@@ -724,6 +732,12 @@ iwn_attach(device_t dev)
 		    error);
 		goto fail;
 	}
+	/* update ic->ic_flags to the default power save mode */
+	if (IWN_POWERSAVE_LVL_DEFAULT != IWN_POWERSAVE_LVL_NONE)
+		ic->ic_flags |= IEEE80211_F_PMGTON;
+	else
+		ic->ic_flags &= ~IEEE80211_F_PMGTON;
+
 
 	if (bootverbose)
 		ieee80211_announce(ic);
@@ -2328,7 +2342,7 @@ iwn_calib_timeout(void *arg)
 
 	/* Force automatic TX power calibration every 60 secs. */
 	if (++sc->calib_cnt >= 120) {
-		iwn_set_statistics_request(true,false,1)
+		iwn_set_statistics_request(sc,true,false,1);
 		sc->calib_cnt = 0;
 	}
 	callout_reset(&sc->calib_to, msecs_to_ticks(500), iwn_calib_timeout,
@@ -4345,9 +4359,9 @@ iwn_set_timing(struct iwn_softc *sc, struct ieee80211_node *ni)
 {
 	struct iwn_cmd_timing cmd;
 	uint64_t val, mod;
-	uint beacon_int;
+	uint16_t beacon_int;
 
-	beacon_int= ni ? htole16(ni->ni_intval):200u;
+	beacon_int= ni ? ni->ni_intval:200u;
 	
 	memset(&cmd, 0, sizeof cmd);
 	memcpy(&cmd.tstamp, ni->ni_tstamp.data, sizeof (uint64_t));
@@ -4356,7 +4370,7 @@ iwn_set_timing(struct iwn_softc *sc, struct ieee80211_node *ni)
 	
 	
 	
-	cmd.bintval = beacon_int ? beacon_int : 200u;
+	cmd.bintval = htole16 (beacon_int ? beacon_int : 200u);
 	/* Compute remaining time until next beacon. */
 	val = beacon_int * IEEE80211_DUR_TU;
 	mod = le64toh(cmd.tstamp) % val;
@@ -4365,7 +4379,7 @@ iwn_set_timing(struct iwn_softc *sc, struct ieee80211_node *ni)
 	cmd.dtim_period=1;
 	
 	DPRINTF(sc, IWN_DEBUG_RESET, "timing bintval=%u tstamp=%ju, init=%u\n",
-	    ni->ni_intval, le64toh(cmd.tstamp), (uint32_t)(val - mod));
+	    le16toh(cmd.bintval), le64toh(cmd.tstamp), (uint32_t)(val - mod));
 
 	return iwn_cmd(sc, IWN_CMD_TIMING, &cmd, sizeof cmd, 1);
 }
@@ -4679,7 +4693,6 @@ iwn_init_sensitivity(struct iwn_softc *sc)
 {
 	struct iwn_ops *ops = &sc->ops;
 	struct iwn_calib_state *calib = &sc->calib;
-	uint32_t flags;
 	int error;
 
 	/* Reset calibration state machine. */
@@ -5230,7 +5243,7 @@ iwn5000_runtime_calib(struct iwn_softc *sc)
 
 	memset(&cmd, 0, sizeof cmd);
 	cmd.ucode.once.enable = 0xffffffff;
-	cmd.ucode.once.start = htole32(sc->base_params->running_post_alive_calib);
+	cmd.ucode.once.start = IWN5000_CALIB_DC;
 	DPRINTF(sc, IWN_DEBUG_CALIBRATE,
 	    "%s: configuring runtime calibration type 0x%08x\n", __func__,sc->base_params->running_post_alive_calib);
 	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
@@ -5258,7 +5271,7 @@ iwn_config(struct iwn_softc *sc)
 	}
 	*/
 
-	/* Configure bluetooth coexistence. */
+		/* Configure bluetooth coexistence. */
 	if (sc->base_params->advanced_bt_coexist) 
 		error = iwn_send_advanced_btcoex(sc);
 	else
@@ -5270,7 +5283,6 @@ iwn_config(struct iwn_softc *sc)
 		    __func__, error);
 		return error;
 	}
-	
 
 	/* Configure valid TX chains for >=5000 Series. */
 	if (sc->hw_type != IWN_HW_REV_TYPE_4965) {
@@ -5287,6 +5299,7 @@ iwn_config(struct iwn_softc *sc)
 		}
 	}
 
+
 	
 	/* Request statistics */
 	error=iwn_set_statistics_request(sc,true,true,1);
@@ -5295,7 +5308,8 @@ iwn_config(struct iwn_softc *sc)
 		    __func__);
 		return error;
 	}
-
+	
+	
 	/* Set mode, channel, RX filter and enable RX. */
 	memset(&sc->rxon, 0, sizeof (struct iwn_rxon));
 	IEEE80211_ADDR_COPY(sc->rxon.myaddr, IF_LLADDR(ifp));
@@ -5318,8 +5332,13 @@ iwn_config(struct iwn_softc *sc)
 		/* Should not get there. */
 		break;
 	}
-	/* !! Need to set timing !! */
-	
+	/* !! Need to set timing !! 
+	if ((error = iwn_set_timing(sc, NULL)) != 0) {
+		device_printf(sc->sc_dev,
+		    "%s: could not set timing, error %d\n", __func__, error);
+		return error;
+	}
+	*/
 	
 	sc->rxon.cck_mask  = 0x0f;	/* not yet negotiated */
 	sc->rxon.ofdm_mask = 0xff;	/* not yet negotiated */
@@ -5331,6 +5350,7 @@ iwn_config(struct iwn_softc *sc)
 	    IWN_RXCHAIN_MIMO_COUNT(2) |
 	    IWN_RXCHAIN_IDLE_COUNT(2);
 	sc->rxon.rxchain = htole16(rxchain);
+	
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s: setting configuration\n", __func__);
 	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 0);
 	if (error != 0) {
@@ -5338,7 +5358,7 @@ iwn_config(struct iwn_softc *sc)
 		    __func__);
 		return error;
 	}
-
+	
 	if ((error = iwn_add_broadcast_node(sc, 0)) != 0) {
 		device_printf(sc->sc_dev, "%s: could not add broadcast node\n",
 		    __func__);

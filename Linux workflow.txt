@@ -4,6 +4,7 @@ Workflow
 * Alive runtime ucode (iwl_alive_start)
  - Reset ICT
  - BT config (Switch advanced_bt_coexist) -
+ - Si rtcfg iwlagn_send_calib_cfg_rt(calib_rt_cfg)
  - Config ANT (iwlagn_send_tx_ant_config) -
 Si associé
 	- Define some priv flags

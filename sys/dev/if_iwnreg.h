@@ -1696,6 +1696,12 @@ static const struct iwn_chan_band {
 
 #define IWN4965_MAX_PWR_INDEX	107
 
+#define IWN_POWERSAVE_LVL_NONE 			0
+#define IWN_POWERSAVE_LVL_VOIP_COMPATIBLE 	1
+#define IWN_POWERSAVE_LVL_MAX 			5
+
+#define IWN_POWERSAVE_LVL_DEFAULT IWN_POWERSAVE_LVL_NONE
+
 /*
  * RF Tx gain values from highest to lowest power (values obtained from
  * the reference driver.)
@@ -2017,8 +2023,8 @@ struct iwn_base_params {
 	const bool enhanced_TX_power; // See iwl-xxxx.c file to determine that. 
 	const bool need_temp_offset_calib; 
 	const uint16_t calib_need;
-	const uint32_t running_post_alive_calib;
-#define IWN_POST_ALIVE_CALIB_NONE 0
+	const bool running_post_alive_calib;
+
 	
 };
 
@@ -2046,5 +2052,5 @@ static struct iwn_base_params iwn_default_base_params = {
 	/* enhanced_TX_power */ false,
 	/* need_temp_offset_calib */ false,
 	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ IWN_POST_ALIVE_CALIB_NONE,
+	/* running_post_alive_calib */ false,
 };
