@@ -5229,7 +5229,7 @@ iwn_send_advanced_btcoex(struct iwn_softc *sc)
 	memset(&btprot, 0, sizeof btprio);
 	btprot.open = 1;
 	btprot.type = 1;
-	error = iwn_cmd(sc, IWN_CMD_BT_COEX_PROT, &btprot, sizeof(btprot), 1);
+	error = iwn_cmd(sc, IWN_CMD_BT_COEX_PROT, &btprot, sizeof(btprot), 0);
 	if (error != 0)
 		return error;
 	btprot.open = 0;
@@ -5258,7 +5258,8 @@ iwn_config(struct iwn_softc *sc)
 	uint32_t txmask;
 	uint16_t rxchain;
 	int error;
-
+	
+	
 	/* CG: Calibration stuff must be part of HW INIT
 	if (sc->hw_type == IWN_HW_REV_TYPE_6005) {
 		// Set radio temperature sensor offset. 
@@ -5271,7 +5272,7 @@ iwn_config(struct iwn_softc *sc)
 	}
 	*/
 
-		/* Configure bluetooth coexistence. */
+	/* Configure bluetooth coexistence. */
 	if (sc->base_params->advanced_bt_coexist) 
 		error = iwn_send_advanced_btcoex(sc);
 	else
@@ -5284,6 +5285,18 @@ iwn_config(struct iwn_softc *sc)
 		return error;
 	}
 
+	if (sc->base_params->running_post_alive_calib) {
+			// Configure runtime DC calibration. 
+			error = iwn5000_runtime_calib(sc);
+			if (error != 0) {
+				device_printf(sc->sc_dev,
+					"%s: could not configure runtime calibration\n",
+					__func__);
+				return error;
+			}
+		}
+
+	
 	/* Configure valid TX chains for >=5000 Series. */
 	if (sc->hw_type != IWN_HW_REV_TYPE_4965) {
 		txmask = htole32(sc->txchainmask);
@@ -5299,8 +5312,7 @@ iwn_config(struct iwn_softc *sc)
 		}
 	}
 
-
-	
+		
 	/* Request statistics */
 	error=iwn_set_statistics_request(sc,true,true,1);
 	if (error != 0) {
@@ -6439,16 +6451,7 @@ iwn5000_post_alive(struct iwn_softc *sc)
 		/* Send calibration results to runtime firmware. */
 		error = iwn5000_send_calibration(sc);
 		
-		if (sc->base_params->running_post_alive_calib) {
-			/* Configure runtime DC calibration. */
-			error = iwn5000_runtime_calib(sc);
-			if (error != 0) {
-				device_printf(sc->sc_dev,
-					"%s: could not configure runtime calibration\n",
-					__func__);
-				return error;
-			}
-		}
+		
 	}
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s end\n", __func__);
 	return error;
@@ -7109,8 +7112,6 @@ iwn_hw_init(struct iwn_softc *sc)
 	/* Clear pending interrupts. */
 	IWN_WRITE(sc, IWN_INT, 0xffffffff);
 	
-	iwn_debug_register(sc);
-
 	if ((error = iwn_apm_init(sc)) != 0) {
 		device_printf(sc->sc_dev,
 		    "%s: could not power ON adapter, error %d\n", __func__,
