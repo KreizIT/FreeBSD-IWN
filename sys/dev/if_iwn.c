@@ -2277,7 +2277,7 @@ iwn_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 	IWN_LOCK(sc);
 	callout_stop(&sc->calib_to);
 	
-	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
 
 	switch (nstate) {
 	case IEEE80211_S_ASSOC:
@@ -4428,7 +4428,7 @@ iwn4965_set_txpower(struct iwn_softc *sc, struct ieee80211_channel *ch,
 	int i, c, grp, maxpwr;
 	uint8_t chan;
 
-	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
 	/* Retrieve current channel from last RXON. */
 	chan = sc->rxon->chan;
 	DPRINTF(sc, IWN_DEBUG_RESET, "setting TX power for channel %d\n",
@@ -5330,7 +5330,7 @@ iwn_config(struct iwn_softc *sc)
 	
 	
 	/* Set mode, channel, RX filter and enable RX. */
-	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
 	memset(sc->rxon, 0, sizeof (struct iwn_rxon));
 	IEEE80211_ADDR_COPY(sc->rxon->myaddr, IF_LLADDR(ifp));
 	IEEE80211_ADDR_COPY(sc->rxon->wlap, IF_LLADDR(ifp));
@@ -5441,10 +5441,10 @@ iwn_scan(struct iwn_softc *sc)
 	struct ieee80211vap *vap = ni->ni_vap;
 	struct iwn_vap *ivp = IWN_VAP(vap);
 
-	if(ivp->ctx == IWL_RXON_BSS_CTX)
-		sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
-	else if(ivp->ctx == IWL_RXON_PAN_CTX)
-		sc->rxon = &sc->rx_on[IWL_RXON_PAN_CTX];
+	if(ivp->ctx == IWN_RXON_BSS_CTX)
+		sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
+	else if(ivp->ctx == IWN_RXON_PAN_CTX)
+		sc->rxon = &sc->rx_on[IWN_RXON_PAN_CTX];
 	
 	buf = malloc(IWN_SCAN_MAXSZ, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (buf == NULL) {
@@ -5593,7 +5593,7 @@ iwn_auth(struct iwn_softc *sc, struct ieee80211vap *vap)
 	struct ieee80211_node *ni = vap->iv_bss;
 	int error;
 
-	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
 	/* Update adapter configuration. */
 	IEEE80211_ADDR_COPY(sc->rxon->bssid, ni->ni_bssid);
 	sc->rxon->chan = ieee80211_chan2ieee(ic, ni->ni_chan);
@@ -5655,7 +5655,7 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 	uint32_t htflags = 0;
 	int error;
 
-	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
 	
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		/* Link LED blinks while monitoring. */

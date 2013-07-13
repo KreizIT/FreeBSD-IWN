@@ -21,9 +21,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 enum iwn_rxon_ctx_id {
-        IWL_RXON_BSS_CTX,
-        IWL_RXON_PAN_CTX,
-        IWL_NUM_RXON_CTX
+        IWN_RXON_BSS_CTX,
+        IWN_RXON_PAN_CTX,
+        IWN_NUM_RXON_CTX
 };
 
 struct iwn_led_mode
@@ -46,7 +46,7 @@ struct iwn_pan_slot {
 
 struct iwn_pan_params_cmd {
 	uint16_t flags;
-#define	IWL_PAN_PARAMS_FLG_SLOTTED_MODE	(1 << 3)
+#define	IWN_PAN_PARAMS_FLG_SLOTTED_MODE	(1 << 3)
 
 	uint8_t reserved;
 	uint8_t num_slots;
@@ -54,7 +54,7 @@ struct iwn_pan_params_cmd {
 } __packed;
 
 
-struct iwl_led_mode
+struct iwn_led_mode
 {
 	uint8_t		led_cur_mode;
 	uint64_t	led_cur_bt;
@@ -336,10 +336,10 @@ struct iwn_softc {
 	struct iwn_rx_stat	last_rx_stat;
 	int			last_rx_valid;
 	struct iwn_ucode_info	ucode_info;
-	struct iwn_rxon 	rx_on[IWL_NUM_RXON_CTX];
+	struct iwn_rxon 	rx_on[IWN_NUM_RXON_CTX];
 	struct iwn_rxon		*rxon;
 	int			ctx;
-	struct ieee80211vap	*ivap[IWL_NUM_RXON_CTX];
+	struct ieee80211vap	*ivap[IWN_NUM_RXON_CTX];
 	uint8_t			uc_pan_support; /*CG: PAN support */
 	uint8_t			uc_scan_progress;
 	uint32_t		rawtemp;
