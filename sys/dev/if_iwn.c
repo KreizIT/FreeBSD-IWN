@@ -2276,6 +2276,8 @@ iwn_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 	IEEE80211_UNLOCK(ic);
 	IWN_LOCK(sc);
 	callout_stop(&sc->calib_to);
+	
+	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
 
 	switch (nstate) {
 	case IEEE80211_S_ASSOC:
@@ -2290,8 +2292,8 @@ iwn_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 		 * !AUTH -> AUTH transition requires state reset to handle
 		 * reassociations correctly.
 		 */
-		sc->rxon.associd = 0;
-		sc->rxon.filter &= ~htole32(IWN_FILTER_BSS);
+		sc->rxon->associd = 0;
+		sc->rxon->filter &= ~htole32(IWN_FILTER_BSS);
 		sc->calib.state = IWN_CALIB_STATE_INIT;
 
 		if ((error = iwn_auth(sc, vap)) != 0) {
@@ -4426,8 +4428,9 @@ iwn4965_set_txpower(struct iwn_softc *sc, struct ieee80211_channel *ch,
 	int i, c, grp, maxpwr;
 	uint8_t chan;
 
+	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
 	/* Retrieve current channel from last RXON. */
-	chan = sc->rxon.chan;
+	chan = sc->rxon->chan;
 	DPRINTF(sc, IWN_DEBUG_RESET, "setting TX power for channel %d\n",
 	    chan);
 
@@ -4766,7 +4769,7 @@ iwn_collect_noise(struct iwn_softc *sc,
 
 #ifdef notyet
 	/* XXX Disable RX chains with no antennas connected. */
-	sc->rxon.rxchain = htole16(IWN_RXCHAIN_SEL(sc->chainmask));
+	sc->rxon->rxchain = htole16(IWN_RXCHAIN_SEL(sc->chainmask));
 	(void)iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
 #endif
 
@@ -5327,21 +5330,22 @@ iwn_config(struct iwn_softc *sc)
 	
 	
 	/* Set mode, channel, RX filter and enable RX. */
-	memset(&sc->rxon, 0, sizeof (struct iwn_rxon));
-	IEEE80211_ADDR_COPY(sc->rxon.myaddr, IF_LLADDR(ifp));
-	IEEE80211_ADDR_COPY(sc->rxon.wlap, IF_LLADDR(ifp));
-	sc->rxon.chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
-	sc->rxon.flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
+	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	memset(sc->rxon, 0, sizeof (struct iwn_rxon));
+	IEEE80211_ADDR_COPY(sc->rxon->myaddr, IF_LLADDR(ifp));
+	IEEE80211_ADDR_COPY(sc->rxon->wlap, IF_LLADDR(ifp));
+	sc->rxon->chan = ieee80211_chan2ieee(ic, ic->ic_curchan);
+	sc->rxon->flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
 	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_curchan))
-		sc->rxon.flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
+		sc->rxon->flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
-		sc->rxon.mode = IWN_MODE_STA;
-		sc->rxon.filter = htole32(IWN_FILTER_MULTICAST);
+		sc->rxon->mode = IWN_MODE_STA;
+		sc->rxon->filter = htole32(IWN_FILTER_MULTICAST);
 		break;
 	case IEEE80211_M_MONITOR:
-		sc->rxon.mode = IWN_MODE_MONITOR;
-		sc->rxon.filter = htole32(IWN_FILTER_MULTICAST |
+		sc->rxon->mode = IWN_MODE_MONITOR;
+		sc->rxon->filter = htole32(IWN_FILTER_MULTICAST |
 		    IWN_FILTER_CTL | IWN_FILTER_PROMISC);
 		break;
 	default:
@@ -5356,19 +5360,19 @@ iwn_config(struct iwn_softc *sc)
 	}
 	*/
 	
-	sc->rxon.cck_mask  = 0x0f;	/* not yet negotiated */
-	sc->rxon.ofdm_mask = 0xff;	/* not yet negotiated */
-	sc->rxon.ht_single_mask = 0xff;
-	sc->rxon.ht_dual_mask = 0xff;
-	sc->rxon.ht_triple_mask = 0xff;
+	sc->rxon->cck_mask  = 0x0f;	/* not yet negotiated */
+	sc->rxon->ofdm_mask = 0xff;	/* not yet negotiated */
+	sc->rxon->ht_single_mask = 0xff;
+	sc->rxon->ht_dual_mask = 0xff;
+	sc->rxon->ht_triple_mask = 0xff;
 	rxchain =
 	    IWN_RXCHAIN_VALID(sc->rxchainmask) |
 	    IWN_RXCHAIN_MIMO_COUNT(2) |
 	    IWN_RXCHAIN_IDLE_COUNT(2);
-	sc->rxon.rxchain = htole16(rxchain);
+	sc->rxon->rxchain = htole16(rxchain);
 	
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s: setting configuration\n", __func__);
-	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 0);
+	error = iwn_cmd(sc, IWN_CMD_RXON, sc->rxon, sc->rxonsz, 0);
 	if (error != 0) {
 		device_printf(sc->sc_dev, "%s: RXON command failed\n",
 		    __func__);
@@ -5434,6 +5438,14 @@ iwn_scan(struct iwn_softc *sc)
 	uint8_t txant;
 	int buflen, error;
 
+	struct ieee80211vap *vap = ni->ni_vap;
+	struct iwn_vap *ivp = IWN_VAP(vap);
+
+	if(ivp->ctx == IWL_RXON_BSS_CTX)
+		sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	else if(ivp->ctx == IWL_RXON_PAN_CTX)
+		sc->rxon = &sc->rx_on[IWL_RXON_PAN_CTX];
+	
 	buf = malloc(IWN_SCAN_MAXSZ, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (buf == NULL) {
 		device_printf(sc->sc_dev,
@@ -5475,7 +5487,7 @@ iwn_scan(struct iwn_softc *sc)
 	} else {
 		hdr->flags = htole32(IWN_RXON_24GHZ | IWN_RXON_AUTO);
 		if (sc->hw_type == IWN_HW_REV_TYPE_4965 &&
-		    sc->rxon.associd && sc->rxon.chan > 14)
+		    sc->rxon->associd && sc->rxon->chan > 14)
 			tx->rate = htole32(0xd);
 		else {
 			/* Send probe requests at 1Mbps. */
@@ -5534,7 +5546,7 @@ iwn_scan(struct iwn_softc *sc)
 	} else if (IEEE80211_IS_CHAN_5GHZ(c)) {
 		chan->rf_gain = 0x3b;
 		chan->active  = htole16(24);
-		if (sc->rxon.associd)
+		if (sc->rxon->associd)
 			chan->passive = htole16(78);
 		else
 			chan->passive = htole16(110);
@@ -5547,7 +5559,7 @@ iwn_scan(struct iwn_softc *sc)
 	} else {
 		chan->rf_gain = 0x28;
 		chan->active  = htole16(36);
-		if (sc->rxon.associd)
+		if (sc->rxon->associd)
 			chan->passive = htole16(88);
 		else
 			chan->passive = htole16(120);
@@ -5581,30 +5593,31 @@ iwn_auth(struct iwn_softc *sc, struct ieee80211vap *vap)
 	struct ieee80211_node *ni = vap->iv_bss;
 	int error;
 
+	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
 	/* Update adapter configuration. */
-	IEEE80211_ADDR_COPY(sc->rxon.bssid, ni->ni_bssid);
-	sc->rxon.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
-	sc->rxon.flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
+	IEEE80211_ADDR_COPY(sc->rxon->bssid, ni->ni_bssid);
+	sc->rxon->chan = ieee80211_chan2ieee(ic, ni->ni_chan);
+	sc->rxon->flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
 	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		sc->rxon.flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
+		sc->rxon->flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		sc->rxon.flags |= htole32(IWN_RXON_SHSLOT);
+		sc->rxon->flags |= htole32(IWN_RXON_SHSLOT);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
-		sc->rxon.flags |= htole32(IWN_RXON_SHPREAMBLE);
+		sc->rxon->flags |= htole32(IWN_RXON_SHPREAMBLE);
 	if (IEEE80211_IS_CHAN_A(ni->ni_chan)) {
-		sc->rxon.cck_mask  = 0;
-		sc->rxon.ofdm_mask = 0x15;
+		sc->rxon->cck_mask  = 0;
+		sc->rxon->ofdm_mask = 0x15;
 	} else if (IEEE80211_IS_CHAN_B(ni->ni_chan)) {
-		sc->rxon.cck_mask  = 0x03;
-		sc->rxon.ofdm_mask = 0;
+		sc->rxon->cck_mask  = 0x03;
+		sc->rxon->ofdm_mask = 0;
 	} else {
 		/* Assume 802.11b/g. */
-		sc->rxon.cck_mask  = 0x0f;
-		sc->rxon.ofdm_mask = 0x15;
+		sc->rxon->cck_mask  = 0x0f;
+		sc->rxon->ofdm_mask = 0x15;
 	}
 	DPRINTF(sc, IWN_DEBUG_STATE, "rxon chan %d flags %x cck %x ofdm %x\n",
-	    sc->rxon.chan, sc->rxon.flags, sc->rxon.cck_mask,
-	    sc->rxon.ofdm_mask);
+	    sc->rxon->chan, sc->rxon->flags, sc->rxon->cck_mask,
+	    sc->rxon->ofdm_mask);
 	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
 	if (error != 0) {
 		device_printf(sc->sc_dev, "%s: RXON command failed, error %d\n",
@@ -5642,6 +5655,8 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 	uint32_t htflags = 0;
 	int error;
 
+	sc->rxon = &sc->rx_on[IWL_RXON_BSS_CTX];
+	
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		/* Link LED blinks while monitoring. */
 		iwn_set_led(sc, IWN_LED_LINK, 5, 5);
@@ -5654,26 +5669,26 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 	}
 
 	/* Update adapter configuration. */
-	IEEE80211_ADDR_COPY(sc->rxon.bssid, ni->ni_bssid);
-	sc->rxon.associd = htole16(IEEE80211_AID(ni->ni_associd));
-	sc->rxon.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
-	sc->rxon.flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
+	IEEE80211_ADDR_COPY(sc->rxon->bssid, ni->ni_bssid);
+	sc->rxon->associd = htole16(IEEE80211_AID(ni->ni_associd));
+	sc->rxon->chan = ieee80211_chan2ieee(ic, ni->ni_chan);
+	sc->rxon->flags = htole32(IWN_RXON_TSF | IWN_RXON_CTS_TO_SELF);
 	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-		sc->rxon.flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
+		sc->rxon->flags |= htole32(IWN_RXON_AUTO | IWN_RXON_24GHZ);
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
-		sc->rxon.flags |= htole32(IWN_RXON_SHSLOT);
+		sc->rxon->flags |= htole32(IWN_RXON_SHSLOT);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
-		sc->rxon.flags |= htole32(IWN_RXON_SHPREAMBLE);
+		sc->rxon->flags |= htole32(IWN_RXON_SHPREAMBLE);
 	if (IEEE80211_IS_CHAN_A(ni->ni_chan)) {
-		sc->rxon.cck_mask  = 0;
-		sc->rxon.ofdm_mask = 0x15;
+		sc->rxon->cck_mask  = 0;
+		sc->rxon->ofdm_mask = 0x15;
 	} else if (IEEE80211_IS_CHAN_B(ni->ni_chan)) {
-		sc->rxon.cck_mask  = 0x03;
-		sc->rxon.ofdm_mask = 0;
+		sc->rxon->cck_mask  = 0x03;
+		sc->rxon->ofdm_mask = 0;
 	} else {
 		/* Assume 802.11b/g. */
-		sc->rxon.cck_mask  = 0x0f;
-		sc->rxon.ofdm_mask = 0x15;
+		sc->rxon->cck_mask  = 0x0f;
+		sc->rxon->ofdm_mask = 0x15;
 	}
 	if (IEEE80211_IS_CHAN_HT(ni->ni_chan)) {
 		htflags |= IWN_RXON_HT_PROTMODE(ic->ic_curhtprotmode);
@@ -5690,10 +5705,10 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 		if (IEEE80211_IS_CHAN_HT40D(ni->ni_chan))
 			htflags |= IWN_RXON_HT_HT40MINUS;
 	}
-	sc->rxon.flags |= htole32(htflags);
-	sc->rxon.filter |= htole32(IWN_FILTER_BSS);
+	sc->rxon->flags |= htole32(htflags);
+	sc->rxon->filter |= htole32(IWN_FILTER_BSS);
 	DPRINTF(sc, IWN_DEBUG_STATE, "rxon chan %d flags %x\n",
-	    sc->rxon.chan, sc->rxon.flags);
+	    sc->rxon->chan, sc->rxon->flags);
 	error = iwn_cmd(sc, IWN_CMD_RXON, &sc->rxon, sc->rxonsz, 1);
 	if (error != 0) {
 		device_printf(sc->sc_dev,

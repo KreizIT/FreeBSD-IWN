@@ -26,6 +26,18 @@ enum iwn_rxon_ctx_id {
         IWL_NUM_RXON_CTX
 };
 
+struct iwn_led_mode
+{
+	uint8_t		led_cur_mode;
+	uint64_t	led_cur_bt;
+	uint64_t	led_last_bt;
+	uint64_t	led_cur_tpt;
+	uint64_t	led_last_tpt;
+	uint64_t	led_bt_diff;
+	int		led_cur_time;
+	int		led_last_time;
+};
+
 struct iwn_pan_slot {
 	uint16_t time;
 	uint8_t type;
@@ -38,7 +50,7 @@ struct iwn_pan_params_cmd {
 
 	uint8_t reserved;
 	uint8_t num_slots;
-	struct iwl_pan_slot slots[10];
+	struct iwn_pan_slot slots[10];
 } __packed;
 
 
@@ -228,6 +240,10 @@ struct iwn_vap {
 
 	int			(*iv_newstate)(struct ieee80211vap *,
 				    enum ieee80211_state, int);
+	int 			ctx;
+	int			beacon_int;
+	uint8_t			macaddr[IEEE80211_ADDR_LEN];
+
 };
 #define	IWN_VAP(_vap)	((struct iwn_vap *)(_vap))
 
