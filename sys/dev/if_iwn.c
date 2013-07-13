@@ -933,6 +933,7 @@ iwn_vap_create(struct ieee80211com *ic, const char name[IFNAMSIZ], int unit,
 	struct iwn_vap *ivp;
 	struct ieee80211vap *vap;
 	
+	
 	if (!TAILQ_EMPTY(&ic->ic_vaps))		/* only one at a time */
 		return NULL;
 	ivp = (struct iwn_vap *) malloc(sizeof(struct iwn_vap),
@@ -2888,14 +2889,14 @@ iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 	struct iwn_tx_data *data;
 	int cmd_queue_num;
 
-	if(sc->uc_pan_support == IWN_UC_PAN_PRESENT)
+	if(sc->sc_flags & IWN_FLAG_PAN_SUPPORT)
 		cmd_queue_num = IWN_PAN_CMD_QUEUE;
 	else
 		cmd_queue_num = IWN_CMD_QUEUE_NUM;
 	
 	
 	DPRINTF(sc, IWN_DEBUG_CMD, "%s: qid: %d PAN Active : %d\n",
-	    __func__, (desc->qid & 0xf),sc->uc_pan_support );
+	    __func__, (desc->qid & 0xf),(sc->sc_flags & IWN_FLAG_PAN_SUPPORT) );
 		
 	
 	if ((desc->qid & 0xf) != cmd_queue_num)
@@ -4103,7 +4104,7 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 	if (async == 0)
 		IWN_LOCK_ASSERT(sc);
 		
-	if(sc->uc_pan_support == IWN_UC_PAN_PRESENT)
+	if(sc->sc_flags & IWN_FLAG_PAN_SUPPORT)
 		cmd_queue_num = IWN_PAN_CMD_QUEUE;
 	else
 		cmd_queue_num = IWN_CMD_QUEUE_NUM;
@@ -5244,6 +5245,7 @@ iwn5000_runtime_calib(struct iwn_softc *sc)
 	memset(&cmd, 0, sizeof cmd);
 	cmd.ucode.once.enable = 0xffffffff;
 	cmd.ucode.once.start = IWN5000_CALIB_DC;
+	cmd.ucode.flags       = 0xffffffff;
 	DPRINTF(sc, IWN_DEBUG_CALIBRATE,
 	    "%s: configuring runtime calibration type 0x%08x\n", __func__,sc->base_params->running_post_alive_calib);
 	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
@@ -5271,8 +5273,7 @@ iwn_config(struct iwn_softc *sc)
 		}
 	}
 	*/
-
-	/* Configure bluetooth coexistence. */
+		/* Configure bluetooth coexistence. */
 	if (sc->base_params->advanced_bt_coexist) 
 		error = iwn_send_advanced_btcoex(sc);
 	else
@@ -5285,7 +5286,10 @@ iwn_config(struct iwn_softc *sc)
 		return error;
 	}
 
+	
+
 	if (sc->base_params->running_post_alive_calib) {
+			DPRINTF(sc,IWN_DEBUG_RESET,"%s: Running runtime calib\n",__func__);
 			// Configure runtime DC calibration. 
 			error = iwn5000_runtime_calib(sc);
 			if (error != 0) {
@@ -6339,7 +6343,7 @@ iwn5000_post_alive(struct iwn_softc *sc)
 	IWN_SETBITS(sc, IWN_FH_TX_CHICKEN, IWN_FH_TX_CHICKEN_SCHED_RETRY);
 
 	/* Enable chain mode for all queues, except command queue. */
-	if(sc->uc_pan_support == IWN_UC_PAN_PRESENT)
+	if(sc->sc_flags & IWN_FLAG_PAN_SUPPORT)
 		iwn_prph_write(sc, IWN5000_SCHED_QCHAIN_SEL, 0xffdff);
 	else
 		iwn_prph_write(sc, IWN5000_SCHED_QCHAIN_SEL, 0xfffef);
@@ -6363,7 +6367,7 @@ iwn5000_post_alive(struct iwn_softc *sc)
 	/* Identify TX FIFO rings (0-7). */
 	iwn_prph_write(sc, IWN5000_SCHED_TXFACT, 0xff);
 
-	if(sc->uc_pan_support == IWN_UC_PAN_PRESENT) {	
+	if(sc->sc_flags & IWN_FLAG_PAN_SUPPORT) {	
 		/* Mark TX rings as active. */
 		for (qid = 0; qid < 11; qid++) {
 			static uint8_t qid2fifo[] = { 3, 2, 1, 0, 0, 4, 2, 5, 4, 7, 5 };
@@ -6779,8 +6783,8 @@ iwn_read_firmware_tlv(struct iwn_softc *sc, struct iwn_fw_info *fw,
 			}
 			break;
 		case IWN_FW_TLV_PAN:
-			sc->uc_pan_support = IWN_UC_PAN_PRESENT;
-			DPRINTF(sc, IWN_DEBUG_RESET,"PAN Support found : %d\n", sc->uc_pan_support);
+			sc->sc_flags |= IWN_FLAG_PAN_SUPPORT;
+			DPRINTF(sc, IWN_DEBUG_RESET,"PAN Support found : %d\n", 1);
 			break;
 		case IWN_FW_TLV_PBREQ_MAXLEN:
 		case IWN_FW_TLV_RUNT_EVTLOG_PTR:
