@@ -26,17 +26,6 @@ enum iwn_rxon_ctx_id {
         IWN_NUM_RXON_CTX
 };
 
-struct iwn_led_mode
-{
-	uint8_t		led_cur_mode;
-	uint64_t	led_cur_bt;
-	uint64_t	led_last_bt;
-	uint64_t	led_cur_tpt;
-	uint64_t	led_last_tpt;
-	uint64_t	led_bt_diff;
-	int		led_cur_time;
-	int		led_last_time;
-};
 
 struct iwn_pan_slot {
 	uint16_t time;

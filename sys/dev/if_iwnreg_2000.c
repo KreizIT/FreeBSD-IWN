@@ -132,5 +132,7 @@ static struct iwn_base_params iwn2030_base_params = {
 	/* need_temp_offset_calib */ true,
 	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND | IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ),
 	/* running_post_alive_calib */ true,
-
+	/* no_crystal_calibration */ false,
+	true, //support_hostap
+	false, //no_multi_vaps
 };

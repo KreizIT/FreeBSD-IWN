@@ -4,6 +4,7 @@ Workflow
 * Alive runtime ucode (iwl_alive_start)
  - Reset ICT (Not good to do that)
  - BT config (Switch advanced_bt_coexist) -
+ 
  - Si rtcfg iwlagn_send_calib_cfg_rt(calib_rt_cfg) -
  - Config ANT (iwlagn_send_tx_ant_config) -
 Si associé
@@ -11,7 +12,8 @@ Si associé
 Sinon
 	- (iwlagn_set_rxon_chain)
 
--reset data ds priv (a faire)
+-reset data calib ds priv (a faire)
+
 -send request statistic -
 -iwlagn_commit_rxon
 	- iwl_send_rxon_timing si IWL_RXON_CTX_BSS
@@ -26,4 +28,10 @@ Sinon
   -Se_powerCMD	
 
 
-
+*alive notify
+	1) iwl_send_wimax_coex(priv);
+	2) si pas no_xtal_calib : set xcal (place cmd code : IWL_PHY_CALIBRATE_CRYSTAL_FRQ_CMD dans calib_result)(prepare pour iwn5000_crystal_calib)
+	3) Envoie calib_result, soit le set xcal
+	
+	
+		
