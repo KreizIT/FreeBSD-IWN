@@ -28,7 +28,11 @@
  *							DEVICE ID BLOCK
  * ============================================================================ 
 */ 
- /* Device ID for 2x30 series */
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 2x30 series 
+ * -----------------------------------------------------------------------------
+ */
 #define IWN_DID_2x30_1 	0x0887 
 #define IWN_DID_2x30_2 	0x0888 
 /* SubDevice ID */
@@ -39,7 +43,11 @@
 #define IWN_SDID_2x30_5		0x4266 // "2000 Series 2x2 BG/BT"
 #define IWN_SDID_2x30_6 	0x4466 // "2000 Series 2x2 BG/BT"
  
-/* 1000 Series WiFi */
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 1000 series 
+ * -----------------------------------------------------------------------------
+ */
 #define IWN_DID_1000_1 0x0083
 #define IWN_DID_1000_2 0x0084
 
@@ -58,7 +66,11 @@
 #define IWN_SDID_1000_11 0x1216 //  iwl1000_bg_cfg
 #define IWN_SDID_1000_12 0x1316 //  iwl1000_bg_cfg
 
-/* 6x00 Series */
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 6x00 series 
+ * -----------------------------------------------------------------------------
+ */
 #define IWN_DID_6x00_1	0x422B
 #define IWN_DID_6x00_2  0x422C
 #define IWN_DID_6x00_3	0x4238
@@ -74,8 +86,41 @@
 #define IWN_SDID_6x00_8 0x1111 //  iwl6000_3agn_cfg
 #define IWN_SDID_6x00_9 0x1311 //  iwl6000i_2agn_cfg
 #define IWN_SDID_6x00_10 0x1316 //  iwl6000i_2abg_cfg
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 6x05 series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_6x05_1	0x0082
+#define IWN_DID_6x05_2 	0x0085
+/* SubDevice ID */
+#define IWN_SDID_6x05_1 	0x1301 //iwl6005_2agn_cfg
+#define IWN_SDID_6x05_2 	0x1306 //iwl6005_2abg_cfg
+#define IWN_SDID_6x05_3 	0x1307 //iwl6005_2bg_cfg
+#define IWN_SDID_6x05_4 	0x1321 //iwl6005_2agn_cfg
+#define IWN_SDID_6x05_5 	0x1326 //iwl6005_2abg_cfg
+#define IWN_SDID_6x05_6 	0x1311 //iwl6005_2agn_cfg
+#define IWN_SDID_6x05_7 	0x1316 //iwl6005_2abg_cfg
+#define IWN_SDID_6x05_8 	0xC020 //iwl6005_2agn_sff_cfg
+#define IWN_SDID_6x05_9 	0xC220 //iwl6005_2agn_sff_cfg
+#define IWN_SDID_6x05_10 	0x4820 //iwl6005_2agn_d_cfg
+#define IWN_SDID_6x05_11 	0x1304 //iwl6005_2agn_mow1_cfg/* low 5GHz active */
+#define IWN_SDID_6x05_12 	0x1305 //iwl6005_2agn_mow2_cfg/* high 5GHz active */
 
- 
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 6050 WiFi/WiMax Series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_6050_1 0x0087
+#define IWN_DID_6050_2 0x0089
+
+#define IWN_SDID_6050_1 0x1301 //iwl6050_2agn_cfg
+#define IWN_SDID_6050_2 0x1306 //iwl6050_2abg_cfg
+#define IWN_SDID_6050_3 0x1321 //iwl6050_2agn_cfg
+#define IWN_SDID_6050_4 0x1326 //iwl6050_2abg_cfg
+#define IWN_SDID_6050_5 0x1311 //iwl6050_2agn_cfg
+#define IWN_SDID_6050_6 0x1316 //iwl6050_2abg_cfg
 
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
@@ -1686,14 +1731,6 @@ struct iwn_fw_tlv {
 #define IWN4965_EEPROM_BANDS	0x0ea
 /* Indirect offsets. */
 #define IWN5000_EEPROM_DOMAIN	0x001
-#define IWN5000_EEPROM_BAND1	0x004
-#define IWN5000_EEPROM_BAND2	0x013
-#define IWN5000_EEPROM_BAND3	0x021
-#define IWN5000_EEPROM_BAND4	0x02e
-#define IWN5000_EEPROM_BAND5	0x03a
-#define IWN5000_EEPROM_BAND6	0x041
-#define IWN6000_EEPROM_BAND6	0x040
-#define IWN5000_EEPROM_BAND7	0x049
 #define IWN6000_EEPROM_ENHINFO	0x054
 #define IWN5000_EEPROM_CRYSTAL	0x128 //XTAL in linux 3.2
 #define IWN5000_EEPROM_TEMP		0x12a //KELVIN_TEMPERATURE in linux 3.2
@@ -1776,6 +1813,16 @@ struct iwn4965_eeprom_band {
 /*
  * Offsets of channels descriptions in EEPROM.
  */
+#define IWN5000_EEPROM_NO_HT40	0x000 //EEPROM_REGULATORY_BAND_NO_HT40
+#define IWN5000_EEPROM_BAND1	0x004 //EEPROM_REG_BAND_1_CHANNELS
+#define IWN5000_EEPROM_BAND2	0x013 //EEPROM_REG_BAND_2_CHANNELS
+#define IWN5000_EEPROM_BAND3	0x021 //EEPROM_REG_BAND_3_CHANNELS
+#define IWN5000_EEPROM_BAND4	0x02e //EEPROM_REG_BAND_4_CHANNELS
+#define IWN5000_EEPROM_BAND5	0x03a //EEPROM_REG_BAND_5_CHANNELS
+#define IWN5000_EEPROM_BAND6	0x041 //EEPROM_REG_BAND_24_HT40_CHANNELS
+#define IWN6000_EEPROM_BAND6	0x040 //EEPROM_6000_REG_BAND_24_HT40_CHANNELS
+#define IWN5000_EEPROM_BAND7	0x049 //EEPROM_REG_BAND_52_HT40_CHANNELS
+
 static const uint32_t iwn4965_regulatory_bands[IWN_NBANDS] = {
 	IWN4965_EEPROM_BAND1,
 	IWN4965_EEPROM_BAND2,
@@ -1783,7 +1830,7 @@ static const uint32_t iwn4965_regulatory_bands[IWN_NBANDS] = {
 	IWN4965_EEPROM_BAND4,
 	IWN4965_EEPROM_BAND5,
 	IWN4965_EEPROM_BAND6,
-	IWN4965_EEPROM_BAND7
+	IWN4965_EEPROM_BAND7 // Should be IWN5000_EEPRON_NO_HT40
 };
 
 static const uint32_t iwn5000_regulatory_bands[IWN_NBANDS] = {
@@ -1804,6 +1851,16 @@ static const uint32_t iwn6000_regulatory_bands[IWN_NBANDS] = {
 	IWN5000_EEPROM_BAND5,
 	IWN6000_EEPROM_BAND6,
 	IWN5000_EEPROM_BAND7
+};
+
+static const uint32_t iwn1000_regulatory_bands[IWN_NBANDS] = {
+	IWN5000_EEPROM_BAND1,
+	IWN5000_EEPROM_BAND2,
+	IWN5000_EEPROM_BAND3,
+	IWN5000_EEPROM_BAND4,
+	IWN5000_EEPROM_BAND5,
+	IWN5000_EEPROM_BAND6,
+	IWN5000_EEPROM_NO_HT40,
 };
 
 #define IWN_CHAN_BANDS_COUNT	 7
@@ -2142,8 +2199,36 @@ static const char * const iwn_fw_errmsg[] = {
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
-
 		
+static const uint32_t iwn2030_regulatory_bands[IWN_NBANDS] = {
+	IWN5000_EEPROM_BAND1,
+	IWN5000_EEPROM_BAND2,
+	IWN5000_EEPROM_BAND3,
+	IWN5000_EEPROM_BAND4,
+	IWN5000_EEPROM_BAND5,
+	IWN6000_EEPROM_BAND6,
+	IWN5000_EEPROM_BAND7
+};
+ /* Get value from linux kernel 3.2.+ in Drivers/net/wireless/iwlwifi/iwl-2000.c*/
+static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
+    105,110,
+    128,232,
+	80,145,
+	128,232,
+	125,175,
+	160,310,
+	97,
+	97,
+	110
+};		
+		
+		
+/* =============================================================================
+ *                                  NIC PARAMETERS
+ *
+ * =============================================================================
+ */
+ 
 /* Flags for managing calibration result. See calib_need in iwn_base_params struct */
 #define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
 #define IWN_FLG_NEED_PHY_CALIB_LO				(1<<1)
@@ -2177,6 +2262,7 @@ static const char * const iwn_fw_errmsg[] = {
  * @no_idle_support: do not support idle mode
  * @hd_v2: v2 of enhanced sensitivity value, used for 2000 series and up
  * advanced_bt_coexist : Advanced BT management
+ * bt_session_2 : NIC need a new struct for configure BT coexistence. Needed only if advanced_bt_coexist is true 
  * bt_sco_disable :
  * additional_nic_config: For 6005 series
  * iq_invert : ? But need it for N 2000 series
@@ -2184,9 +2270,9 @@ static const char * const iwn_fw_errmsg[] = {
  * enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True' if update_enhanced_txpower = iwl_eeprom_enhanced_txpower 
  * need_temp_offset_calib : Need to compute some temp offset for calibration.
  * calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which calibration data ucode need. See calib_init_cfg in iwl-xxxx.c linux kernel file
+ * additional_gp_drv_bit : Specific bit to defined during nic_config
  */
 struct iwn_base_params {
-	int eeprom_size;
 	uint32_t pll_cfg_val;
 	const uint16_t max_ll_items;
 #define IWN_OTP_MAX_LL_ITEMS_1000		(3)	/* OTP blocks for 1000 */
@@ -2207,24 +2293,21 @@ struct iwn_base_params {
 	const bool bt_session_2;
 	const bool bt_sco_disable;
 	const bool additional_nic_config;
-	const bool iq_invert;
 	const uint32_t *regulatory_bands;
-	const bool enhanced_TX_power; // See iwl-xxxx.c file to determine that. 
-	const bool need_temp_offset_calib; 
+	const bool enhanced_TX_power; // See iwl-agn-devices.c file to determine that(enhanced_txpower). 
 	const uint16_t calib_need;
-	const bool running_post_alive_calib;
 	const bool no_crystal_calibration; // see no_xtal_calib in linux
 	const bool support_hostap; //Define IEEE80211_C_HOSTAP for ic_caps
 	const bool no_multi_vaps; // see iwn_vap_create
+	uint8_t additional_gp_drv_bit; //
 	
 };
 
-		
+/* NOTA : Values with comments BEFORE are not yet used in driver */
 static struct iwn_base_params iwn_default_base_params = {
-	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
-	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */4, /*OTP_MAX_LL_ITEMS_2x00,*/
-	/*.shadow_ram_support = */true,
+	IWN_ANA_PLL_INIT, // pll_cfg_val
+	4,  //max_ll_items
+	true, // shadow_ram_support
 	/*.led_compensation = */57,
 	/*.adv_thermal_throttle =*/ true,
 	/*.support_ct_kill_exit = */true,
@@ -2232,28 +2315,52 @@ static struct iwn_base_params iwn_default_base_params = {
 	/*.chain_noise_scale =*/ 1000,
 	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
 	/*.max_event_log_size =*/ 512,
-	/*.shadow_reg_enable = */false, 
+	false, //shadow_reg_enable
 	/*.hd_v2 = */true,
-	/* advanced_bt_coexist */ false,
-	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true,
-	/* additional_nic_config */ false,
-	/* iq_invert */ false,
-	/* regulatory_bands */ iwn5000_regulatory_bands,
-	/* enhanced_TX_power */ false,
-	/* need_temp_offset_calib */ false,
-	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ false,
-	/* no_crystal_calibration */ false,
-	true, //support_hostap
-	false, // no_multi_vaps
+	false, // advanced_bt_coexist
+	false, // bt_session_2
+	true, // bt_sco_disable
+	false, //additional_nic_config
+	iwn5000_regulatory_bands, //regulatory_bands
+	false, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, // no_multi_vaps
+	0, //additional_gp_drv_bit
 };
 
+static struct iwn_base_params iwn2030_base_params = {
+	 0, //pll_cfg_val
+	 IWN_OTP_MAX_LL_ITEMS_2x00, //max_ll_items
+	 true, //shadow_ram_support
+	/*.led_compensation = */ 57,
+	/*.adv_thermal_throttle = */ true,
+	/*.support_ct_kill_exit = */ true,
+	/*.plcp_delta_threshold = */ 50,
+	/*.chain_noise_scale = */ 1000,
+	/*.wd_timeout = */ 2000,
+	/*.max_event_log_size = */ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */ true,
+	true, //advanced_bt_coexist
+	true, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn2030_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND | IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ), //calib_need
+	false, //no_crystal_calibration
+	true, //support_hostap
+	false, //no_multi_vaps
+	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT, // additional_gp_drv_bit
+};
+
+
 static struct iwn_base_params iwn_1000_base_params = {
-	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
-	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */IWN_OTP_MAX_LL_ITEMS_1000, /*OTP_MAX_LL_ITEMS_2x00,*/
-	/*.shadow_ram_support = */false,
+	IWN_ANA_PLL_INIT, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_1000, //max_ll_items
+	false, //shadow_ram_support
 	/*.led_compensation = */57,
 	/*.adv_thermal_throttle =*/ true,
 	/*.support_ct_kill_exit = */true,
@@ -2261,27 +2368,24 @@ static struct iwn_base_params iwn_1000_base_params = {
 	/*.chain_noise_scale =*/ 1000,
 	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
 	/*.max_event_log_size =*/ 512,
-	/*.shadow_reg_enable = */false, 
+	false, //shadow_reg_enable
 	/*.hd_v2 = */true,
-	/* advanced_bt_coexist */ false,
-	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true,
-	/* additional_nic_config */ false,
-	/* iq_invert */ false,
-	/* regulatory_bands */ iwn5000_regulatory_bands,
-	/* enhanced_TX_power */ false,
-	/* need_temp_offset_calib */ false,
-	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ false,
-	/* no_crystal_calibration */ false,
+	false, //advanced_bt_coexist
+	false, //bt_session_2
+	false, //bt_sco_disable
+	false, //additional_nic_config
+	iwn5000_regulatory_bands, //regulatory_bands
+	false, //enhanced_TX_power
+	( IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
 };
 static struct iwn_base_params iwn_6000_base_params = {
-	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
-	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */IWN_OTP_MAX_LL_ITEMS_6x00, /*OTP_MAX_LL_ITEMS_2x00,*/
-	/*.shadow_ram_support = */true,
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
 	/*.led_compensation = */57,
 	/*.adv_thermal_throttle =*/ true,
 	/*.support_ct_kill_exit = */true,
@@ -2289,20 +2393,118 @@ static struct iwn_base_params iwn_6000_base_params = {
 	/*.chain_noise_scale =*/ 1000,
 	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
 	/*.max_event_log_size =*/ 512,
-	/*.shadow_reg_enable = */false, 
+	false, //shadow_reg_enable
 	/*.hd_v2 = */true,
-	/* advanced_bt_coexist */ false,
-	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true,
-	/* additional_nic_config */ false,
-	/* iq_invert */ false,
-	/* regulatory_bands */ iwn6000_regulatory_bands,
-	/* enhanced_TX_power */ true,
-	/* need_temp_offset_calib */ false,
-	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ false,
-	/* no_crystal_calibration */ false,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	false, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6000i_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6000g2_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6050_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x50, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	true, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6150_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x50, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	true, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	IWN_GP_DRIVER_6050_1X2, //additional_gp_drv_bit
 };
 
