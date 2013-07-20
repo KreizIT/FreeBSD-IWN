@@ -864,40 +864,7 @@ iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 	sc->reset_noise_gain = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
 	sc->noise_gain = IWN5000_PHY_CALIB_NOISE_GAIN;
 
-	/* Nota: Switch will be removed when all specific config will put in iwn_config_specific */
-	switch (sc->hw_type) {
-	case IWN_HW_REV_TYPE_5100:
-		sc->limits = &iwn5000_sensitivity_limits;
-		sc->fwname = "iwn5000fw";
-		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
-		/* Override chains masks, ROM is known to be broken. */
-		sc->txchainmask = IWN_ANT_B;
-		sc->rxchainmask = IWN_ANT_AB;
-		break;
-	case IWN_HW_REV_TYPE_5150:
-		sc->limits = &iwn5150_sensitivity_limits;
-		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
-		sc->fwname = "iwn5150fw";
-		break;
-	case IWN_HW_REV_TYPE_5300:
-	case IWN_HW_REV_TYPE_5350:
-		sc->limits = &iwn5000_sensitivity_limits;
-		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
-		sc->fwname = "iwn5000fw";
-		break;
-	case IWN_HW_REV_TYPE_1000:
-	case IWN_HW_REV_TYPE_6000:
-	case IWN_HW_REV_TYPE_6050:
-	case IWN_HW_REV_TYPE_6005:
-	case IWN_HW_REV_TYPE_2230:
-		return iwn_config_specific(sc,pid);
-		break;
-	default:
-		device_printf(sc->sc_dev, "adapter type %d not supported\n",
-		    sc->hw_type);
-		return ENOTSUP;
-	}
-	return 0;
+	return iwn_config_specific(sc,pid);
 }
 
 /*
