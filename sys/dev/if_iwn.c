@@ -925,7 +925,7 @@ iwn_vap_create(struct ieee80211com *ic, const char name[IFNAMSIZ], int unit,
 	IEEE80211_ADDR_COPY(mac1, mac);
 	
 	if(unit == 1) {
-		if(sc->sc_flags & IWN_FLAG_PAN_SUPPORT)
+		if(!(sc->sc_flags & IWN_FLAG_PAN_SUPPORT))
 			return NULL;
 		mac1[5] += 1;
 		sc->ctx	= IWN_RXON_PAN_CTX;
