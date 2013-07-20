@@ -106,26 +106,26 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"},
     { 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"},
-	// { 0x8086, 0x0896, "Intel Centrino Wireless-N 130"		},
-	// { 0x8086, 0x0897, "Intel Centrino Wireless-N 130"		},
-	// { 0x8086, 0x08ae, "Intel Centrino Wireless-N 100"		},
-	// { 0x8086, 0x08af, "Intel Centrino Wireless-N 100"		},
-	// { 0x8086, 0x4229, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_130_1, "Intel Centrino Wireless-N 130"		},
+	{ 0x8086, IWN_DID_130_2, "Intel Centrino Wireless-N 130"		},
+	{ 0x8086, IWN_DID_100_1, "Intel Centrino Wireless-N 100"		},
+	{ 0x8086, IWN_DID_100_2, "Intel Centrino Wireless-N 100"		},
+	{ 0x8086, 0x4229, "Intel Wireless WiFi Link 4965"		},
 	{ 0x8086, IWN_DID_6x00_1, "Intel Centrino Ultimate-N 6300"		},
 	{ 0x8086, IWN_DID_6x00_2, "Intel Centrino Advanced-N 6200"		},
-	// { 0x8086, 0x422d, "Intel Wireless WiFi Link 4965"		},
-	// { 0x8086, 0x4230, "Intel Wireless WiFi Link 4965"		},
-	// { 0x8086, 0x4232, "Intel WiFi Link 5100"			},
-	// { 0x8086, 0x4233, "Intel Wireless WiFi Link 4965"		},
-	// { 0x8086, 0x4235, "Intel Ultimate N WiFi Link 5300"		},
-	// { 0x8086, 0x4236, "Intel Ultimate N WiFi Link 5300"		},
-	// { 0x8086, 0x4237, "Intel WiFi Link 5100"			},
+	{ 0x8086, 0x422d, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, 0x4230, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_5x00_1, "Intel WiFi Link 5100"			},
+	{ 0x8086, 0x4233, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_5x00_3, "Intel Ultimate N WiFi Link 5300"		},
+	{ 0x8086, IWN_DID_5x00_4, "Intel Ultimate N WiFi Link 5300"		},
+	{ 0x8086, IWN_DID_5x00_2, "Intel WiFi Link 5100"			},
 	{ 0x8086, IWN_DID_6x00_3, "Intel Centrino Ultimate-N 6300"		},
 	{ 0x8086, IWN_DID_6x00_4, "Intel Centrino Advanced-N 6200"		},
-	// { 0x8086, 0x423a, "Intel WiMAX/WiFi Link 5350"			},
-	// { 0x8086, 0x423b, "Intel WiMAX/WiFi Link 5350"			},
-	// { 0x8086, 0x423c, "Intel WiMAX/WiFi Link 5150"			},
-	// { 0x8086, 0x423d, "Intel WiMAX/WiFi Link 5150"			},
+	{ 0x8086, IWN_DID_5x50_1, "Intel WiMAX/WiFi Link 5350"			},
+	{ 0x8086, IWN_DID_5x50_2, "Intel WiMAX/WiFi Link 5350"			},
+	{ 0x8086, IWN_DID_5x50_3, "Intel WiMAX/WiFi Link 5150"			},
+	{ 0x8086, IWN_DID_5x50_4, "Intel WiMAX/WiFi Link 5150"			},
 	{ 0x8086, IWN_DID_6035_1, "Centrino Advanced-N 6235"		},
 	{ 0x8086, IWN_DID_6035_2, "Centrino Advanced-N 6235"		},
 	{ 0, 0, NULL }
@@ -8073,19 +8073,169 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 					return ENOTSUP;
 		}
 		break;
+/* 130 Series WiFi */
+/* XXX: This series will need adjustement for rate see rx_with_siso_diversity in linux kernel */
+ 	case IWN_DID_130_1:
+ 	case IWN_DID_130_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_130_1: 
+			case IWN_SDID_130_3:
+			case IWN_SDID_130_5:
+			//iwl130_bgn_cfg
+			case IWN_SDID_130_2:
+			case IWN_SDID_130_4:
+			case IWN_SDID_130_6:
+			//iwl130_bg_cfg
+				sc->fwname = "iwn6000g2bfw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6000g2b_base_params;
+				break;
+			default:
+					device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+					return ENOTSUP;
+		}
+		break;
+/* 100 Series WiFi */
+ 	case IWN_DID_100_1:
+ 	case IWN_DID_100_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_100_1:
+			case IWN_SDID_100_2:
+			case IWN_SDID_100_3:
+			case IWN_SDID_100_4:
+			case IWN_SDID_100_5:
+			case IWN_SDID_100_6:
+				sc->limits = &iwn1000_sensitivity_limits;
+				sc->base_params = &iwn_1000_base_params; 
+				sc->fwname = "iwn100fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+
 /* 2x30 Series */
 	case IWN_DID_2x30_1:
 	case IWN_DID_2x30_2:
 		switch(sc->subdevice_id) {
 			case IWN_SDID_2x30_1:
-			case IWN_SDID_2x30_2:
 			case IWN_SDID_2x30_3:
-			case IWN_SDID_2x30_4:
 			case IWN_SDID_2x30_5:
+			//iwl100_bgn_cfg
+			case IWN_SDID_2x30_2:
+			case IWN_SDID_2x30_4:
 			case IWN_SDID_2x30_6:
+			//iwl100_bg_cfg
 				sc->limits = &iwn2030_sensitivity_limits;
 				sc->base_params = &iwn2030_base_params; 
 				sc->fwname = "iwn2030fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 5x00 Series */
+	case IWN_DID_5x00_1:
+	case IWN_DID_5x00_2:
+	case IWN_DID_5x00_3:
+	case IWN_DID_5x00_4:
+		sc->limits = &iwn5000_sensitivity_limits;
+		sc->base_params = &iwn_default_base_params; 
+		sc->fwname = "iwn5000fw";
+		switch(sc->subdevice_id) {
+			case IWN_SDID_5x00_1:
+			case IWN_SDID_5x00_2:
+			case IWN_SDID_5x00_3:
+			case IWN_SDID_5x00_4:
+			case IWN_SDID_5x00_9:
+			case IWN_SDID_5x00_10:
+			case IWN_SDID_5x00_11:
+			case IWN_SDID_5x00_12:
+			case IWN_SDID_5x00_17:
+			case IWN_SDID_5x00_18:
+			case IWN_SDID_5x00_19:
+			case IWN_SDID_5x00_20:
+			//iwl5100_agn_cfg
+				sc->txchainmask = IWN_ANT_B;
+				sc->rxchainmask = IWN_ANT_AB;
+				break;			
+			case IWN_SDID_5x00_5:
+			case IWN_SDID_5x00_6:
+			case IWN_SDID_5x00_13:
+			case IWN_SDID_5x00_14:
+			case IWN_SDID_5x00_21:
+			case IWN_SDID_5x00_22:
+			//iwl5100_bgn_cfg
+				sc->txchainmask = IWN_ANT_B;
+				sc->rxchainmask = IWN_ANT_AB;
+				break;
+			case IWN_SDID_5x00_7:
+			case IWN_SDID_5x00_8:
+			case IWN_SDID_5x00_15:
+			case IWN_SDID_5x00_16:
+			case IWN_SDID_5x00_23:
+			case IWN_SDID_5x00_24:
+			//iwl5100_abg_cfg
+				sc->txchainmask = IWN_ANT_B;
+				sc->rxchainmask = IWN_ANT_AB;
+				break;
+			
+			case IWN_SDID_5x00_25:
+			case IWN_SDID_5x00_26:
+			case IWN_SDID_5x00_27:
+			case IWN_SDID_5x00_28:
+			case IWN_SDID_5x00_29:
+			case IWN_SDID_5x00_30:
+			case IWN_SDID_5x00_31:
+			case IWN_SDID_5x00_32:
+			case IWN_SDID_5x00_33:
+			case IWN_SDID_5x00_34:
+			case IWN_SDID_5x00_35:
+			case IWN_SDID_5x00_36:
+			//iwl5300_agn_cfg
+				sc->txchainmask = IWN_ANT_ABC;
+				sc->rxchainmask = IWN_ANT_ABC;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 5x50 Series */
+	case IWN_DID_5x50_1:
+	case IWN_DID_5x50_2:
+	case IWN_DID_5x50_3:
+	case IWN_DID_5x50_4:
+		sc->limits = &iwn5000_sensitivity_limits;
+		sc->base_params = &iwn_default_base_params; 
+		sc->fwname = "iwn5000fw";
+		switch(sc->subdevice_id) {
+			case IWN_SDID_5x50_1:
+			case IWN_SDID_5x50_2:
+			case IWN_SDID_5x50_3:
+			//iwl5350_agn_cfg
+				sc->limits = &iwn5000_sensitivity_limits;
+				sc->base_params = &iwn_default_base_params; 
+				sc->fwname = "iwn5000fw";
+			break;
+
+			case IWN_SDID_5x50_4:
+			case IWN_SDID_5x50_5:
+			case IWN_SDID_5x50_8:
+			case IWN_SDID_5x50_9:
+			case IWN_SDID_5x50_10:
+			case IWN_SDID_5x50_11:
+			//iwl5150_agn_cfg
+			case IWN_SDID_5x50_6:
+			case IWN_SDID_5x50_7:
+			case IWN_SDID_5x50_12:
+			case IWN_SDID_5x50_13:
+			//iwl5150_abg_cfg
+				sc->limits = &iwn5000_sensitivity_limits;
+				sc->fwname = "iwn5150fw";
+				sc->base_params = &iwn_5x50_base_params;
 				break;
 			default:
 				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);

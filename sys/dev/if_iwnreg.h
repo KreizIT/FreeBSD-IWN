@@ -178,6 +178,107 @@
 #define IWN_SDID_x030_15 	0x5225 // iwl6030_2bgn_cfg
 #define IWN_SDID_x030_16 	0x5226 // iwl6030_2abg_cfg
 
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 130 Series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_130_1 		0x0896
+#define IWN_DID_130_2 		0x0897
+
+#define IWN_SDID_130_1 		0x5005 //iwl130_bgn_cfg
+#define IWN_SDID_130_2 		0x5007 //iwl130_bg_cfg
+#define IWN_SDID_130_3 		0x5015 //iwl130_bgn_cfg
+#define IWN_SDID_130_4 		0x5017 //iwl130_bg_cfg
+#define IWN_SDID_130_5 		0x5025 //iwl130_bgn_cfg
+#define IWN_SDID_130_6 		0x5027 //iwl130_bg_cfg
+
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 100 Series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_100_1 		0x08AE
+#define IWN_DID_100_2 		0x08AF
+
+#define IWN_SDID_100_1 		0x1005 //iwl100_bgn_cfg)
+#define IWN_SDID_100_2 		0x1007 //iwl100_bg_cfg)}
+#define IWN_SDID_100_3 		0x1015 //iwl100_bgn_cfg)
+#define IWN_SDID_100_4 		0x1017 //iwl100_bg_cfg)}
+#define IWN_SDID_100_5 		0x1025 //iwl100_bgn_cfg)
+#define IWN_SDID_100_6 		0x1027 //iwl100_bg_cfg)}
+
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 5x00 Series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_5x00_1 		0x4232
+#define IWN_DID_5x00_2 		0x4237
+#define IWN_DID_5x00_3 		0x4235
+#define IWN_DID_5x00_4 		0x4236
+
+#define IWN_SDID_5x00_1 		0x1201 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_2 		0x1301 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_3 		0x1204 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_4 		0x1304 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_5 		0x1205 //iwl5100_bgn_cfg
+#define IWN_SDID_5x00_6 		0x1305 //iwl5100_bgn_cfg
+#define IWN_SDID_5x00_7 		0x1206 //iwl5100_abg_cfg
+#define IWN_SDID_5x00_8 		0x1306 //iwl5100_abg_cfg
+#define IWN_SDID_5x00_9 		0x1221 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_10 		0x1321 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_11		0x1224 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_12 		0x1324 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_13 		0x1225 //iwl5100_bgn_cfg
+#define IWN_SDID_5x00_14 		0x1325 //iwl5100_bgn_cfg
+#define IWN_SDID_5x00_15 		0x1226 //iwl5100_abg_cfg
+#define IWN_SDID_5x00_16 		0x1326 //iwl5100_abg_cfg
+#define IWN_SDID_5x00_17 		0x1211 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_18 		0x1311 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_19 		0x1214 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_20 		0x1314 //iwl5100_agn_cfg
+#define IWN_SDID_5x00_21 		0x1215 //iwl5100_bgn_cfg
+#define IWN_SDID_5x00_22 		0x1315 //iwl5100_bgn_cfg
+#define IWN_SDID_5x00_23 		0x1216 //iwl5100_abg_cfg
+#define IWN_SDID_5x00_24 		0x1316 //iwl5100_abg_cfg
+#define IWN_SDID_5x00_25 		0x1021 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_26 		0x1121 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_27 		0x1024 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_28 		0x1124 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_29 		0x1001 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_30 		0x1101 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_31 		0x1004 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_32 		0x1104 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_33 		0x1011 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_34 		0x1111 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_35 		0x1014 //iwl5300_agn_cfg
+#define IWN_SDID_5x00_36 		0x1114 //iwl5300_agn_cfg
+
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 5x50 Series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_5x50_1			0x423A
+#define IWN_DID_5x50_2			0x423B
+#define IWN_DID_5x50_3			0x423C
+#define IWN_DID_5x50_4			0x423D
+
+#define IWN_SDID_5x50_1 		0x1001 //iwl5350_agn_cfg
+#define IWN_SDID_5x50_2 		0x1021 //iwl5350_agn_cfg
+#define IWN_SDID_5x50_3 		0x1011 //iwl5350_agn_cfg
+#define IWN_SDID_5x50_4 		0x1201 //iwl5150_agn_cfg
+#define IWN_SDID_5x50_5 		0x1301 //iwl5150_agn_cfg
+#define IWN_SDID_5x50_6 		0x1206 //iwl5150_abg_cfg
+#define IWN_SDID_5x50_7 		0x1306 //iwl5150_abg_cfg
+#define IWN_SDID_5x50_8 		0x1221 //iwl5150_agn_cfg
+#define IWN_SDID_5x50_9 		0x1321 //iwl5150_agn_cfg
+#define IWN_SDID_5x50_10 		0x1211 //iwl5150_agn_cfg
+#define IWN_SDID_5x50_11 		0x1311 //iwl5150_agn_cfg
+#define IWN_SDID_5x50_12 		0x1216 //iwl5150_abg_cfg
+#define IWN_SDID_5x50_13 		0x1316 //iwl5150_abg_cfg
+
 
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
@@ -2590,3 +2691,29 @@ static struct iwn_base_params iwn_6000g2b_base_params = {
 	true, //no_multi_vaps
 	0, //additional_gp_drv_bit
 };
+static struct iwn_base_params iwn_5x50_base_params = {
+	IWN_ANA_PLL_INIT, // pll_cfg_val
+	4,  //max_ll_items
+	true, // shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, // bt_session_2
+	true, // bt_sco_disable
+	false, //additional_nic_config
+	iwn5000_regulatory_bands, //regulatory_bands
+	false, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	true, //no_crystal_calibration
+	false, //support_hostap
+	true, // no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+
