@@ -98,10 +98,10 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_6x05_2, "Intel Centrino Advanced-N 6205"		},
 	{ 0x8086, IWN_DID_6050_1, "Intel Centrino Advanced-N + WiMAX 6250"	},
 	{ 0x8086, IWN_DID_6050_2, "Intel Centrino Advanced-N + WiMAX 6250"	},
-	// { 0x8086, 0x008a, "Intel Centrino Wireless-N 1030"		},
-	// { 0x8086, 0x008b, "Intel Centrino Wireless-N 1030"		},
-	// { 0x8086, 0x0090, "Intel Centrino Advanced-N 6230"		},
-	// { 0x8086, 0x0091, "Intel Centrino Advanced-N 6230"		},
+	{ 0x8086, IWN_DID_x030_1, "Intel Centrino Wireless-N 1030"		},
+	{ 0x8086, IWN_DID_x030_2, "Intel Centrino Wireless-N 1030"		},
+	{ 0x8086, IWN_DID_x030_3, "Intel Centrino Advanced-N 6230"		},
+	{ 0x8086, IWN_DID_x030_4, "Intel Centrino Advanced-N 6230"		},
 	{ 0x8086, IWN_DID_6150_1, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"},
@@ -886,40 +886,9 @@ iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 		sc->fwname = "iwn5000fw";
 		break;
 	case IWN_HW_REV_TYPE_1000:
-		sc->limits = &iwn1000_sensitivity_limits;
-		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
-		sc->fwname = "iwn1000fw";
-		break;
 	case IWN_HW_REV_TYPE_6000:
-		return iwn_config_specific(sc,pid);
-		break;
-		sc->limits = &iwn6000_sensitivity_limits;
-		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
-		sc->fwname = "iwn6000fw";
-		if (pid == 0x422c || pid == 0x4239) {
-			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
-			/* Override chains masks, ROM is known to be broken. */
-			sc->txchainmask = IWN_ANT_BC;
-			sc->rxchainmask = IWN_ANT_BC;
-		}
-		break;
 	case IWN_HW_REV_TYPE_6050:
-		sc->limits = &iwn6000_sensitivity_limits;
-		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
-		sc->fwname = "iwn6050fw";
-		/* Override chains masks, ROM is known to be broken. */
-		sc->txchainmask = IWN_ANT_AB;
-		sc->rxchainmask = IWN_ANT_AB;
-		break;
 	case IWN_HW_REV_TYPE_6005:
-		sc->limits = &iwn6000_sensitivity_limits;
-		sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
-		if (pid != 0x0082 && pid != 0x0085) {
-			sc->fwname = "iwn6000g2bfw";
-			sc->sc_flags |= IWN_FLAG_ADV_BTCOEX; /* should be replace by base_params advanced_bt_coexist */
-		} else
-			sc->fwname = "iwn6000g2afw";
-		break;
 	case IWN_HW_REV_TYPE_2230:
 		return iwn_config_specific(sc,pid);
 		break;
@@ -8056,6 +8025,48 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 				sc->fwname = "iwn6050fw";
 				sc->limits = &iwn6000_sensitivity_limits;
 				sc->base_params = &iwn_6150_base_params;
+				break;
+			default:
+					device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+					return ENOTSUP;
+		}
+		break;
+/* 6030 Series and 1030 Series */
+ 	case IWN_DID_x030_1:
+ 	case IWN_DID_x030_2:
+ 	case IWN_DID_x030_3:
+ 	case IWN_DID_x030_4:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_x030_1:
+			case IWN_SDID_x030_3:
+			case IWN_SDID_x030_5:
+			// iwl1030_bgn_cfg
+			
+			case IWN_SDID_x030_2:
+			case IWN_SDID_x030_4:
+			case IWN_SDID_x030_6:
+			//iwl1030_bg_cfg
+			
+			case IWN_SDID_x030_7:
+			case IWN_SDID_x030_10:
+			case IWN_SDID_x030_14:
+			//iwl6030_2agn_cfg
+			
+			case IWN_SDID_x030_8:
+			case IWN_SDID_x030_11:
+			case IWN_SDID_x030_15:
+			// iwl6030_2bgn_cfg
+			
+			case IWN_SDID_x030_9:
+			case IWN_SDID_x030_12:
+			case IWN_SDID_x030_16:
+			// iwl6030_2abg_cfg
+			
+			case IWN_SDID_x030_13:
+			//iwl6030_2bg_cfg
+				sc->fwname = "iwn6000g2bfw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6000g2b_base_params;
 				break;
 			default:
 					device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);

@@ -151,6 +151,34 @@
 #define IWN_SDID_6035_3 0x4460 // iwl6035_2agn_cfg
 #define IWN_SDID_6035_4 0x4860 // iwl6035_2agn_cfg
 
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 1030 and 6030 Series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_x030_1 		0x008A 
+#define IWN_DID_x030_2 		0x008B
+#define IWN_DID_x030_3 		0x0090
+#define IWN_DID_x030_4 		0x0091
+
+#define IWN_SDID_x030_1 	0x5305 // iwl1030_bgn_cfg
+#define IWN_SDID_x030_2 	0x5307 // iwl1030_bg_cfg
+#define IWN_SDID_x030_3 	0x5325 // iwl1030_bgn_cfg
+#define IWN_SDID_x030_4 	0x5327 // iwl1030_bg_cfg
+#define IWN_SDID_x030_5 	0x5315 // iwl1030_bgn_cfg
+#define IWN_SDID_x030_6 	0x5317 // iwl1030_bg_cfg
+#define IWN_SDID_x030_7 	0x5211 // iwl6030_2agn_cfg
+#define IWN_SDID_x030_8 	0x5215 // iwl6030_2bgn_cfg
+#define IWN_SDID_x030_9 	0x5216 // iwl6030_2abg_cfg
+#define IWN_SDID_x030_10 	0x5201 // iwl6030_2agn_cfg
+#define IWN_SDID_x030_11 	0x5205 // iwl6030_2bgn_cfg
+#define IWN_SDID_x030_12 	0x5206 // iwl6030_2abg_cfg
+#define IWN_SDID_x030_13 	0x5207 // iwl6030_2bg_cfg)
+#define IWN_SDID_x030_14 	0x5221 // iwl6030_2agn_cfg
+#define IWN_SDID_x030_15 	0x5225 // iwl6030_2bgn_cfg
+#define IWN_SDID_x030_16 	0x5226 // iwl6030_2abg_cfg
+
+
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
 #define IWN_TX_RING_HIMARK	224
@@ -2536,6 +2564,7 @@ static struct iwn_base_params iwn_6150_base_params = {
 	true, //no_multi_vaps
 	IWN_GP_DRIVER_6050_1X2, //additional_gp_drv_bit
 };
+//IWL_DEVICE_6035 & IWL_DEVICE_6030
 static struct iwn_base_params iwn_6000g2b_base_params = {
 	0, //pll_cfg_val
 	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
