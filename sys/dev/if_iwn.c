@@ -102,8 +102,8 @@ static const struct iwn_ident iwn_ident_table[] = {
 	// { 0x8086, 0x008b, "Intel Centrino Wireless-N 1030"		},
 	// { 0x8086, 0x0090, "Intel Centrino Advanced-N 6230"		},
 	// { 0x8086, 0x0091, "Intel Centrino Advanced-N 6230"		},
-	// { 0x8086, 0x0885, "Intel Centrino Wireless-N + WiMAX 6150"	},
-	// { 0x8086, 0x0886, "Intel Centrino Wireless-N + WiMAX 6150"	},
+	{ 0x8086, IWN_DID_6150_1, "Intel Centrino Wireless-N + WiMAX 6150"	},
+	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"},
     { 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"},
 	// { 0x8086, 0x0896, "Intel Centrino Wireless-N 130"		},
@@ -126,6 +126,8 @@ static const struct iwn_ident iwn_ident_table[] = {
 	// { 0x8086, 0x423b, "Intel WiMAX/WiFi Link 5350"			},
 	// { 0x8086, 0x423c, "Intel WiMAX/WiFi Link 5150"			},
 	// { 0x8086, 0x423d, "Intel WiMAX/WiFi Link 5150"			},
+	{ 0x8086, IWN_DID_6035_1, "Centrino Advanced-N 6235"		},
+	{ 0x8086, IWN_DID_6035_2, "Centrino Advanced-N 6235"		},
 	{ 0, 0, NULL }
 };
 
@@ -7931,6 +7933,7 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
 				return ENOTSUP;
 		}
+		break;
 /* 6x00 Series */
 	case IWN_DID_6x00_2:
 	case IWN_DID_6x00_4:
@@ -7965,6 +7968,7 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
 				return ENOTSUP;
 		}
+		break;
 /* 6x05 Series */
 	case IWN_DID_6x05_1:  
 	case IWN_DID_6x05_2:
@@ -7996,7 +8000,24 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 					device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
 					return ENOTSUP;
 		}
-		
+		break;
+/* 6x35 Series */
+	case IWN_DID_6035_1:
+	case IWN_DID_6035_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_6035_1:
+			case IWN_SDID_6035_2:
+			case IWN_SDID_6035_3:
+			case IWN_SDID_6035_4:
+				sc->fwname = "iwn6000g2bfw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6000g2b_base_params;
+				break;
+			default:
+					device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+					return ENOTSUP;
+		}
+		break;
 /* 6x50 WiFi/WiMax Series */
 	case IWN_DID_6050_1:
 	case IWN_DID_6050_2:
@@ -8019,8 +8040,28 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 					device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
 					return ENOTSUP;
 		}
-
-				
+		break;
+/* 6150 WiFi/WiMax Series */
+ 	case IWN_DID_6150_1:
+	case IWN_DID_6150_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_6150_1:
+			case IWN_SDID_6150_3:
+			case IWN_SDID_6150_5:
+				// iwl6150_bgn_cfg
+			case IWN_SDID_6150_2:
+			case IWN_SDID_6150_4:
+			case IWN_SDID_6150_6:
+				//iwl6150_bg_cfg
+				sc->fwname = "iwn6050fw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6150_base_params;
+				break;
+			default:
+					device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+					return ENOTSUP;
+		}
+		break;
 /* 2x30 Series */
 	case IWN_DID_2x30_1:
 	case IWN_DID_2x30_2:

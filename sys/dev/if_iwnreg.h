@@ -122,6 +122,35 @@
 #define IWN_SDID_6050_5 0x1311 //iwl6050_2agn_cfg
 #define IWN_SDID_6050_6 0x1316 //iwl6050_2abg_cfg
 
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 6150 Series 
+ * -----------------------------------------------------------------------------
+ */
+
+#define IWN_DID_6150_1 	0x0885 
+#define IWN_DID_6150_2 	0x0886
+
+#define IWN_SDID_6150_1	0x1305 // iwl6150_bgn_cfg
+#define IWN_SDID_6150_2	0x1307 // iwl6150_bg_cfg)
+#define IWN_SDID_6150_3	0x1325 // iwl6150_bgn_cfg
+#define IWN_SDID_6150_4	0x1327 // iwl6150_bg_cfg)
+#define IWN_SDID_6150_5	0x1315 // iwl6150_bgn_cfg
+#define IWN_SDID_6150_6	0x1317 // iwl6150_bg_cfg) 
+ 
+/*
+ * -----------------------------------------------------------------------------
+ * Device ID for 6035 Series 
+ * -----------------------------------------------------------------------------
+ */
+#define IWN_DID_6035_1 	0x088E
+#define IWN_DID_6035_2 	0x088F
+ 
+#define IWN_SDID_6035_1 0x4060 // iwl6035_2agn_cfg
+#define IWN_SDID_6035_2 0x4260 // iwl6035_2agn_cfg
+#define IWN_SDID_6035_3 0x4460 // iwl6035_2agn_cfg
+#define IWN_SDID_6035_4 0x4860 // iwl6035_2agn_cfg
+
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
 #define IWN_TX_RING_HIMARK	224
@@ -2507,4 +2536,28 @@ static struct iwn_base_params iwn_6150_base_params = {
 	true, //no_multi_vaps
 	IWN_GP_DRIVER_6050_1X2, //additional_gp_drv_bit
 };
-
+static struct iwn_base_params iwn_6000g2b_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	true, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
