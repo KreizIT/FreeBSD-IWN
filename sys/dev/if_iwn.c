@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD$");
 
-/*#include "opt_wlan.h"*/
+#include "opt_wlan.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -242,7 +242,6 @@ static int	iwn_set_link_quality(struct iwn_softc *,
 static int	iwn_add_broadcast_node(struct iwn_softc *, int);
 static int	iwn_updateedca(struct ieee80211com *);
 static void	iwn_update_mcast(struct ifnet *);
-//static void	iwn_set_led(struct iwn_softc *, uint8_t, uint8_t, uint8_t);
 static void iwn_set_led(struct iwn_softc *, uint8_t , uint8_t , uint8_t , uint8_t );
 static int	iwn_set_critical_temp(struct iwn_softc *);
 static int	iwn_set_timing(struct iwn_softc *, struct ieee80211_node *);
@@ -370,8 +369,10 @@ enum {
 	IWN_DEBUG_NODE		= 0x00000400,	/* node management */
 	IWN_DEBUG_LED		= 0x00000800,	/* led management */
 	IWN_DEBUG_CMD		= 0x00001000,	/* cmd submission */
-	IWN_DEBUG_REGISTER	= 0x00002000,	/* print chipset register */
-	IWN_DEBUG_TRACE		= 0x00004000,	/* Print begin and start driver function */
+	IWN_DEBUG_TXRATE	= 0x00002000,	/* TX rate debugging */
+	IWN_DEBUG_PWRSAVE	= 0x00004000,	/* Power save operations */
+	IWN_DEBUG_REGISTER	= 0x00010000,	/* print chipset register */
+	IWN_DEBUG_TRACE		= 0x00020000,	/* Print begin and start driver function */
 	IWN_DEBUG_FATAL		= 0x80000000,	/* fatal errors */
 	IWN_DEBUG_ANY		= 0xffffffff
 };
@@ -655,7 +656,7 @@ iwn_attach(device_t dev)
 		| IEEE80211_C_IBSS		/* ibss/adhoc mode */
 #endif
 		| IEEE80211_C_WME		/* WME */
-		| IEEE80211_C_PMGT		/* power management */
+		| IEEE80211_C_PMGT		/* Station-side power mgmt */
 		;
 	if (sc->base_params->support_hostap) {
 		ic->ic_caps |= IEEE80211_C_HOSTAP ;/* HOSTAP mode  supported  */
@@ -962,8 +963,7 @@ iwn_vap_create(struct ieee80211com *ic, const char name[IFNAMSIZ], int unit,
 	/* handler for setting change (partial 're'set) requested via ioctl */
 	vap->iv_reset = iwn_iv_reset;
 
-	
-//DEL	ieee80211_ratectl_init(vap);
+	ieee80211_ratectl_init(vap);
 	/* Complete setup. */
 	ieee80211_vap_attach(vap, iwn_media_change, ieee80211_media_status);
 	ic->ic_opmode = opmode;
@@ -1053,7 +1053,7 @@ iwn_suspend(device_t dev)
 	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
 
 	
-	/*ieee80211_suspend_all(ic);*/
+	ieee80211_suspend_all(ic);
 	iwn_stop(sc);
 	if (vap != NULL)
 		ieee80211_stop(vap);
@@ -1073,7 +1073,7 @@ iwn_resume(device_t dev)
 	/* Clear device-specific "PCI retry timeout" register (41h). */
 	pci_write_config(dev, 0x41, 0, 1);
 
-	/*ieee80211_resume_all(ic);*/
+	ieee80211_resume_all(ic);
 		if (ifp->if_flags & IFF_UP) {
 		iwn_init(sc);
 		if (vap != NULL)
@@ -1097,9 +1097,8 @@ iwn_nic_lock(struct iwn_softc *sc)
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if ((IWN_READ(sc, IWN_GP_CNTRL) &
 		     (IWN_GP_CNTRL_MAC_ACCESS_ENA | IWN_GP_CNTRL_SLEEP)) ==
-		    IWN_GP_CNTRL_MAC_ACCESS_ENA) {
+		    IWN_GP_CNTRL_MAC_ACCESS_ENA)
 				return 0;
-		}
 		DELAY(10);
 	}
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s timeout\n", __func__);
@@ -1376,7 +1375,6 @@ iwn_dma_contig_free(struct iwn_dma_info *dma)
 			bus_dmamap_sync(dma->tag, dma->map,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(dma->tag, dma->map);
-			//!!! CG ADD & to dma-vaddr !!
 			bus_dmamem_free(dma->tag, &dma->vaddr, dma->map);
 			dma->vaddr = NULL;
 		}
@@ -2238,65 +2236,104 @@ rate2plcp(int rate)
 	return 0;
 }
 
-static void
-iwn_newassoc(struct ieee80211_node *ni, int isnew)
+/*
+ * Calculate the required PLCP value from the given rate,
+ * to the given node.
+ *
+ * This will take the node configuration (eg 11n, rate table
+ * setup, etc) into consideration.
+ */
+static uint32_t
+iwn_rate_to_plcp(struct iwn_softc *sc, struct ieee80211_node *ni,
+    uint8_t rate)
 {
 #define	RV(v)	((v) & IEEE80211_RATE_VAL)
 	struct ieee80211com *ic = ni->ni_ic;
-	struct iwn_softc *sc = ic->ic_ifp->if_softc;
-	struct iwn_node *wn = (void *)ni;
 	uint8_t txant1, txant2;
-	int i, plcp, rate, ridx;
+	uint32_t plcp = 0;
+	int ridx;
 
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s begin\n", __func__);
 	/* Use the first valid TX antenna. */
 	txant1 = IWN_LSB(sc->txchainmask);
 	txant2 = IWN_LSB(sc->txchainmask & ~txant1);
 
+	/*
+	 * If it's an MCS rate, let's set the plcp correctly
+	 * and set the relevant flags based on the node config.
+	 */
 	if (IEEE80211_IS_CHAN_HT(ni->ni_chan)) {
-		ridx = ni->ni_rates.rs_nrates - 1;
-		for (i = ni->ni_htrates.rs_nrates - 1; i >= 0; i--) {
-			plcp = RV(ni->ni_htrates.rs_rates[i]) | IWN_RFLAG_MCS;
+		/*
+		 * Set the initial PLCP value to be between 0->31 for
+		 * MCS 0 -> MCS 31, then set the "I'm an MCS rate!"
+		 * flag.
+		 */
+		plcp = RV(rate) | IWN_RFLAG_MCS;
+
+		/*
+		 * XXX the following should only occur if both
+		 * the local configuration _and_ the remote node
+		 * advertise these capabilities.  Thus this code
+		 * may need fixing!
+		 */
+
+		/*
+		 * Set the channel width and guard interval.
+		 */
 			if (IEEE80211_IS_CHAN_HT40(ni->ni_chan)) {
 				plcp |= IWN_RFLAG_HT40;
 				if (ni->ni_htcap & IEEE80211_HTCAP_SHORTGI40)
 					plcp |= IWN_RFLAG_SGI;
-			} else if (ni->ni_htcap & IEEE80211_HTCAP_SHORTGI20)
+		} else if (ni->ni_htcap & IEEE80211_HTCAP_SHORTGI20) {
 				plcp |= IWN_RFLAG_SGI;
-			if (i > 7)
+		}
+
+		/*
+		 * If it's a two stream rate, enable TX on both
+		 * antennas.
+		 *
+		 * XXX three stream rates?
+		 */
+		if (rate > 0x87)
 				plcp |= IWN_RFLAG_ANT(txant1 | txant2);
 			else
 				plcp |= IWN_RFLAG_ANT(txant1);
-			if (ridx >= 0) {
-				rate = RV(ni->ni_rates.rs_rates[ridx]);
-				wn->ridx[rate] = plcp;
-			}
-			wn->ridx[IEEE80211_RATE_MCS | i] = plcp;
-			ridx--;
-		}
 	} else {
-		static const uint32_t iwn_rates_plcp[] = {
-			/* PLCP/hw value for CCK */
-			10, 20, 55, 110,
-			/* PLCP/hw value for OFDM */
-			13, 15, 5, 7, 9, 11, 1, 3,
-			/* PLCP/hw value for HT 60 MBps -- remove? */
-			3
-		};
+		/*
+		 * Set the initial PLCP - fine for both
+		 * OFDM and CCK rates.
+		 */
+		plcp = rate2plcp(rate);
 
-		for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
-			rate = RV(ni->ni_rates.rs_rates[i]);
-			plcp = iwn_rates_plcp[i];
-			ridx = ic->ic_rt->rateCodeToIndex[rate];
+		/* Set CCK flag if it's CCK */
+
+		/* XXX It would be nice to have a method
+		 * to map the ridx -> phy table entry
+		 * so we could just query that, rather than
+		 * this hack to check against IWN_RIDX_OFDM6.
+		 */
+		ridx = ieee80211_legacy_rate_lookup(ic->ic_rt,
+		    rate & IEEE80211_RATE_VAL);
 			if (ridx < IWN_RIDX_OFDM6 &&
 			    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
 				plcp |= IWN_RFLAG_CCK;
+
+		/* Set antenna configuration */
 			plcp |= IWN_RFLAG_ANT(txant1);
-			wn->ridx[rate] = htole32(plcp);
 		}
-	}
-	DPRINTF(sc, IWN_DEBUG_RESET, "%s end\n", __func__);
+
+	DPRINTF(sc, IWN_DEBUG_TXRATE, "%s: rate=0x%02x, plcp=0x%08x\n",
+	    __func__,
+	    rate,
+	    plcp);
+
+	return (htole32(plcp));
 #undef	RV
+}
+
+static void
+iwn_newassoc(struct ieee80211_node *ni, int isnew)
+{
+	/* Doesn't do anything at the moment */
 }
 
 static int
@@ -3424,7 +3461,6 @@ iwn_fatal_intr(struct iwn_softc *sc)
 	/* Force a complete recalibration on next init. */
 	sc->sc_flags &= ~IWN_FLAG_CALIB_DONE;
 
-	
 	/* Check that the error log address is valid. */
 	if (sc->errptr < IWN_FW_DATA_BASE ||
 	    sc->errptr + sizeof (dump) >
@@ -3698,7 +3734,8 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		(void) ieee80211_ratectl_rate(ni, NULL, 0);
 		rate = ni->ni_txrate;
 	}
-	ridx = ic->ic_rt->rateCodeToIndex[rate];
+	ridx = ieee80211_legacy_rate_lookup(ic->ic_rt,
+	    rate & IEEE80211_RATE_VAL);
 
 	/* Encrypt the frame if need be. */
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -3806,7 +3843,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx->rts_ntries = 60;
 	tx->data_ntries = 15;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
-	tx->rate = wn->ridx[rate];
+	tx->rate = iwn_rate_to_plcp(sc, ni, rate);
 	if ((tx->id == IWN_PAN_BCAST_ID) || (tx->id == IWN_BROADCAST_ID)) {
 		/* Group or management frame. */
 		tx->linkq = 0;
@@ -3938,7 +3975,8 @@ iwn_tx_data_raw(struct iwn_softc *sc, struct mbuf *m,
 
 	/* Choose a TX rate index. */
 	rate = params->ibp_rate0;
-	ridx = ic->ic_rt->rateCodeToIndex[rate];
+	ridx = ieee80211_legacy_rate_lookup(ic->ic_rt,
+	    rate & IEEE80211_RATE_VAL);
 	if (ridx == (uint8_t)-1) {
 		/* XXX fall back to mcast/mgmt rate? */
 		m_freem(m);
@@ -4017,6 +4055,8 @@ iwn_tx_data_raw(struct iwn_softc *sc, struct mbuf *m,
 	tx->rts_ntries = params->ibp_try1;
 	tx->data_ntries = params->ibp_try0;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
+
+	/* XXX should just use  iwn_rate_to_plcp() */
 	tx->rate = htole32(rate2plcp(rate));
 	if (ridx < IWN_RIDX_OFDM6 &&
 	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
@@ -4407,14 +4447,20 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 	else
 		txrate = rs->rs_nrates - 1;
 	for (i = 0; i < IWN_MAX_TX_RETRIES; i++) {
+		uint32_t plcp;
+
 		if (IEEE80211_IS_CHAN_HT(ni->ni_chan))
 			rate = IEEE80211_RATE_MCS | txrate;
 		else
 			rate = RV(rs->rs_rates[txrate]);
-		linkq.retry[i] = wn->ridx[rate];
 
-		if ((le32toh(wn->ridx[rate]) & IWN_RFLAG_MCS) &&
-		    RV(le32toh(wn->ridx[rate])) > 7)
+		/* Do rate -> PLCP config mapping */
+		plcp = iwn_rate_to_plcp(sc, ni, rate);
+		linkq.retry[i] = plcp;
+
+		/* Special case for dual-stream rates? */
+		if ((le32toh(plcp) & IWN_RFLAG_MCS) &&
+		    RV(le32toh(plcp)) > 7)
 			linkq.mimo = i + 1;
 
 		/* Next retry at immediate lower bit-rate. */
@@ -4506,12 +4552,7 @@ iwn_update_mcast(struct ifnet *ifp)
 	/* Ignore */
 }
 
-/*static void
-iwn_set_led(struct iwn_softc *sc, uint8_t which, uint8_t off, uint8_t on)
-{
-	(void)iwn_set_led(sc,which,off,on,IWN_LED_INT_BLINK);
-}
-*/
+
 static void
 iwn_set_led(struct iwn_softc *sc, uint8_t which, uint8_t off, uint8_t on, uint8_t mode)
 {
@@ -4946,6 +4987,8 @@ iwn_collect_noise(struct iwn_softc *sc,
 {
 	struct iwn_ops *ops = &sc->ops;
 	struct iwn_calib_state *calib = &sc->calib;
+	struct ifnet *ifp = sc->sc_ifp;
+	struct ieee80211com *ic = ifp->if_l2com;
 	uint32_t val;
 	int i;
 
@@ -4984,12 +5027,9 @@ iwn_collect_noise(struct iwn_softc *sc,
 	(void)iwn_cmd(sc, IWN_CMD_RXON, sc->rxon, sc->rxonsz, 1);
 #endif
 
-#if 0
-	/* XXX: not yet */
 	/* Enable power-saving mode if requested by user. */
-	if (sc->sc_ic.ic_flags & IEEE80211_F_PMGTON)
+	if (ic->ic_flags & IEEE80211_F_PMGTON)
 		(void)iwn_set_pslevel(sc, 0, 3, 1);
-#endif
 }
 
 static int
@@ -5320,6 +5360,12 @@ iwn_set_pslevel(struct iwn_softc *sc, int dtim, int level, int async)
 		#endif
 	}
 
+	DPRINTF(sc, IWN_DEBUG_PWRSAVE,
+	    "%s: dtim=%d, level=%d, async=%d\n",
+	    __func__,
+	    dtim,
+	    level,
+	    async);
 	
 	/* Select which PS parameters to use. */
 	if (dtim <= 2)
@@ -5480,20 +5526,7 @@ iwn_send_advanced_btcoex(struct iwn_softc *sc)
 	return iwn_cmd(sc, IWN_CMD_BT_COEX_PROT, &btprot, sizeof(btprot), 1);
 }
 
-/*static int
-iwn5000_runtime_calib(struct iwn_softc *sc)
-{
-	struct iwn5000_calib_config cmd;
 
-	memset(&cmd, 0, sizeof cmd);
-	cmd.ucode.once.enable = 0xffffffff;
-	cmd.ucode.once.start = IWN5000_CALIB_DC;
-	cmd.ucode.flags       = 0xffffffff;
-	DPRINTF(sc, IWN_DEBUG_CALIBRATE,
-	    "%s: configuring runtime calibration type 0x%08x\n", __func__,sc->base_params->running_post_alive_calib);
-	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
-}
-*/
 
 static int
 iwn_config(struct iwn_softc *sc)
@@ -5825,31 +5858,6 @@ iwn_scan(struct iwn_softc *sc)
 	else
 		chan->rf_gain = 0x28;
 
-	/*if (IEEE80211_IS_CHAN_5GHZ(c) &&
-	    !(c->ic_flags & IEEE80211_CHAN_PASSIVE)) {
-		chan->active  = htole16(24);
-		chan->passive = htole16(110);
-		chan->flags |= htole32(IWN_CHAN_ACTIVE);
-	} else if (IEEE80211_IS_CHAN_5GHZ(c)) {
-		chan->active  = htole16(24);
-		if (sc->rxon->associd)
-			chan->passive = htole16(78);
-		else
-			chan->passive = htole16(110);
-		hdr->crc_threshold = 0xffff;
-	} else if (!(c->ic_flags & IEEE80211_CHAN_PASSIVE)) {
-		chan->active  = htole16(36);
-		chan->passive = htole16(120);
-		chan->flags |= htole32(IWN_CHAN_ACTIVE);
-	} else {
-		chan->active  = htole16(36);
-		if (sc->rxon->associd)
-			chan->passive = htole16(88);
-		else
-			chan->passive = htole16(120);
-		hdr->crc_threshold = 0xffff;
-	}
-	*/
 	
 	chan->active  = htole16(iwn_get_active_dwell(sc, c));
 	chan->passive = htole16(iwn_get_passive_dwell(sc, c));
@@ -6055,7 +6063,7 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 		    "%s: could not add BSS node, error %d\n", __func__, error);
 		return error;
 	}
-	/* Not done in iwl 
+	/*XXX Not done in iwl 
 	DPRINTF(sc, IWN_DEBUG_STATE, "%s: setting link quality for node %d\n",
 	    __func__, node.id);
 	if ((error = iwn_set_link_quality(sc, ni)) != 0) {
@@ -6251,7 +6259,7 @@ iwn_ampdu_tx_stop(struct ieee80211_node *ni, struct ieee80211_tx_ampdu *tap)
 	uint8_t tid = tap->txa_tid;
 	int qid;
 
-	/* Was done after in iwl ->*/ //sc->sc_addba_stop(ni, tap);
+	sc->sc_addba_stop(ni, tap);
 
 	if (tap->txa_private == NULL)
 		return;
@@ -6266,7 +6274,6 @@ iwn_ampdu_tx_stop(struct ieee80211_node *ni, struct ieee80211_tx_ampdu *tap)
 	sc->qid2tap[qid] = NULL;
 	free(tap->txa_private, M_DEVBUF);
 	tap->txa_private = NULL;
-	sc->sc_addba_stop(ni, tap); //See upper
 }
 
 static void
