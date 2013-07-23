@@ -2206,6 +2206,7 @@ struct iwn_sensitivity_limits {
 	uint32_t	min_energy_cck;
 	uint32_t	energy_cck;
 	uint32_t	energy_ofdm;
+	uint32_t	min_corr_barker_mrc;
 };
 
 /*
@@ -2220,7 +2221,8 @@ static const struct iwn_sensitivity_limits iwn4965_sensitivity_limits = {
 	200, 400,
 	 97,
 	100,
-	100
+	100,
+	390
 };
 
 static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
@@ -2232,7 +2234,8 @@ static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	 390
 };
 
 static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
@@ -2244,7 +2247,8 @@ static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	 390
 };
 
 static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
@@ -2256,8 +2260,19 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	 390
 };
+min_ofdm_x1;  // auto_corr_min_ofdm_x1 , max_ofdm_x1; //auto_corr_max_ofdm_x1
+min_ofdm_mrc_x1; //auto_corr_min_ofdm_mrc_x1, max_ofdm_mrc_x1; //auto_corr_max_ofdm_mrc
+min_ofdm_x4; //auto_corr_min_ofdm, max_ofdm_x4; //auto_corr_max_ofdm 
+min_ofdm_mrc_x4; //auto_corr_min_ofdm_mrc, max_ofdm_mrc_x4 //max_ofdm_mrc_x4
+min_cck_x4; //auto_corr_min_cck, max_cck_x4:auto_corr_max_cck
+min_cck_mrc_x4 : auto_corr_min_cck_mrc max_cck_mrc_x4: auto_corr_max_cck_mrc
+min_energy_cck: min_nrg_cck
+energy_cck:nrg_th_cck
+energy_ofdm:nrg_th_ofdm
+corr_barker_mrc :barker_corr_th_min_mrc
 
  /* Define several specific values for Intel 6000 series */
  static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
@@ -2267,9 +2282,10 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	128, 232,
 	125, 175,
 	160, 310,
-	 97,
-	 97,
-	100
+	110,
+	110,
+	110,
+	336
 };
 
 

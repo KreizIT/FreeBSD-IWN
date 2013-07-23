@@ -4960,9 +4960,10 @@ iwn_init_sensitivity(struct iwn_softc *sc)
 	calib->ofdm_mrc_x1 = sc->limits->min_ofdm_mrc_x1;
 	calib->ofdm_x4     = sc->limits->min_ofdm_x4;
 	calib->ofdm_mrc_x4 = sc->limits->min_ofdm_mrc_x4;
-	calib->cck_x4      = 125;
+	calib->cck_x4      = sc->limits->min_cck_x4;
 	calib->cck_mrc_x4  = sc->limits->min_cck_mrc_x4;
 	calib->energy_cck  = sc->limits->energy_cck;
+	calib->corr_barker_mrc  = sc->limits->min_corr_barker_mrc;
 
 	/* Write initial sensitivity. */
 	if ((error = iwn_send_sensitivity(sc)) != 0)
@@ -5296,15 +5297,15 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 	cmd.corr_ofdm_mrc_x1   = htole16(calib->ofdm_mrc_x1);
 	cmd.corr_ofdm_x4       = htole16(calib->ofdm_x4);
 	cmd.corr_ofdm_mrc_x4   = htole16(calib->ofdm_mrc_x4);
-	cmd.energy_ofdm        = htole16(sc->limits->energy_ofdm);
-	cmd.energy_ofdm_th     = htole16(62);
+	cmd.energy_ofdm        = htole16(calib->energy_ofdm);
+	cmd.energy_ofdm_th     = htole16(62); //Value doesn't change in linux Kernel
 	/* CCK modulation. */
 	cmd.corr_cck_x4        = htole16(calib->cck_x4);
 	cmd.corr_cck_mrc_x4    = htole16(calib->cck_mrc_x4);
 	cmd.energy_cck         = htole16(calib->energy_cck);
 	/* Barker modulation: use default values. */
-	cmd.corr_barker        = htole16(190);
-	cmd.corr_barker_mrc    = htole16(390);
+	cmd.corr_barker        = htole16(190); //Value doesn't change in linux Kernel
+	cmd.corr_barker_mrc    = htole16(calib->corr_barker_mrc);
 
 	DPRINTF(sc, IWN_DEBUG_CALIBRATE,
 	    "%s: set sensitivity %d/%d/%d/%d/%d/%d/%d\n", __func__,

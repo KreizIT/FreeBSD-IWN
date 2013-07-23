@@ -177,6 +177,8 @@ struct iwn_calib_state {
 	uint32_t	energy_samples[10];
 	u_int		cur_energy_sample;
 	uint32_t	energy_cck;
+	
+	uint32_t	corr_barker_mrc;
 };
 
 struct iwn_calib_info {
