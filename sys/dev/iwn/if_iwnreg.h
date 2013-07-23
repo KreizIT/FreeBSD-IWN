@@ -17,7 +17,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
 
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
@@ -38,11 +37,6 @@
 
 #define IWN_ICT_SIZE		4096
 #define IWN_ICT_COUNT		(IWN_ICT_SIZE / sizeof (uint32_t))
-
-/* For cards with PAN command default is IWN_CMD_QUEUE_NUM */
-#define	IWN_CMD_QUEUE_NUM		4
-#define	IWN_PAN_CMD_QUEUE		9
-
 
 /* Maximum number of DMA segments for TX. */
 #define IWN_MAX_SCATTER	20
@@ -68,7 +62,6 @@
 #define IWN_INT			0x008
 #define IWN_INT_MASK		0x00c
 #define IWN_FH_INT		0x010
-#define IWN_GPIO_IN			0x018 /* read external chip pins */
 #define IWN_RESET		0x020
 #define IWN_GP_CNTRL		0x024
 #define IWN_HW_REV		0x028
@@ -76,12 +69,8 @@
 #define IWN_EEPROM_GP		0x030
 #define IWN_OTP_GP		0x034
 #define IWN_GIO			0x03c
-#define INW_GP_UCODE	0x048
 #define IWN_GP_DRIVER		0x050
-#define IWN_GP1_DRIVER		0x054
-#define IWN_UCODE_GP1_SET   0x058
 #define IWN_UCODE_GP1_CLR	0x05c
-#define IWN_UCODE_DRV_GP2   0x060
 #define IWN_LED			0x094
 #define IWN_DRAM_INT_TBL	0x0a0
 #define IWN_SHADOW_REG_CTRL	0x0a8
@@ -90,7 +79,6 @@
 #define IWN_HW_REV_WA		0x22c
 #define IWN_DBG_HPET_MEM	0x240
 #define IWN_DBG_LINK_PWR_MGMT	0x250
-// Need nic_lock for use above
 #define IWN_MEM_RADDR		0x40c
 #define IWN_MEM_WADDR		0x410
 #define IWN_MEM_WDATA		0x418
@@ -199,50 +187,12 @@
 #define IWN_RESET_LINK_PWR_MGMT_DIS	(1 << 31)
 
 /* Possible flags for register IWN_GP_CNTRL. */
-/*
- * GP (general purpose) CONTROL REGISTER
- * Bit fields:
- *    27:  HW_RF_KILL_SW
- *         Indicates state of (platform's) hardware RF-Kill switch
- * 26-24:  POWER_SAVE_TYPE
- *         Indicates current power-saving mode:
- *         000 -- No power saving
- *         001 -- MAC power-down
- *         010 -- PHY (radio) power-down
- *         011 -- Error
- *   9-6:  SYS_CONFIG
- *         Indicates current system configuration, reflecting pins on chip
- *         as forced high/low by device circuit board.
- *     4:  GOING_TO_SLEEP
- *         Indicates MAC is entering a power-saving sleep power-down.
- *         Not a good time to access device-internal resources.
- *     3:  MAC_ACCESS_REQ
- *         Host sets this to request and maintain MAC wakeup, to allow host
- *         access to device-internal resources.  Host must wait for
- *         MAC_CLOCK_READY (and !GOING_TO_SLEEP) before accessing non-CSR
- *         device registers.
- *     2:  INIT_DONE
- *         Host sets this to put device into fully operational D0 power mode.
- *         Host resets this after SW_RESET to put device into low power mode.
- *     0:  MAC_CLOCK_READY
- *         Indicates MAC (ucode processor, etc.) is powered up and can run.
- *         Internal resources are accessible.
- *         NOTE:  This does not indicate that the processor is actually running.
- *         NOTE:  This does not indicate that device has completed
- *                init or post-power-down restore of internal SRAM memory.
- *                Use CSR_UCODE_DRV_GP1_BIT_MAC_SLEEP as indication that
- *                SRAM is restored and uCode is in normal operation mode.
- *                Later devices (5xxx/6xxx/1xxx) use non-volatile SRAM, and
- *                do not need to save/restore it.
- *         NOTE:  After device reset, this bit remains "0" until host sets
- *                INIT_DONE
- */
-#define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0) 		//x00000001
+#define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
 #define IWN_GP_CNTRL_MAC_CLOCK_READY	(1 << 0)
-#define IWN_GP_CNTRL_INIT_DONE		(1 << 2)		//x00000004
-#define IWN_GP_CNTRL_MAC_ACCESS_REQ	(1 << 3)		//x00000008
-#define IWN_GP_CNTRL_SLEEP		(1 << 4)			//x00000010
-#define IWN_GP_CNTRL_RFKILL		(1 << 27)			//x08000000
+#define IWN_GP_CNTRL_INIT_DONE		(1 << 2)
+#define IWN_GP_CNTRL_MAC_ACCESS_REQ	(1 << 3)
+#define IWN_GP_CNTRL_SLEEP		(1 << 4)
+#define IWN_GP_CNTRL_RFKILL		(1 << 27)
 
 /* Possible flags for register IWN_HW_REV. */
 #define IWN_HW_REV_TYPE_SHIFT	4
@@ -256,7 +206,6 @@
 #define IWN_HW_REV_TYPE_6000	7
 #define IWN_HW_REV_TYPE_6050	8
 #define IWN_HW_REV_TYPE_6005	11
-#define IWN_HW_REV_TYPE_2230	12
 
 /* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
@@ -266,20 +215,16 @@
 #define IWN_GIO_L0S_ENA		(1 << 1)
 
 /* Possible flags for register IWN_GP_DRIVER. */
-#define IWN_GP_DRIVER_RADIO_3X3_HYB				(0 << 0)
-#define IWN_GP_DRIVER_RADIO_2X2_HYB				(1 << 0)
-#define IWN_GP_DRIVER_RADIO_2X2_IPA				(2 << 0)
-#define IWN_GP_DRIVER_RADIO_MSK					(0x00000003)
-#define IWN_GP_DRIVER_CALIB_VER6				(1 << 2)
-#define IWN_GP_DRIVER_6050_1X2					(1 << 3)
-#define IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT 	(0x00000080)
-
+#define IWN_GP_DRIVER_RADIO_3X3_HYB	(0 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_HYB	(1 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_IPA	(2 << 0)
+#define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
+#define IWN_GP_DRIVER_6050_1X2		(1 << 3)
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
 #define IWN_UCODE_GP1_CMD_BLOCKED	(1 << 2)
 #define IWN_UCODE_GP1_CTEMP_STOP_RF	(1 << 3)
-#define IWN_UCODE_GP1_CFG_COMPLETE  (1 << 5)
 
 /* Possible flags/values for register IWN_LED. */
 #define IWN_LED_BSM_CTRL	(1 << 5)
@@ -301,18 +246,17 @@
 #define IWN_BSM_WR_CTRL_START		(1 << 31)
 
 /* Possible flags for register IWN_INT. */
-#define IWN_INT_ALIVE		(1 <<  0) // x00000001
-#define IWN_INT_WAKEUP		(1 <<  1) // x00000002
-#define IWN_INT_SW_RX		(1 <<  3) // x00000008
-#define IWN_INT_CT_REACHED	(1 <<  6) // x00000040
-#define IWN_INT_RF_TOGGLED	(1 <<  7) // x00000080
-#define IWN_INT_SW_ERR		(1 << 25) // x02000000
-#define IWN_INT_SCHED		(1 << 26) // x04000000
-#define IWN_INT_FH_TX		(1 << 27) // x08000000
-#define IWN_INT_RX_PERIODIC	(1 << 28) // x10000000
-#define IWN_INT_HW_ERR		(1 << 29) // x20000000
-#define IWN_INT_FH_RX		(1 << 31) // x80000000
-
+#define IWN_INT_ALIVE		(1 <<  0)
+#define IWN_INT_WAKEUP		(1 <<  1)
+#define IWN_INT_SW_RX		(1 <<  3)
+#define IWN_INT_CT_REACHED	(1 <<  6)
+#define IWN_INT_RF_TOGGLED	(1 <<  7)
+#define IWN_INT_SW_ERR		(1 << 25)
+#define IWN_INT_SCHED		(1 << 26)
+#define IWN_INT_FH_TX		(1 << 27)
+#define IWN_INT_RX_PERIODIC	(1 << 28)
+#define IWN_INT_HW_ERR		(1 << 29)
+#define IWN_INT_FH_RX		(1 << 31)
 
 /* Shortcut. */
 #define IWN_INT_MASK_DEF						\
@@ -479,7 +423,6 @@ struct iwn_tx_cmd {
 #define IWN_CMD_LINK_QUALITY		 78
 #define IWN_CMD_SET_LED			 72
 #define IWN5000_CMD_WIMAX_COEX		 90
-#define IWN_TEMP_NOTIFICATION		98
 #define IWN5000_CMD_CALIB_CONFIG	101
 #define IWN5000_CMD_CALIB_RESULT	102
 #define IWN5000_CMD_CALIB_COMPLETE	103
@@ -493,7 +436,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_GET_STATISTICS		156
 #define IWN_CMD_SET_CRITICAL_TEMP	164
 #define IWN_CMD_SET_SENSITIVITY		168
-#define IWN_CMD_PHY_CALIB		    176
+#define IWN_CMD_PHY_CALIB		176
 #define IWN_CMD_BT_COEX_PRIOTABLE	204
 #define IWN_CMD_BT_COEX_PROT		205
 
@@ -503,35 +446,12 @@ struct iwn_tx_cmd {
 	uint8_t	data[136];
 } __packed;
 
-/*
- * Structure for IWN_CMD_GET_STATISTICS = (0x9c) 156
- * all devices identical.
- *
- * This command triggers an immediate response containing uCode statistics.
- * The response is in the same format as IWN_BEACON_STATISTICS (0x9d) 157.
- *
- * If the CLEAR_STATS configuration flag is set, uCode will clear its
- * internal copy of the statistics (counters) after issuing the response.
- * This flag does not affect IWN_BEACON_STATISTICS after beacons (see below).
- *
- * If the DISABLE_NOTIF configuration flag is set, uCode will not issue
- * IWN_BEACON_STATISTICS after received beacons.  This flag
- * does not affect the response to the IWN_CMD_GET_STATISTICS 0x9c itself.
- */
-struct iwn_statistics_cmd {
-	uint32_t configuration_flags;	/* IWN_STATS_CONF_* */
-#define IWN_STATS_CONF_CLEAR_STATS htole32(0x1)	
-#define IWN_STATS_CONF_DISABLE_NOTIF htole32(0x2)
-
-} __packed;
-
 /* Antenna flags, used in various commands. */
 #define IWN_ANT_A	(1 << 0)
 #define IWN_ANT_B	(1 << 1)
 #define IWN_ANT_C	(1 << 2)
 /* Shortcuts. */
 #define IWN_ANT_AB	(IWN_ANT_A | IWN_ANT_B)
-#define IWN_ANT_AC	(IWN_ANT_A | IWN_ANT_C)
 #define IWN_ANT_BC	(IWN_ANT_B | IWN_ANT_C)
 #define IWN_ANT_ABC	(IWN_ANT_A | IWN_ANT_B | IWN_ANT_C)
 
@@ -631,8 +551,7 @@ struct iwn_cmd_timing {
 	uint16_t	atim;
 	uint32_t	binitval;
 	uint16_t	lintval;
-	uint8_t		dtim_period;
-	uint8_t		delta_cp_bss_tbtts;
+	uint16_t	reserved;
 } __packed;
 
 /* Structure for command IWN_CMD_ADD_NODE. */
@@ -941,20 +860,8 @@ struct iwn_bluetooth {
 	uint32_t	kill_cts;
 } __packed;
 
-/* Structures for enhanced command IWN_CMD_BLUETOOTH. */
 struct iwn6000_btcoex_config {
 	uint8_t		flags;
-#define IWN_BT_FLAG_COEX6000_CHAN_INHIBITION	1
-#define IWN_BT_FLAG_COEX6000_MODE_MASK			( (1 << 3) | (1 << 4) | (1 <<5 ))
-#define IWN_BT_FLAG_COEX6000_MODE_SHIFT			3
-#define IWN_BT_FLAG_COEX6000_MODE_DISABLED		0
-#define IWN_BT_FLAG_COEX6000_MODE_LEGACY_2W		1
-#define IWN_BT_FLAG_COEX6000_MODE_3W			2
-#define IWN_BT_FLAG_COEX6000_MODE_4W			3
-
-#define IWN_BT_FLAG_UCODE_DEFAULT		(1 << 6)
-/* Disable Sync PSPoll on SCO/eSCO */
-#define IWN_BT_FLAG_SYNC_2_BT_DISABLE	(1 << 7)
 	uint8_t		lead_time;
 	uint8_t		max_kill;
 	uint8_t		bt3_t7_timer;
@@ -970,29 +877,6 @@ struct iwn6000_btcoex_config {
 	uint8_t		tx_prio_boost;
 	uint16_t	rx_prio_boost;
 } __packed;
-
-/* Structures for enhanced command IWN_CMD_BLUETOOTH for 2000 Series. */
-struct iwn2000_btcoex_config {
-	uint8_t		flags; // Cf Flags in iwn6000_btcoex_config
-	uint8_t		lead_time;
-	uint8_t		max_kill;
-	uint8_t		bt3_t7_timer;
-	uint32_t	kill_ack;
-	uint32_t	kill_cts;
-	uint8_t		sample_time;
-	uint8_t		bt3_t2_timer;
-	uint16_t	bt4_reaction;
-	uint32_t	lookup_table[12];
-	uint16_t	bt4_decision;
-	uint16_t	valid;
-	
-	uint32_t	prio_boost; // size change prior to iwn6000_btcoex_config
-	uint8_t		reserved; // added prior to iwn6000_btcoex_config
-	
-	uint8_t		tx_prio_boost;
-	uint16_t	rx_prio_boost;
-} __packed;
-
 
 struct iwn_btcoex_priotable {
 	uint8_t		calib_init1;
@@ -1071,10 +955,6 @@ struct iwn_enhanced_sensitivity_cmd {
 	uint16_t	reserved;
 } __packed;
 
-/* Define maximal number of calib result send to runtime firmware 
-PS: TEMP_OFFSET count for 2 (std and v2)
-*/
-#define IWN5000_PHY_CALIB_MAX_RESULT	8
 /* Structures for command IWN_CMD_PHY_CALIB. */
 struct iwn_phy_calib {
 	uint8_t	code;
@@ -1095,15 +975,6 @@ struct iwn_phy_calib {
 	uint8_t	isvalid;
 } __packed;
 
-#define IWN_BUF_IX_PHY_CALIB_DC				0
-#define IWN_BUF_IX_PHY_CALIB_LO			 	1
-#define IWN_BUF_IX_PHY_CALIB_TX_IQ			2
-#define IWN_BUF_IX_PHY_CALIB_CRYSTAL		3
-#define IWN_BUF_IX_PHY_CALIB_BASE_BAND		4
-#define IWN_BUF_IX_PHY_CALIB_TX_IQ_PERIODIC	5
-#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET	6 
-#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2	7
-
 struct iwn5000_phy_calib_crystal {
 	uint8_t	code;
 	uint8_t	group;
@@ -1123,17 +994,6 @@ struct iwn5000_phy_calib_temp_offset {
 #define IWN_DEFAULT_TEMP_OFFSET	2700
 
 	uint16_t	reserved;
-} __packed;
-
-struct iwn5000_phy_calib_temp_offsetv2 {
-	uint8_t		code;
-	uint8_t		group;
-	uint8_t		ngroups;
-	uint8_t		isvalid;
-	int16_t 	offset_high;
-	int16_t		offset_low;
-	int16_t		burntVoltageRef;
-	int16_t		reserved;
 } __packed;
 
 struct iwn_phy_calib_gain {
@@ -1506,18 +1366,8 @@ struct iwn_fw_tlv {
 #define IWN_FW_TLV_INIT_DATA		4
 #define IWN_FW_TLV_BOOT_TEXT		5
 #define IWN_FW_TLV_PBREQ_MAXLEN		6
-#define IWN_FW_TLV_PAN				7
-#define	IWN_FW_TLV_RUNT_EVTLOG_PTR	8
-#define	IWN_FW_TLV_RUNT_EVTLOG_SIZE	9
-#define	IWN_FW_TLV_RUNT_ERRLOG_PTR	10
-#define	IWN_FW_TLV_INIT_EVTLOG_PTR	11
-#define	IWN_FW_TLV_INIT_EVTLOG_SIZE	12
-#define	IWN_FW_TLV_INIT_ERRLOG_PTR	13
-#define IWN_FW_TLV_ENH_SENS			14
+#define IWN_FW_TLV_ENH_SENS		14
 #define IWN_FW_TLV_PHY_CALIB		15
-#define	IWN_FW_TLV_WOWLAN_INST		16
-#define	IWN_FW_TLV_WOWLAN_DATA		17
-#define	IWN_FW_TLV_FLAGS			18
 
 	uint16_t	alt;
 	uint32_t	len;
@@ -1539,8 +1389,8 @@ struct iwn_fw_tlv {
 #define IWN_EEPROM_RFCFG	0x048
 #define IWN4965_EEPROM_DOMAIN	0x060
 #define IWN4965_EEPROM_BAND1	0x063
-#define IWN5000_EEPROM_REG		0x066
-#define IWN5000_EEPROM_CAL		0x067
+#define IWN5000_EEPROM_REG	0x066
+#define IWN5000_EEPROM_CAL	0x067
 #define IWN4965_EEPROM_BAND2	0x072
 #define IWN4965_EEPROM_BAND3	0x080
 #define IWN4965_EEPROM_BAND4	0x08d
@@ -1561,9 +1411,9 @@ struct iwn_fw_tlv {
 #define IWN6000_EEPROM_BAND6	0x040
 #define IWN5000_EEPROM_BAND7	0x049
 #define IWN6000_EEPROM_ENHINFO	0x054
-#define IWN5000_EEPROM_CRYSTAL	0x128 //XTAL in linux 3.2
-#define IWN5000_EEPROM_TEMP		0x12a //KELVIN_TEMPERATURE in linux 3.2
-#define IWN5000_EEPROM_VOLT		0x12b //RAW_TEMPERATURE  in linux 3.2
+#define IWN5000_EEPROM_CRYSTAL	0x128
+#define IWN5000_EEPROM_TEMP	0x12a
+#define IWN5000_EEPROM_VOLT	0x12b
 
 /* Possible flags for IWN_EEPROM_SKU_CAP. */
 #define IWN_EEPROM_SKU_CAP_11N	(1 << 6)
@@ -1681,11 +1531,6 @@ static const struct iwn_chan_band {
 	{ 11, { 36, 44, 52, 60, 100, 108, 116, 124, 132, 149, 157 } }
 };
 
-/* OTP */
-/* lower blocks contain EEPROM image and calibration data */
-#define OTP_LOW_IMAGE_SIZE		(2 * 512 * sizeof(int)) /* 2 KB */
-
-
 #define IWN1000_OTP_NBLOCKS	3 
 #define IWN6000_OTP_NBLOCKS	4 
 #define IWN6050_OTP_NBLOCKS	7
@@ -1695,12 +1540,6 @@ static const struct iwn_chan_band {
 #define IWN_RIDX_OFDM6	4
 
 #define IWN4965_MAX_PWR_INDEX	107
-
-#define IWN_POWERSAVE_LVL_NONE 			0
-#define IWN_POWERSAVE_LVL_VOIP_COMPATIBLE 	1
-#define IWN_POWERSAVE_LVL_MAX 			5
-
-#define IWN_POWERSAVE_LVL_DEFAULT IWN_POWERSAVE_LVL_NONE
 
 /*
  * RF Tx gain values from highest to lowest power (values obtained from
@@ -1871,7 +1710,17 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	 95
 };
 
-
+static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
+	105, 110,
+	192, 232,
+	 80, 145,
+	128, 232,
+	125, 175,
+	160, 310,
+	 97,
+	 97,
+	100
+};
 
 /* Map TID to TX scheduler's FIFO. */
 static const uint8_t iwn_tid2fifo[] = {
@@ -1956,101 +1805,3 @@ static const char * const iwn_fw_errmsg[] = {
 #define IWN_BARRIER_READ_WRITE(sc)					\
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
-
-
-		
-/* Flags for managing calibration result. See calib_need in iwn_base_params struct */
-#define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
-#define IWN_FLG_NEED_PHY_CALIB_LO				(1<<1)
-#define IWN_FLG_NEED_PHY_CALIB_TX_IQ			(1<<2)
-#define IWN_FLG_NEED_PHY_CALIB_CRYSTAL			(1<<3)
-#define IWN_FLG_NEED_PHY_CALIB_BASE_BAND		(1<<4)
-#define IWN_FLG_NEED_PHY_CALIB_TX_IQ_PERIODIC	(1<<5)
-#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET		(1<<6)
-#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2	(1<<7)
-
-		
-/* Define some parameters for managing different NIC.
- * Refer to linux specific file like iwl-xxxx.c to determine correct value for NIC
- *
- *
- * @max_ll_items: max number of OTP blocks
- * @shadow_ram_support: shadow support for OTP memory
- * @led_compensation: compensate on the led on/off time per HW according
- *	to the deviation to achieve the desired led frequency.
- *	The detail algorithm is described in iwl-led.c
- * @chain_noise_num_beacons: number of beacons used to compute chain noise
- * @adv_thermal_throttle: support advance thermal throttle
- * @support_ct_kill_exit: support ct kill exit condition
- * @support_wimax_coexist: support wimax/wifi co-exist
- * @plcp_delta_threshold: plcp error rate threshold used to trigger
- *	radio tuning when there is a high receiving plcp error rate
- * @chain_noise_scale: default chain noise scale used for gain computation
- * @wd_timeout: TX queues watchdog timeout
- * @max_event_log_size: size of event log buffer size for ucode event logging
- * @shadow_reg_enable: HW shadhow register bit
- * @no_idle_support: do not support idle mode
- * @hd_v2: v2 of enhanced sensitivity value, used for 2000 series and up
- * advanced_bt_coexist : Advanced BT management
- * bt_sco_disable :
- * additional_nic_config: For 6005 series
- * iq_invert : ? But need it for N 2000 series
- * regulatory_bands :
- * enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True' if update_enhanced_txpower = iwl_eeprom_enhanced_txpower 
- * need_temp_offset_calib : Need to compute some temp offset for calibration.
- * calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which calibration data ucode need. See calib_init_cfg in iwl-xxxx.c linux kernel file
- */
-struct iwn_base_params {
-	int eeprom_size;
-	uint32_t pll_cfg_val;
-	const uint16_t max_ll_items;
-	const bool shadow_ram_support;
-	uint16_t led_compensation;
-	bool adv_thermal_throttle;
-	bool support_ct_kill_exit;
-	uint8_t plcp_delta_threshold;
-	int chain_noise_scale;
-	unsigned int wd_timeout;
-	uint32_t max_event_log_size;
-	const bool shadow_reg_enable;
-	const bool hd_v2;
-	const bool advanced_bt_coexist;
-	const bool bt_session_2;
-	const bool bt_sco_disable;
-	const bool additional_nic_config;
-	const bool iq_invert;
-	const uint32_t *regulatory_bands;
-	const bool enhanced_TX_power; // See iwl-xxxx.c file to determine that. 
-	const bool need_temp_offset_calib; 
-	const uint16_t calib_need;
-	const bool running_post_alive_calib;
-
-	
-};
-
-		
-static struct iwn_base_params iwn_default_base_params = {
-	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
-	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */4, /*OTP_MAX_LL_ITEMS_2x00,*/
-	/*.shadow_ram_support = */true,
-	/*.led_compensation = */57,
-	/*.adv_thermal_throttle =*/ true,
-	/*.support_ct_kill_exit = */true,
-	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
-	/*.chain_noise_scale =*/ 1000,
-	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
-	/*.max_event_log_size =*/ 512,
-	/*.shadow_reg_enable = */false, 
-	/*.hd_v2 = */true,
-	/* advanced_bt_coexist */ false,
-	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true,
-	/* additional_nic_config */ false,
-	/* iq_invert */ false,
-	/* regulatory_bands */ iwn5000_regulatory_bands,
-	/* enhanced_TX_power */ false,
-	/* need_temp_offset_calib */ false,
-	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ false,
-};

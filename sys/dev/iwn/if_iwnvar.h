@@ -102,7 +102,6 @@ struct iwn_node {
 	struct	ieee80211_node		ni;	/* must be the first */
 	uint16_t			disable_tid;
 	uint8_t				id;
-	uint32_t			ridx[256];
 	struct {
 		uint64_t		bitmap;
 		int			startidx;
@@ -213,8 +212,6 @@ struct iwn_softc {
 #define IWN_FLAG_ADV_BTCOEX	(1 << 8)
 
 	uint8_t 		hw_type;
-	/* subdevice_id will be used to adjust configuration */
-	uint16_t			subdevice_id; 
 
 	struct iwn_ops		ops;
 	const char		*fwname;
@@ -277,14 +274,13 @@ struct iwn_softc {
 	struct callout		watchdog_to;
 
 	struct iwn_fw_info	fw;
-	struct iwn_calib_info	calibcmd[IWN5000_PHY_CALIB_MAX_RESULT];
+	struct iwn_calib_info	calibcmd[5];
 	uint32_t		errptr;
 
 	struct iwn_rx_stat	last_rx_stat;
 	int			last_rx_valid;
 	struct iwn_ucode_info	ucode_info;
 	struct iwn_rxon		rxon;
-	uint8_t			uc_pan_support; /*CG: PAN support */
 	uint32_t		rawtemp;
 	int			temp;
 	int			noise;
@@ -299,13 +295,10 @@ struct iwn_softc {
 	char			eeprom_domain[4];
 	uint32_t		eeprom_crystal;
 	int16_t			eeprom_temp;
-	int16_t			eeprom_temp_high;
 	int16_t			eeprom_voltage;
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
-
-	uint32_t		tlv_feature_flags;
 
 	int32_t			temp_off;
 	uint32_t		int_mask;
@@ -333,9 +326,6 @@ struct iwn_softc {
 
 	struct iwn_rx_radiotap_header sc_rxtap;
 	struct iwn_tx_radiotap_header sc_txtap;
-	
-	/* For specifique params */
-	struct iwn_base_params *base_params;
 };
 
 #define IWN_LOCK_INIT(_sc) \
@@ -345,8 +335,3 @@ struct iwn_softc {
 #define IWN_LOCK_ASSERT(_sc)		mtx_assert(&(_sc)->sc_mtx, MA_OWNED)
 #define IWN_UNLOCK(_sc)			mtx_unlock(&(_sc)->sc_mtx)
 #define IWN_LOCK_DESTROY(_sc)		mtx_destroy(&(_sc)->sc_mtx)
-#define IWN_UC_PAN_PRESENT		1
-/* Return defined name */
-#define IWN_DESC(x) case x: return #x
-#define COUNTOF( array ) ( sizeof( array )/sizeof( array[0] ) )
-
