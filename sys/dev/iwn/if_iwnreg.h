@@ -790,6 +790,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_PHY_CALIB		    176
 #define IWN_CMD_BT_COEX_PRIOTABLE	204
 #define IWN_CMD_BT_COEX_PROT		205
+#define IWN_CMD_BT_COEX_NOTIF		206
 /* PAN commands */
 #define IWN_CMD_WIPAN_PARAMS			0xb2
 #define IWN_CMD_WIPAN_RXON			0xb3
@@ -2263,7 +2264,8 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	 95,
 	 390
 };
-min_ofdm_x1;  // auto_corr_min_ofdm_x1 , max_ofdm_x1; //auto_corr_max_ofdm_x1
+
+/*min_ofdm_x1;  // auto_corr_min_ofdm_x1 , max_ofdm_x1; //auto_corr_max_ofdm_x1
 min_ofdm_mrc_x1; //auto_corr_min_ofdm_mrc_x1, max_ofdm_mrc_x1; //auto_corr_max_ofdm_mrc
 min_ofdm_x4; //auto_corr_min_ofdm, max_ofdm_x4; //auto_corr_max_ofdm 
 min_ofdm_mrc_x4; //auto_corr_min_ofdm_mrc, max_ofdm_mrc_x4 //max_ofdm_mrc_x4
@@ -2273,7 +2275,7 @@ min_energy_cck: min_nrg_cck
 energy_cck:nrg_th_cck
 energy_ofdm:nrg_th_ofdm
 corr_barker_mrc :barker_corr_th_min_mrc
-
+*/
  /* Define several specific values for Intel 6000 series */
  static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
 	105, 110,

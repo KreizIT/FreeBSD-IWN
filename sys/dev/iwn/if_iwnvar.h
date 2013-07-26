@@ -179,6 +179,7 @@ struct iwn_calib_state {
 	uint32_t	energy_cck;
 	
 	uint32_t	corr_barker_mrc;
+	uint32_t	energy_ofdm;
 };
 
 struct iwn_calib_info {
@@ -404,7 +405,4 @@ struct iwn_softc {
 #define IWN_UNLOCK(_sc)			mtx_unlock(&(_sc)->sc_mtx)
 #define IWN_LOCK_DESTROY(_sc)		mtx_destroy(&(_sc)->sc_mtx)
 #define IWN_UC_PAN_PRESENT		1
-/* Return defined name */
-#define IWN_DESC(x) case x: return #x
-#define COUNTOF( array ) ( sizeof( array )/sizeof( array[0] ) )
 
