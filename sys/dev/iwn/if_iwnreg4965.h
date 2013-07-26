@@ -1,0 +1,257 @@
+/*-
+ * Copyright (c) 2013 Cedric GROSS <c.gross@kreiz-it.fr>
+ * Copyright (c) 2011 Intel Corporation
+ * Copyright (c) 2007-2009
+ *	Damien Bergamini <damien.bergamini@free.fr>
+ * Copyright (c) 2008
+ *	Benjamin Close <benjsc@FreeBSD.org>
+ * Copyright (c) 2008 Sam Leffler, Errno Consulting
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+ 
+ __FBSDID("$FreeBSD$");
+ 
+#define IWN4965_NTXQUEUES	16
+#define IWN4965_FIRSTAGGQUEUE	7
+#define IWN4965_NDMACHNLS	7
+
+#define IWN4965_SCHED_DRAM_ADDR		(IWN_SCHED_BASE + 0x010)
+#define IWN4965_SCHED_TXFACT		(IWN_SCHED_BASE + 0x01c)
+#define IWN4965_SCHED_QUEUE_RDPTR(qid)	(IWN_SCHED_BASE + 0x064 + (qid) * 4)
+#define IWN4965_SCHED_QCHAIN_SEL	(IWN_SCHED_BASE + 0x0d0)
+#define IWN4965_SCHED_INTR_MASK		(IWN_SCHED_BASE + 0x0e4)
+#define IWN4965_SCHED_QUEUE_STATUS(qid)	(IWN_SCHED_BASE + 0x104 + (qid) * 4)
+
+#define IWN4965_SCHED_CTX_OFF		0x380
+#define IWN4965_SCHED_CTX_LEN		416
+#define IWN4965_SCHED_QUEUE_OFFSET(qid)	(0x380 + (qid) * 8)
+#define IWN4965_SCHED_TRANS_TBL(qid)	(0x500 + (qid) * 2)
+
+#define IWN_HW_REV_TYPE_4965	0
+
+#define IWN4965_TXQ_STATUS_ACTIVE	0x0007fc01
+#define IWN4965_TXQ_STATUS_INACTIVE	0x0007fc00
+#define IWN4965_TXQ_STATUS_AGGR_ENA	(1 << 5 | 1 << 8)
+#define IWN4965_TXQ_STATUS_CHGACT	(1 << 10)
+
+#define IWN4965_SCHED_COUNT	512
+#define IWN4965_SCHEDSZ		(IWN4965_NTXQUEUES * IWN4965_SCHED_COUNT * 2)
+
+#define IWN4965_RXONSZ	(sizeof (struct iwn_rxon) - 6)
+
+#define IWN4965_ID_BROADCAST	31
+
+#define IWN4965_PHY_CALIB_DIFF_GAIN		 7
+
+#define IWN4965_FW_TEXT_MAXSZ	( 96 * 1024)
+#define IWN4965_FW_DATA_MAXSZ	( 40 * 1024)
+#define IWN4965_FWSZ		(IWN4965_FW_TEXT_MAXSZ + IWN4965_FW_DATA_MAXSZ)
+
+#define IWN4965_EEPROM_DOMAIN	0x060
+#define IWN4965_EEPROM_BAND1	0x063
+#define IWN4965_EEPROM_BAND2	0x072
+#define IWN4965_EEPROM_BAND3	0x080
+#define IWN4965_EEPROM_BAND4	0x08d
+#define IWN4965_EEPROM_BAND5	0x099
+#define IWN4965_EEPROM_BAND6	0x0a0
+#define IWN4965_EEPROM_BAND7	0x0a8
+#define IWN4965_EEPROM_MAXPOW	0x0e8
+#define IWN4965_EEPROM_VOLTAGE	0x0e9
+#define IWN4965_EEPROM_BANDS	0x0ea
+
+#define IWN4965_MAX_PWR_INDEX	107
+
+#define IWN_HW_IF_CONFIG_4965_R		(1 <<  4)
+
+/*
+ * RF Tx gain values from highest to lowest power (values obtained from
+ * the reference driver.)
+ */
+static const uint8_t iwn4965_rf_gain_2ghz[IWN4965_MAX_PWR_INDEX + 1] = {
+	0x3f, 0x3f, 0x3f, 0x3e, 0x3e, 0x3e, 0x3d, 0x3d, 0x3d, 0x3c, 0x3c,
+	0x3c, 0x3b, 0x3b, 0x3b, 0x3a, 0x3a, 0x3a, 0x39, 0x39, 0x39, 0x38,
+	0x38, 0x38, 0x37, 0x37, 0x37, 0x36, 0x36, 0x36, 0x35, 0x35, 0x35,
+	0x34, 0x34, 0x34, 0x33, 0x33, 0x33, 0x32, 0x32, 0x32, 0x31, 0x31,
+	0x31, 0x30, 0x30, 0x30, 0x06, 0x06, 0x06, 0x05, 0x05, 0x05, 0x04,
+	0x04, 0x04, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x01, 0x01, 0x01,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static const uint8_t iwn4965_rf_gain_5ghz[IWN4965_MAX_PWR_INDEX + 1] = {
+	0x3f, 0x3f, 0x3f, 0x3f, 0x3f, 0x3e, 0x3e, 0x3e, 0x3d, 0x3d, 0x3d,
+	0x3c, 0x3c, 0x3c, 0x3b, 0x3b, 0x3b, 0x3a, 0x3a, 0x3a, 0x39, 0x39,
+	0x39, 0x38, 0x38, 0x38, 0x37, 0x37, 0x37, 0x36, 0x36, 0x36, 0x35,
+	0x35, 0x35, 0x34, 0x34, 0x34, 0x33, 0x33, 0x33, 0x32, 0x32, 0x32,
+	0x31, 0x31, 0x31, 0x30, 0x30, 0x30, 0x25, 0x25, 0x25, 0x24, 0x24,
+	0x24, 0x23, 0x23, 0x23, 0x22, 0x18, 0x18, 0x17, 0x17, 0x17, 0x16,
+	0x16, 0x16, 0x15, 0x15, 0x15, 0x14, 0x14, 0x14, 0x13, 0x13, 0x13,
+	0x12, 0x08, 0x08, 0x07, 0x07, 0x07, 0x06, 0x06, 0x06, 0x05, 0x05,
+	0x05, 0x04, 0x04, 0x04, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x01,
+	0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+/*
+ * DSP pre-DAC gain values from highest to lowest power (values obtained
+ * from the reference driver.)
+ */
+static const uint8_t iwn4965_dsp_gain_2ghz[IWN4965_MAX_PWR_INDEX + 1] = {
+	0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68,
+	0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e,
+	0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62,
+	0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68,
+	0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e,
+	0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62,
+	0x6e, 0x68, 0x62, 0x61, 0x60, 0x5f, 0x5e, 0x5d, 0x5c, 0x5b, 0x5a,
+	0x59, 0x58, 0x57, 0x56, 0x55, 0x54, 0x53, 0x52, 0x51, 0x50, 0x4f,
+	0x4e, 0x4d, 0x4c, 0x4b, 0x4a, 0x49, 0x48, 0x47, 0x46, 0x45, 0x44,
+	0x43, 0x42, 0x41, 0x40, 0x3f, 0x3e, 0x3d, 0x3c, 0x3b
+};
+
+static const uint8_t iwn4965_dsp_gain_5ghz[IWN4965_MAX_PWR_INDEX + 1] = {
+	0x7b, 0x75, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62,
+	0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68,
+	0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e,
+	0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62,
+	0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68,
+	0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e,
+	0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62,
+	0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68,
+	0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e, 0x68, 0x62, 0x6e,
+	0x68, 0x62, 0x6e, 0x68, 0x62, 0x5d, 0x58, 0x53, 0x4e
+};
+
+
+struct iwn4965_node_info {
+	uint8_t		control;
+	uint8_t		reserved1[3];
+	uint8_t		macaddr[IEEE80211_ADDR_LEN];
+	uint16_t	reserved2;
+	uint8_t		id;
+	uint8_t		flags;
+	uint16_t	reserved3;
+	uint16_t	kflags;
+	uint8_t		tsc2;	/* TKIP TSC2 */
+	uint8_t		reserved4;
+	uint16_t	ttak[5];
+	uint8_t		kid;
+	uint8_t		reserved5;
+	uint8_t		key[16];
+	uint32_t	htflags;
+	uint32_t	mask;
+	uint16_t	disable_tid;
+	uint16_t	reserved6;
+	uint8_t		addba_tid;
+	uint8_t		delba_tid;
+	uint16_t	addba_ssn;
+	uint32_t	reserved7;
+} __packed;
+
+struct iwn4965_cmd_txpower {
+	uint8_t		band;
+	uint8_t		reserved1;
+	uint8_t		chan;
+	uint8_t		reserved2;
+	struct {
+		uint8_t	rf_gain[2];
+		uint8_t	dsp_gain[2];
+	} __packed	power[IWN_RIDX_MAX + 1];
+} __packed;
+
+struct iwn4965_tx_stat {
+	uint8_t		nframes;
+	uint8_t		btkillcnt;
+	uint8_t		rtsfailcnt;
+	uint8_t		ackfailcnt;
+	uint32_t	rate;
+	uint16_t	duration;
+	uint16_t	reserved;
+	uint32_t	power[2];
+	uint32_t	status;
+} __packed;
+
+struct iwn4965_rx_phystat {
+	uint16_t	antenna;
+	uint16_t	agc;
+	uint8_t		rssi[6];
+} __packed;
+
+struct iwn4965_eeprom_chan_samples {
+	uint8_t	num;
+	struct {
+		uint8_t temp;
+		uint8_t	gain;
+		uint8_t	power;
+		int8_t	pa_det;
+	}	samples[2][IWN_NSAMPLES];
+} __packed;
+struct iwn4965_eeprom_band {
+	uint8_t	lo;	/* low channel number */
+	uint8_t	hi;	/* high channel number */
+	struct	iwn4965_eeprom_chan_samples chans[2];
+} __packed;
+
+static const uint32_t iwn4965_regulatory_bands[IWN_NBANDS] = {
+	IWN4965_EEPROM_BAND1,
+	IWN4965_EEPROM_BAND2,
+	IWN4965_EEPROM_BAND3,
+	IWN4965_EEPROM_BAND4,
+	IWN4965_EEPROM_BAND5,
+	IWN4965_EEPROM_BAND6,
+	IWN4965_EEPROM_BAND7 // Should be IWN5000_EEPRON_NO_HT40
+};
+
+static const struct iwn_sensitivity_limits iwn4965_sensitivity_limits = {
+	105, 140,
+	220, 270,
+	 85, 120,
+	170, 210,
+	125, 200,
+	200, 400,
+	 97,
+	100,
+	100,
+	390
+};
+
+static void	iwn4965_read_eeprom(struct iwn_softc *);
+static int	iwn4965_attach(struct iwn_softc *, uint16_t);
+static void	iwn4965_update_sched(struct iwn_softc *, int, int, uint8_t,
+		    uint16_t);
+static int	iwn4965_add_node(struct iwn_softc *, struct iwn_node_info *,
+		    int);
+static void	iwn4965_power_calibration(struct iwn_softc *, int);
+static int	iwn4965_set_txpower(struct iwn_softc *,
+		    struct ieee80211_channel *, int);
+static int	iwn4965_get_rssi(struct iwn_softc *, struct iwn_rx_stat *);
+static int	iwn4965_init_gains(struct iwn_softc *);
+static int	iwn4965_get_temperature(struct iwn_softc *);
+static int	iwn4965_set_gains(struct iwn_softc *);
+static void	iwn4965_ampdu_tx_start(struct iwn_softc *,
+		    struct ieee80211_node *, int, uint8_t, uint16_t);
+static void	iwn4965_ampdu_tx_stop(struct iwn_softc *, int,
+		    uint8_t, uint16_t);
+static int	iwn4965_post_alive(struct iwn_softc *);
+static int	iwn4965_load_bootcode(struct iwn_softc *, const uint8_t *,
+		    int);
+static int	iwn4965_load_firmware(struct iwn_softc *);
+static int	iwn4965_nic_config(struct iwn_softc *);
+static void	iwn4965_tx_done(struct iwn_softc *, struct iwn_rx_desc *,
+		    struct iwn_rx_data *);
+#ifdef	IWN_DEBUG
+static void	iwn4965_print_power_group(struct iwn_softc *, int);
+#endif
+

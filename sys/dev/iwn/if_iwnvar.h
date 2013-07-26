@@ -339,8 +339,10 @@ struct iwn_softc {
 	uint32_t		qfullmsk;
 
 	uint32_t		prom_base;
+#ifdef	IWN_4965
 	struct iwn4965_eeprom_band
 				bands[IWN_NBANDS];
+#endif
 	struct iwn_eeprom_chan	eeprom_channels[IWN_NBANDS][IWN_MAX_CHAN_PER_BAND];
 	uint16_t		rfcfg;
 	uint8_t			calib_ver;

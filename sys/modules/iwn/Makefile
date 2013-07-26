@@ -12,6 +12,7 @@ opt_wlan.h:
 .if IWN_DEBUG
 CFLAGS+=-DIWN_DEBUG
 .endif
+.if IWN_4965
+CFLAGS+=-DIWN_4965
 .endif
-
 .include <bsd.kmod.mk>
