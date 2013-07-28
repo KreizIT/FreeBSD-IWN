@@ -238,6 +238,23 @@ struct iwn_vap {
 };
 #define	IWN_VAP(_vap)	((struct iwn_vap *)(_vap))
 
+#ifdef	IWN_4965
+struct iwn4965_eeprom_chan_samples {
+	uint8_t	num;
+	struct {
+		uint8_t temp;
+		uint8_t	gain;
+		uint8_t	power;
+		int8_t	pa_det;
+	}	samples[2][IWN_NSAMPLES];
+} __packed;
+
+struct iwn4965_eeprom_band {
+	uint8_t	lo;	/* low channel number */
+	uint8_t	hi;	/* high channel number */
+	struct	iwn4965_eeprom_chan_samples chans[2];
+} __packed;
+#endif
 struct iwn_softc {
 	device_t		sc_dev;
 

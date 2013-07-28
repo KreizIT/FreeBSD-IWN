@@ -14,5 +14,6 @@ CFLAGS+=-DIWN_DEBUG
 .endif
 .if IWN_4965
 CFLAGS+=-DIWN_4965
+SRCS+= if_iwn495.c
 .endif
 .include <bsd.kmod.mk>

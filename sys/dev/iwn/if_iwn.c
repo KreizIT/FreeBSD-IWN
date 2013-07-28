@@ -835,7 +835,7 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 
 		DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RESET, "->%s end\n", __func__);
 
-		}
+}
 
 static void
 iwn_sysctlattach(struct iwn_softc *sc)
@@ -2497,6 +2497,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		tap->wr_dbm_antsignal = (int8_t)rssi;
 		tap->wr_dbm_antnoise = (int8_t)nf;
 		tap->wr_tsft = stat->tstamp;
+		/* XXX rate contain also antenna information */
 		switch (stat->rate) {
 		/* CCK rates. */
 		case  10: tap->wr_rate =   2; break;
@@ -2513,7 +2514,10 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		case 0x1: tap->wr_rate =  96; break;
 		case 0x3: tap->wr_rate = 108; break;
 		/* Unknown rate: should not happen. */
-		default:  tap->wr_rate =   0;
+		default:  
+			tap->wr_rate =   0;
+			DPRINTF(sc, IWN_DEBUG_RECV, 
+			    "Rate found: 0x%08x and not translated\n", stat->rate);
 		}
 	}
 
@@ -3118,7 +3122,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 		    desc->type, iwn_intr_str(desc->type),
 		    le16toh(desc->len));
 
-		if (!(desc->qid & 0x80))	/* Reply to a command. */
+		if (!(desc->qid & IWN_UNSOLICITED_RX_NOTIF))	/* Reply to a command. */
 			iwn_cmd_done(sc, desc);
 
 		switch (desc->type) {
@@ -4603,14 +4607,14 @@ iwn5000_get_rssi(struct iwn_softc *sc, struct iwn_rx_stat *stat)
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RECV, "->Doing %s\n", __func__);
 
-	agc = (le32toh(phy->agc) >> 9) & 0x7f;
+	agc = (le32toh(phy->agc) >> 9) & 0x7f;	/* 0x7f == (0xfe00 >> 9) */
 
 	rssi = MAX(le16toh(phy->rssi[0]) & 0xff,
 		   le16toh(phy->rssi[1]) & 0xff);
 	rssi = MAX(le16toh(phy->rssi[2]) & 0xff, rssi);
 
 	DPRINTF(sc, IWN_DEBUG_RECV,
-	    "%s: agc %d rssi %d %d %d result %d\n", __func__, agc,
+	    "%s: agc %d rssi ANT_A:%d ANT_B:%d ANT_C:%d result %d dBm\n", __func__, agc,
 	    phy->rssi[0], phy->rssi[1], phy->rssi[2],
 	    rssi - agc - IWN_RSSI_TO_DBM);
 	return rssi - agc - IWN_RSSI_TO_DBM;

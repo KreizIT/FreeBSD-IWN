@@ -24,14 +24,14 @@
 #define IWN_CT_KILL_EXIT_THRESHOLD         95              /* in Celsius */
 
  
-/* ============================================================================
+/* ==========================================================================
  *							DEVICE ID BLOCK
- * ============================================================================ 
+ * ==========================================================================
 */ 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 2x30 series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_2x30_1 	0x0887 
 #define IWN_DID_2x30_2 	0x0888 
@@ -44,9 +44,9 @@
 #define IWN_SDID_2x30_6 	0x4466 // "2000 Series 2x2 BG/BT"
  
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 1000 series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_1000_1 0x0083
 #define IWN_DID_1000_2 0x0084
@@ -67,9 +67,9 @@
 #define IWN_SDID_1000_12 0x1316 //  iwl1000_bg_cfg
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 6x00 series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_6x00_1	0x422B
 #define IWN_DID_6x00_2  0x422C
@@ -87,9 +87,9 @@
 #define IWN_SDID_6x00_9 0x1311 //  iwl6000i_2agn_cfg
 #define IWN_SDID_6x00_10 0x1316 //  iwl6000i_2abg_cfg
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 6x05 series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_6x05_1	0x0082
 #define IWN_DID_6x05_2 	0x0085
@@ -108,9 +108,9 @@
 #define IWN_SDID_6x05_12 	0x1305 //iwl6005_2agn_mow2_cfg/* high 5GHz active */
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 6050 WiFi/WiMax Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_6050_1 0x0087
 #define IWN_DID_6050_2 0x0089
@@ -123,9 +123,9 @@
 #define IWN_SDID_6050_6 0x1316 //iwl6050_2abg_cfg
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 6150 Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 
 #define IWN_DID_6150_1 	0x0885 
@@ -139,9 +139,9 @@
 #define IWN_SDID_6150_6	0x1317 // iwl6150_bg_cfg) 
  
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 6035 Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_6035_1 	0x088E
 #define IWN_DID_6035_2 	0x088F
@@ -152,9 +152,9 @@
 #define IWN_SDID_6035_4 0x4860 // iwl6035_2agn_cfg
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 1030 and 6030 Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_x030_1 		0x008A 
 #define IWN_DID_x030_2 		0x008B
@@ -179,9 +179,9 @@
 #define IWN_SDID_x030_16 	0x5226 // iwl6030_2abg_cfg
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 130 Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_130_1 		0x0896
 #define IWN_DID_130_2 		0x0897
@@ -194,9 +194,9 @@
 #define IWN_SDID_130_6 		0x5027 //iwl130_bg_cfg
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 100 Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_100_1 		0x08AE
 #define IWN_DID_100_2 		0x08AF
@@ -209,9 +209,9 @@
 #define IWN_SDID_100_6 		0x1027 //iwl100_bg_cfg)}
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 5x00 Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_5x00_1 		0x4232
 #define IWN_DID_5x00_2 		0x4237
@@ -256,9 +256,9 @@
 #define IWN_SDID_5x00_36 		0x1114 //iwl5300_agn_cfg
 
 /*
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  * Device ID for 5x50 Series 
- * -----------------------------------------------------------------------------
+ * --------------------------------------------------------------------------
  */
 #define IWN_DID_5x50_1			0x423A
 #define IWN_DID_5x50_2			0x423B
@@ -700,6 +700,16 @@ struct iwn_rx_status {
 } __packed;
 
 struct iwn_rx_desc {
+	/*
+	 * The first 4 bytes of the RX frame header contain both the RX frame
+	 * size and some flags.
+	 * Bit fields:
+	 * 31:    flag flush RB request
+	 * 30:    flag ignore TC (terminal counter) request
+	 * 29:    flag fast IRQ request
+	 * 28-14: Reserved
+	 * 13-00: RX frame size
+	 */
 	uint32_t	len;
 	uint8_t		type;
 #define IWN_UC_READY			  1
@@ -718,10 +728,28 @@ struct iwn_rx_desc {
 #define IWN_RX_DONE			195
 #define IWN_RX_COMPRESSED_BA		197
 
-	uint8_t		flags;
-	uint8_t		idx;
+	uint8_t		flags;	/* 0:5 reserved, 6 abort, 7 internal */
+	/*
+	 * The driver sets up the sequence number to values of its choosing.
+	 * uCode does not use this value, but passes it back to the driver
+	 * when sending the response to each driver-originated command, so
+	 * the driver can match the response to the command.  Since the values
+	 * don't get used by uCode, the driver may set up an arbitrary format.
+	 *
+	 * There is one exception:  uCode sets bit 15 when it originates
+	 * the response/notification, i.e. when the response/notification
+	 * is not a direct response to a command sent by the driver.  For
+	 * example, uCode issues REPLY_RX when it sends a received frame
+	 * to the driver; it is not a direct response to any driver command.
+	 */
+	uint8_t		idx;	/* position within TX queue */
 	uint8_t		qid;
+	/* 0:4 TX queue id - 5:6 reserved - 7 unsolicited RX 
+	 * or uCode-originated notification
+	 */
 } __packed;
+
+#define IWN_UNSOLICITED_RX_NOTIF	0x80
 
 /* CARD_STATE_NOTIFICATION */ 
 #define IWN_STATE_CHANGE_HW_CARD_DISABLED               0x01
@@ -1529,23 +1557,111 @@ struct iwn5000_rx_phystat {
 } __packed;
 
 struct iwn_rx_stat {
-	uint8_t		phy_len;
-	uint8_t		cfg_phy_len;
+	uint8_t		phy_len;	/* non configurable DSP phy data byte count */
+	uint8_t		cfg_phy_len;		/* configurable DSP phy data byte count */
 #define IWN_STAT_MAXLEN	20
 
-	uint8_t		id;
+	uint8_t		id;	/* configurable DSP phy data set ID */
 	uint8_t		reserved1;
-	uint64_t	tstamp;
-	uint32_t	beacon;
-	uint16_t	flags;
+	uint64_t	tstamp;	/* TSF at on air rise */
+	uint32_t	beacon;	/* beacon at on-air rise */
+	uint16_t	flags;	/* general phy flags: band, modulation, ... */
 #define IWN_STAT_FLAG_SHPREAMBLE	(1 << 2)
 
-	uint16_t	chan;
-	uint8_t		phybuf[32];
-	uint32_t	rate;
-	uint16_t	len;
-	uint16_t	reserve3;
+	uint16_t	chan;	/* channel number */
+	uint8_t		phybuf[32];	/* for various implementations of non_cfg_phy */
+	uint32_t	rate;	/* IWN_RATE_MCS_* */
+/**
+ * rate bit fields
+ *
+ * High-throughput (HT) rate format for bits 7:0 (bit 8 must be "1"):
+ *  2-0:  0)   6 Mbps
+ *        1)  12 Mbps
+ *        2)  18 Mbps
+ *        3)  24 Mbps
+ *        4)  36 Mbps
+ *        5)  48 Mbps
+ *        6)  54 Mbps
+ *        7)  60 Mbps
+ *
+ *  4-3:  0)  Single stream (SISO)
+ *        1)  Dual stream (MIMO)
+ *        2)  Triple stream (MIMO)
+ *
+ *    5:  Value of 0x20 in bits 7:0 indicates 6 Mbps HT40 duplicate data
+ *
+ * Legacy OFDM rate format for bits 7:0 (bit 8 must be "0", bit 9 "0"):
+ *  3-0:  0xD)   6 Mbps
+ *        0xF)   9 Mbps
+ *        0x5)  12 Mbps
+ *        0x7)  18 Mbps
+ *        0x9)  24 Mbps
+ *        0xB)  36 Mbps
+ *        0x1)  48 Mbps
+ *        0x3)  54 Mbps
+ *
+ * Legacy CCK rate format for bits 7:0 (bit 8 must be "0", bit 9 "1"):
+ *  6-0:   10)  1 Mbps
+ *         20)  2 Mbps
+ *         55)  5.5 Mbps
+ *        110)  11 Mbps
+ *
+ */
+	uint16_t	len;	/* frame's byte-count */
+	uint16_t	frame_time;		/* frame's time on the air */
 } __packed;
+
+#define IWN_RATE_MCS_CODE_MSK 0x7
+#define IWN_RATE_MCS_SPATIAL_POS 3
+#define IWN_RATE_MCS_SPATIAL_MSK 0x18
+#define IWN_RATE_MCS_HT_DUP_POS 5
+#define IWN_RATE_MCS_HT_DUP_MSK 0x20
+/* Both legacy and HT use bits 7:0 as the CCK/OFDM rate or HT MCS */
+#define IWN_RATE_MCS_RATE_MSK 0xff
+
+/* Bit 8: (1) HT format, (0) legacy format in bits 7:0 */
+#define IWN_RATE_MCS_FLAGS_POS 8
+#define IWN_RATE_MCS_HT_POS 8
+#define IWN_RATE_MCS_HT_MSK 0x100
+
+/* Bit 9: (1) CCK, (0) OFDM.  HT (bit 8) must be "0" for this bit to be valid */
+#define IWN_RATE_MCS_CCK_POS 9
+#define IWN_RATE_MCS_CCK_MSK 0x200
+
+/* Bit 10: (1) Use Green Field preamble */
+#define IWN_RATE_MCS_GF_POS 10
+#define IWN_RATE_MCS_GF_MSK 0x400
+
+/* Bit 11: (1) Use 40Mhz HT40 chnl width, (0) use 20 MHz legacy chnl width */
+#define IWN_RATE_MCS_HT40_POS 11
+#define IWN_RATE_MCS_HT40_MSK 0x800
+
+/* Bit 12: (1) Duplicate data on both 20MHz chnls. HT40 (bit 11) must be set. */
+#define IWN_RATE_MCS_DUP_POS 12
+#define IWN_RATE_MCS_DUP_MSK 0x1000
+
+/* Bit 13: (1) Short guard interval (0.4 usec), (0) normal GI (0.8 usec) */
+#define IWN_RATE_MCS_SGI_POS 13
+#define IWN_RATE_MCS_SGI_MSK 0x2000
+
+/*
+ * rate Tx antenna masks
+ * 4965 has 2 transmitters
+ * 5100 has 1 transmitter B
+ * 5150 has 1 transmitter A
+ * 5300 has 3 transmitters
+ * 5350 has 3 transmitters
+ * bit14:16
+ */
+#define IWN_RATE_MCS_ANT_POS	14
+#define IWN_RATE_MCS_ANT_A_MSK	0x04000
+#define IWN_RATE_MCS_ANT_B_MSK	0x08000
+#define IWN_RATE_MCS_ANT_C_MSK	0x10000
+#define IWN_RATE_MCS_ANT_AB_MSK	(IWN_RATE_MCS_ANT_A_MSK \
+    | IWN_RATE_MCS_ANT_B_MSK)
+#define IWN_RATE_MCS_ANT_ABC_MSK	(IWN_RATE_MCS_ANT_AB_MSK \
+    | IWN_RATE_MCS_ANT_C_MSK)
+#define IWN_RATE_ANT_NUM 3
 
 #define IWN_RSSI_TO_DBM	44
 
@@ -2209,13 +2325,15 @@ static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
 };		
 		
 		
-/* =============================================================================
+/* ==========================================================================
  *                                  NIC PARAMETERS
  *
- * =============================================================================
+ * ==========================================================================
  */
  
-/* Flags for managing calibration result. See calib_need in iwn_base_params struct */
+/* Flags for managing calibration result. See calib_need 
+ * in iwn_base_params struct 
+ */
 #define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
 #define IWN_FLG_NEED_PHY_CALIB_LO				(1<<1)
 #define IWN_FLG_NEED_PHY_CALIB_TX_IQ			(1<<2)
@@ -2227,14 +2345,14 @@ static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
 
 		
 /* Define some parameters for managing different NIC.
- * Refer to linux specific file like iwl-xxxx.c to determine correct value for NIC
- *
+ * Refer to linux specific file like iwl-xxxx.c to determine correct value 
+ * for NIC.
  *
  * @max_ll_items: max number of OTP blocks
  * @shadow_ram_support: shadow support for OTP memory
  * @led_compensation: compensate on the led on/off time per HW according
- *	to the deviation to achieve the desired led frequency.
- *	The detail algorithm is described in iwl-led.c
+ *     to the deviation to achieve the desired led frequency.
+ *     The detail algorithm is described in iwl-led.c
  * @chain_noise_num_beacons: number of beacons used to compute chain noise
  * @adv_thermal_throttle: support advance thermal throttle
  * @support_ct_kill_exit: support ct kill exit condition
@@ -2248,14 +2366,18 @@ static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
  * @no_idle_support: do not support idle mode
  * @hd_v2: v2 of enhanced sensitivity value, used for 2000 series and up
  * advanced_bt_coexist : Advanced BT management
- * bt_session_2 : NIC need a new struct for configure BT coexistence. Needed only if advanced_bt_coexist is true 
+ * bt_session_2 : NIC need a new struct for configure BT coexistence. Needed 
+ *   only if advanced_bt_coexist is true 
  * bt_sco_disable :
  * additional_nic_config: For 6005 series
  * iq_invert : ? But need it for N 2000 series
  * regulatory_bands :
- * enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True' if update_enhanced_txpower = iwl_eeprom_enhanced_txpower 
+ * enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True'
+ *  if update_enhanced_txpower = iwl_eeprom_enhanced_txpower 
  * need_temp_offset_calib : Need to compute some temp offset for calibration.
- * calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which calibration data ucode need. See calib_init_cfg in iwl-xxxx.c linux kernel file
+ * calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which 
+ *    calibration data ucode need. See calib_init_cfg in iwl-xxxx.c 
+ *    linux kernel file
  * additional_gp_drv_bit : Specific bit to defined during nic_config
  */
 struct iwn_base_params {
@@ -2309,7 +2431,8 @@ static struct iwn_base_params iwn_default_base_params = {
 	false, //additional_nic_config
 	iwn5000_regulatory_bands, //regulatory_bands
 	false, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO 
+	    | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, // no_multi_vaps
@@ -2335,7 +2458,9 @@ static struct iwn_base_params iwn2030_base_params = {
 	false, //additional_nic_config
 	iwn2030_regulatory_bands, //regulatory_bands
 	true, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND | IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ), //calib_need
 	false, //no_crystal_calibration
 	true, //support_hostap
 	false, //no_multi_vaps
@@ -2362,7 +2487,8 @@ static struct iwn_base_params iwn_1000_base_params = {
 	false, //additional_nic_config
 	iwn5000_regulatory_bands, //regulatory_bands
 	false, //enhanced_TX_power
-	( IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	( IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
@@ -2387,7 +2513,8 @@ static struct iwn_base_params iwn_6000_base_params = {
 	false, //additional_nic_config
 	iwn6000_regulatory_bands, //regulatory_bands
 	true, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
@@ -2412,7 +2539,8 @@ static struct iwn_base_params iwn_6000i_base_params = {
 	false, //additional_nic_config
 	iwn6000_regulatory_bands, //regulatory_bands
 	true, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
@@ -2437,7 +2565,9 @@ static struct iwn_base_params iwn_6000g2_base_params = {
 	false, //additional_nic_config
 	iwn6000_regulatory_bands, //regulatory_bands
 	true, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
@@ -2462,7 +2592,9 @@ static struct iwn_base_params iwn_6050_base_params = {
 	true, //additional_nic_config
 	iwn6000_regulatory_bands, //regulatory_bands
 	true, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
@@ -2487,7 +2619,9 @@ static struct iwn_base_params iwn_6150_base_params = {
 	true, //additional_nic_config
 	iwn6000_regulatory_bands, //regulatory_bands
 	true, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
@@ -2513,7 +2647,9 @@ static struct iwn_base_params iwn_6000g2b_base_params = {
 	false, //additional_nic_config
 	iwn6000_regulatory_bands, //regulatory_bands
 	true, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND|IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
 	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
@@ -2538,7 +2674,8 @@ static struct iwn_base_params iwn_5x50_base_params = {
 	false, //additional_nic_config
 	iwn5000_regulatory_bands, //regulatory_bands
 	false, //enhanced_TX_power
-	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
 	true, //no_crystal_calibration
 	false, //support_hostap
 	true, // no_multi_vaps

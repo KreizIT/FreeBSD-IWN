@@ -189,21 +189,6 @@ struct iwn4965_rx_phystat {
 	uint8_t		rssi[6];
 } __packed;
 
-struct iwn4965_eeprom_chan_samples {
-	uint8_t	num;
-	struct {
-		uint8_t temp;
-		uint8_t	gain;
-		uint8_t	power;
-		int8_t	pa_det;
-	}	samples[2][IWN_NSAMPLES];
-} __packed;
-struct iwn4965_eeprom_band {
-	uint8_t	lo;	/* low channel number */
-	uint8_t	hi;	/* high channel number */
-	struct	iwn4965_eeprom_chan_samples chans[2];
-} __packed;
-
 static const uint32_t iwn4965_regulatory_bands[IWN_NBANDS] = {
 	IWN4965_EEPROM_BAND1,
 	IWN4965_EEPROM_BAND2,
