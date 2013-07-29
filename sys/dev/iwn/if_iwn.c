@@ -75,6 +75,7 @@ __FBSDID("$FreeBSD$");
 
 #include <dev/iwn/if_iwnreg.h>
 #include <dev/iwn/if_iwnvar.h>
+#include <dev/iwn/if_iwn_devid.h>
 
 #ifdef IWN_4965
 #include <dev/iwn/if_iwnreg4965.h>
@@ -98,8 +99,8 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_x030_4, "Intel Centrino Advanced-N 6230"		},
 	{ 0x8086, IWN_DID_6150_1, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
-	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"},
-    { 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"},
+	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"	},
+    { 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"	},
 	{ 0x8086, IWN_DID_130_1, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_130_2, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_100_1, "Intel Centrino Wireless-N 100"		},
@@ -119,10 +120,10 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_6035_1, "Centrino Advanced-N 6235"		},
 	{ 0x8086, IWN_DID_6035_2, "Centrino Advanced-N 6235"		},
 #ifdef IWN_4965
-	{ 0x8086, 0x4229, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x422d, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x4230, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x4233, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_1, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_2, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_3, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_4, "Intel Wireless WiFi Link 4965"		},
 #endif
 	{ 0, 0, NULL }
 };
@@ -4326,7 +4327,14 @@ iwn5000_add_node(struct iwn_softc *sc, struct iwn_node_info *node, int async)
 {
 
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->Doing %s\n", __func__);
-
+	if (node->control == 0)
+		DPRINTF(sc, IWN_DEBUG_NODE, 
+		    "Adding node id : %d MAC : %6D flags: 0x%x\n", node->id,
+		    node->macaddr,":", node->flags);
+	else
+		DPRINTF(sc, IWN_DEBUG_NODE, 
+		    "Updating node id : %d MAC : %6D flags: 0x%x\n", node->id,
+		    node->macaddr,":", node->flags);
 	/* Direct mapping. */
 	return iwn_cmd(sc, IWN_CMD_ADD_NODE, node, sizeof (*node), async);
 }
@@ -4334,10 +4342,6 @@ iwn5000_add_node(struct iwn_softc *sc, struct iwn_node_info *node, int async)
 static int
 iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 {
-	
-	DPRINTF(sc,IWN_DEBUG_RESET,"Disabled %s reached\n",__func__);
-	return 0;
-	
 #define	RV(v)	((v) & IEEE80211_RATE_VAL)
 	struct iwn_node *wn = (void *)ni;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
@@ -4384,7 +4388,6 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 		if (txrate > 0)
 			txrate--;
 	}
-
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s: end\n",__func__);
 
 	return iwn_cmd(sc, IWN_CMD_LINK_QUALITY, &linkq, sizeof linkq, 1);
@@ -4603,19 +4606,22 @@ iwn5000_get_rssi(struct iwn_softc *sc, struct iwn_rx_stat *stat)
 {
 	struct iwn5000_rx_phystat *phy = (void *)stat->phybuf;
 	uint8_t agc;
-	int rssi;
+	int rssi, rssi_a, rssi_b, rssi_c;
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RECV, "->Doing %s\n", __func__);
 
 	agc = (le32toh(phy->agc) >> 9) & 0x7f;	/* 0x7f == (0xfe00 >> 9) */
 
-	rssi = MAX(le16toh(phy->rssi[0]) & 0xff,
-		   le16toh(phy->rssi[1]) & 0xff);
-	rssi = MAX(le16toh(phy->rssi[2]) & 0xff, rssi);
+	rssi_a = le16toh(phy->rssi[0]) & 0xff;
+	rssi_b = le16toh(phy->rssi[1]) & 0xff;
+	rssi_c = le16toh(phy->rssi[2]) & 0xff;
+
+	rssi = MAX(rssi_a, rssi_b); 
+	rssi = MAX(rssi_c, rssi);
 
 	DPRINTF(sc, IWN_DEBUG_RECV,
 	    "%s: agc %d rssi ANT_A:%d ANT_B:%d ANT_C:%d result %d dBm\n", __func__, agc,
-	    phy->rssi[0], phy->rssi[1], phy->rssi[2],
+	    rssi_a, rssi_b, rssi_c,
 	    rssi - agc - IWN_RSSI_TO_DBM);
 	return rssi - agc - IWN_RSSI_TO_DBM;
 }
@@ -5791,7 +5797,7 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 		    "%s: could not add BSS node, error %d\n", __func__, error);
 		return error;
 	}
-	/*XXX Not done in iwl 
+	/*XXX Not done in iwl */
 	DPRINTF(sc, IWN_DEBUG_STATE, "%s: setting link quality for node %d\n",
 	    __func__, node.id);
 	if ((error = iwn_set_link_quality(sc, ni)) != 0) {
@@ -5813,7 +5819,6 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 	callout_reset(&sc->calib_to, msecs_to_ticks(500), iwn_calib_timeout,
 	    sc);
 
-	*/
 	
 	/* Link LED always on while associated. */
 	iwn_set_led(sc, IWN_LED_LINK, 0, 1,IWN_LED_STATIC_ON);

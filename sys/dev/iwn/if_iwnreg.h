@@ -23,263 +23,6 @@
 #define IWN_CT_KILL_THRESHOLD              114             /* in Celsius */
 #define IWN_CT_KILL_EXIT_THRESHOLD         95              /* in Celsius */
 
- 
-/* ==========================================================================
- *							DEVICE ID BLOCK
- * ==========================================================================
-*/ 
-/*
- * --------------------------------------------------------------------------
- * Device ID for 2x30 series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_2x30_1 	0x0887 
-#define IWN_DID_2x30_2 	0x0888 
-/* SubDevice ID */
-#define IWN_SDID_2x30_1		0x4062 // "2000 Series 2x2 BGN/BT"
-#define IWN_SDID_2x30_2 	0x4262 // "2000 Series 2x2 BGN/BT"
-#define IWN_SDID_2x30_3 	0x4462 // "2000 Series 2x2 BGN/BT"
-#define IWN_SDID_2x30_4		0x4066 // "2000 Series 2x2 BG/BT"
-#define IWN_SDID_2x30_5		0x4266 // "2000 Series 2x2 BG/BT"
-#define IWN_SDID_2x30_6 	0x4466 // "2000 Series 2x2 BG/BT"
- 
-/*
- * --------------------------------------------------------------------------
- * Device ID for 1000 series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_1000_1 0x0083
-#define IWN_DID_1000_2 0x0084
-
-/* SubDevice ID */
-#define IWN_SDID_1000_1 0x1205 // iwl1000_bgn_cfg
-#define IWN_SDID_1000_2 0x1305 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_3 0x1225 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_4 0x1325 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_5 0x1215 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_6 0x1315 //  iwl1000_bgn_cfg
-
-#define IWN_SDID_1000_7 0x1206 // 	iwl1000_bg_cfg
-#define IWN_SDID_1000_8 0x1306 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_9 0x1226 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_10 0x1326 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_11 0x1216 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_12 0x1316 //  iwl1000_bg_cfg
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 6x00 series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_6x00_1	0x422B
-#define IWN_DID_6x00_2  0x422C
-#define IWN_DID_6x00_3	0x4238
-#define IWN_DID_6x00_4	0x4239
-/* SubDevice ID */
-#define IWN_SDID_6x00_1 0x1101 //  iwl6000_3agn_cfg
-#define IWN_SDID_6x00_2 0x1121 //  iwl6000_3agn_cfg
-#define IWN_SDID_6x00_3 0x1301 //  iwl6000i_2agn_cfg
-#define IWN_SDID_6x00_4 0x1306 //  iwl6000i_2abg_cfg
-#define IWN_SDID_6x00_5 0x1307 //  iwl6000i_2bg_cfg
-#define IWN_SDID_6x00_6 0x1321 //  iwl6000i_2agn_cfg
-#define IWN_SDID_6x00_7 0x1326 //  iwl6000i_2abg_cfg
-#define IWN_SDID_6x00_8 0x1111 //  iwl6000_3agn_cfg
-#define IWN_SDID_6x00_9 0x1311 //  iwl6000i_2agn_cfg
-#define IWN_SDID_6x00_10 0x1316 //  iwl6000i_2abg_cfg
-/*
- * --------------------------------------------------------------------------
- * Device ID for 6x05 series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_6x05_1	0x0082
-#define IWN_DID_6x05_2 	0x0085
-/* SubDevice ID */
-#define IWN_SDID_6x05_1 	0x1301 //iwl6005_2agn_cfg
-#define IWN_SDID_6x05_2 	0x1306 //iwl6005_2abg_cfg
-#define IWN_SDID_6x05_3 	0x1307 //iwl6005_2bg_cfg
-#define IWN_SDID_6x05_4 	0x1321 //iwl6005_2agn_cfg
-#define IWN_SDID_6x05_5 	0x1326 //iwl6005_2abg_cfg
-#define IWN_SDID_6x05_6 	0x1311 //iwl6005_2agn_cfg
-#define IWN_SDID_6x05_7 	0x1316 //iwl6005_2abg_cfg
-#define IWN_SDID_6x05_8 	0xC020 //iwl6005_2agn_sff_cfg
-#define IWN_SDID_6x05_9 	0xC220 //iwl6005_2agn_sff_cfg
-#define IWN_SDID_6x05_10 	0x4820 //iwl6005_2agn_d_cfg
-#define IWN_SDID_6x05_11 	0x1304 //iwl6005_2agn_mow1_cfg/* low 5GHz active */
-#define IWN_SDID_6x05_12 	0x1305 //iwl6005_2agn_mow2_cfg/* high 5GHz active */
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 6050 WiFi/WiMax Series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_6050_1 0x0087
-#define IWN_DID_6050_2 0x0089
-
-#define IWN_SDID_6050_1 0x1301 //iwl6050_2agn_cfg
-#define IWN_SDID_6050_2 0x1306 //iwl6050_2abg_cfg
-#define IWN_SDID_6050_3 0x1321 //iwl6050_2agn_cfg
-#define IWN_SDID_6050_4 0x1326 //iwl6050_2abg_cfg
-#define IWN_SDID_6050_5 0x1311 //iwl6050_2agn_cfg
-#define IWN_SDID_6050_6 0x1316 //iwl6050_2abg_cfg
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 6150 Series 
- * --------------------------------------------------------------------------
- */
-
-#define IWN_DID_6150_1 	0x0885 
-#define IWN_DID_6150_2 	0x0886
-
-#define IWN_SDID_6150_1	0x1305 // iwl6150_bgn_cfg
-#define IWN_SDID_6150_2	0x1307 // iwl6150_bg_cfg)
-#define IWN_SDID_6150_3	0x1325 // iwl6150_bgn_cfg
-#define IWN_SDID_6150_4	0x1327 // iwl6150_bg_cfg)
-#define IWN_SDID_6150_5	0x1315 // iwl6150_bgn_cfg
-#define IWN_SDID_6150_6	0x1317 // iwl6150_bg_cfg) 
- 
-/*
- * --------------------------------------------------------------------------
- * Device ID for 6035 Series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_6035_1 	0x088E
-#define IWN_DID_6035_2 	0x088F
- 
-#define IWN_SDID_6035_1 0x4060 // iwl6035_2agn_cfg
-#define IWN_SDID_6035_2 0x4260 // iwl6035_2agn_cfg
-#define IWN_SDID_6035_3 0x4460 // iwl6035_2agn_cfg
-#define IWN_SDID_6035_4 0x4860 // iwl6035_2agn_cfg
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 1030 and 6030 Series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_x030_1 		0x008A 
-#define IWN_DID_x030_2 		0x008B
-#define IWN_DID_x030_3 		0x0090
-#define IWN_DID_x030_4 		0x0091
-
-#define IWN_SDID_x030_1 	0x5305 // iwl1030_bgn_cfg
-#define IWN_SDID_x030_2 	0x5307 // iwl1030_bg_cfg
-#define IWN_SDID_x030_3 	0x5325 // iwl1030_bgn_cfg
-#define IWN_SDID_x030_4 	0x5327 // iwl1030_bg_cfg
-#define IWN_SDID_x030_5 	0x5315 // iwl1030_bgn_cfg
-#define IWN_SDID_x030_6 	0x5317 // iwl1030_bg_cfg
-#define IWN_SDID_x030_7 	0x5211 // iwl6030_2agn_cfg
-#define IWN_SDID_x030_8 	0x5215 // iwl6030_2bgn_cfg
-#define IWN_SDID_x030_9 	0x5216 // iwl6030_2abg_cfg
-#define IWN_SDID_x030_10 	0x5201 // iwl6030_2agn_cfg
-#define IWN_SDID_x030_11 	0x5205 // iwl6030_2bgn_cfg
-#define IWN_SDID_x030_12 	0x5206 // iwl6030_2abg_cfg
-#define IWN_SDID_x030_13 	0x5207 // iwl6030_2bg_cfg)
-#define IWN_SDID_x030_14 	0x5221 // iwl6030_2agn_cfg
-#define IWN_SDID_x030_15 	0x5225 // iwl6030_2bgn_cfg
-#define IWN_SDID_x030_16 	0x5226 // iwl6030_2abg_cfg
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 130 Series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_130_1 		0x0896
-#define IWN_DID_130_2 		0x0897
-
-#define IWN_SDID_130_1 		0x5005 //iwl130_bgn_cfg
-#define IWN_SDID_130_2 		0x5007 //iwl130_bg_cfg
-#define IWN_SDID_130_3 		0x5015 //iwl130_bgn_cfg
-#define IWN_SDID_130_4 		0x5017 //iwl130_bg_cfg
-#define IWN_SDID_130_5 		0x5025 //iwl130_bgn_cfg
-#define IWN_SDID_130_6 		0x5027 //iwl130_bg_cfg
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 100 Series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_100_1 		0x08AE
-#define IWN_DID_100_2 		0x08AF
-
-#define IWN_SDID_100_1 		0x1005 //iwl100_bgn_cfg)
-#define IWN_SDID_100_2 		0x1007 //iwl100_bg_cfg)}
-#define IWN_SDID_100_3 		0x1015 //iwl100_bgn_cfg)
-#define IWN_SDID_100_4 		0x1017 //iwl100_bg_cfg)}
-#define IWN_SDID_100_5 		0x1025 //iwl100_bgn_cfg)
-#define IWN_SDID_100_6 		0x1027 //iwl100_bg_cfg)}
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 5x00 Series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_5x00_1 		0x4232
-#define IWN_DID_5x00_2 		0x4237
-#define IWN_DID_5x00_3 		0x4235
-#define IWN_DID_5x00_4 		0x4236
-
-#define IWN_SDID_5x00_1 		0x1201 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_2 		0x1301 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_3 		0x1204 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_4 		0x1304 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_5 		0x1205 //iwl5100_bgn_cfg
-#define IWN_SDID_5x00_6 		0x1305 //iwl5100_bgn_cfg
-#define IWN_SDID_5x00_7 		0x1206 //iwl5100_abg_cfg
-#define IWN_SDID_5x00_8 		0x1306 //iwl5100_abg_cfg
-#define IWN_SDID_5x00_9 		0x1221 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_10 		0x1321 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_11		0x1224 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_12 		0x1324 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_13 		0x1225 //iwl5100_bgn_cfg
-#define IWN_SDID_5x00_14 		0x1325 //iwl5100_bgn_cfg
-#define IWN_SDID_5x00_15 		0x1226 //iwl5100_abg_cfg
-#define IWN_SDID_5x00_16 		0x1326 //iwl5100_abg_cfg
-#define IWN_SDID_5x00_17 		0x1211 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_18 		0x1311 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_19 		0x1214 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_20 		0x1314 //iwl5100_agn_cfg
-#define IWN_SDID_5x00_21 		0x1215 //iwl5100_bgn_cfg
-#define IWN_SDID_5x00_22 		0x1315 //iwl5100_bgn_cfg
-#define IWN_SDID_5x00_23 		0x1216 //iwl5100_abg_cfg
-#define IWN_SDID_5x00_24 		0x1316 //iwl5100_abg_cfg
-#define IWN_SDID_5x00_25 		0x1021 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_26 		0x1121 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_27 		0x1024 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_28 		0x1124 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_29 		0x1001 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_30 		0x1101 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_31 		0x1004 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_32 		0x1104 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_33 		0x1011 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_34 		0x1111 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_35 		0x1014 //iwl5300_agn_cfg
-#define IWN_SDID_5x00_36 		0x1114 //iwl5300_agn_cfg
-
-/*
- * --------------------------------------------------------------------------
- * Device ID for 5x50 Series 
- * --------------------------------------------------------------------------
- */
-#define IWN_DID_5x50_1			0x423A
-#define IWN_DID_5x50_2			0x423B
-#define IWN_DID_5x50_3			0x423C
-#define IWN_DID_5x50_4			0x423D
-
-#define IWN_SDID_5x50_1 		0x1001 //iwl5350_agn_cfg
-#define IWN_SDID_5x50_2 		0x1021 //iwl5350_agn_cfg
-#define IWN_SDID_5x50_3 		0x1011 //iwl5350_agn_cfg
-#define IWN_SDID_5x50_4 		0x1201 //iwl5150_agn_cfg
-#define IWN_SDID_5x50_5 		0x1301 //iwl5150_agn_cfg
-#define IWN_SDID_5x50_6 		0x1206 //iwl5150_abg_cfg
-#define IWN_SDID_5x50_7 		0x1306 //iwl5150_abg_cfg
-#define IWN_SDID_5x50_8 		0x1221 //iwl5150_agn_cfg
-#define IWN_SDID_5x50_9 		0x1321 //iwl5150_agn_cfg
-#define IWN_SDID_5x50_10 		0x1211 //iwl5150_agn_cfg
-#define IWN_SDID_5x50_11 		0x1311 //iwl5150_agn_cfg
-#define IWN_SDID_5x50_12 		0x1216 //iwl5150_abg_cfg
-#define IWN_SDID_5x50_13 		0x1316 //iwl5150_abg_cfg
-
-
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
 #define IWN_TX_RING_HIMARK	224
@@ -297,7 +40,7 @@
 #define IWN_ICT_SIZE		4096
 #define IWN_ICT_COUNT		(IWN_ICT_SIZE / sizeof (uint32_t))
 
-/* For cards with PAN command default is IWN_CMD_QUEUE_NUM */
+/* For cards with PAN command, default is IWN_CMD_QUEUE_NUM */
 #define	IWN_CMD_QUEUE_NUM		4
 #define	IWN_PAN_CMD_QUEUE		9
 
@@ -491,19 +234,6 @@
 #define IWN_GP_CNTRL_MAC_ACCESS_REQ	(1 << 3)		//x00000008
 #define IWN_GP_CNTRL_SLEEP		(1 << 4)			//x00000010
 #define IWN_GP_CNTRL_RFKILL		(1 << 27)			//x08000000
-
-/* Possible flags for register IWN_HW_REV. */
-#define IWN_HW_REV_TYPE_SHIFT	4
-#define IWN_HW_REV_TYPE_MASK	0x000000f0
-#define IWN_HW_REV_TYPE_5300	2
-#define IWN_HW_REV_TYPE_5350	3
-#define IWN_HW_REV_TYPE_5150	4
-#define IWN_HW_REV_TYPE_5100	5
-#define IWN_HW_REV_TYPE_1000	6
-#define IWN_HW_REV_TYPE_6000	7
-#define IWN_HW_REV_TYPE_6050	8
-#define IWN_HW_REV_TYPE_6005	11
-#define IWN_HW_REV_TYPE_2230	12
 
 /* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
@@ -715,9 +445,11 @@ struct iwn_rx_desc {
 #define IWN_UC_READY			  1
 #define IWN_ADD_NODE_DONE		 24
 #define IWN_TX_DONE			 28
+#define IWN_REPLY_LED_CMD		72
 #define IWN5000_CALIBRATION_RESULT	102
 #define IWN5000_CALIBRATION_DONE	103
 #define IWN_START_SCAN			130
+#define IWN_NOTIF_SCAN_RESULT		131
 #define IWN_STOP_SCAN			132
 #define IWN_RX_STATISTICS		156
 #define IWN_BEACON_STATISTICS		157
@@ -1070,11 +802,39 @@ struct iwn_cmd_link_quality {
 	uint16_t	ctl;
 	uint8_t		flags;
 	uint8_t		mimo;
+	/* Best single antenna to use for single stream (legacy, SISO). */
 	uint8_t		antmsk_1stream;
+	/* Best antennas to use for MIMO (unused for 4965, assumes both). */
 	uint8_t		antmsk_2stream;
+	/*
+	 * If driver needs to use different initial rates for different
+	 * EDCA QOS access categories (as implemented by tx fifos 0-3),
+	 * this table will set that up, by indicating the indexes in the
+	 * retry[LINK_QUAL_MAX_RETRY_NUM] rate table at which to start.
+	 * Otherwise, driver should set all entries to 0.
+	 *
+	 * Entry usage:
+	 * 0 = Background, 1 = Best Effort (normal), 2 = Video, 3 = Voice
+	 * TX FIFOs above 3 use same value (typically 0) as TX FIFO 3.
+	 */
 	uint8_t		ridx[WME_NUM_AC];
+	/*
+	 *Maximum number of uSec in aggregation.
+	 * default set to 4000 (4 milliseconds) if not configured in .cfg
+	 */
 	uint16_t	ampdu_limit;
+	/*
+	 * Number of Tx retries allowed for a frame, before that frame will
+	 * no longer be considered for the start of an aggregation sequence
+	 * (scheduler will then try to tx it as single frame).
+	 * Driver should set this to 3.
+	 */
 	uint8_t		ampdu_threshold;
+	/*
+	 * Maximum number of frames in aggregation.
+	 * 0 = no limit (default).  1 = no aggregation.
+	 * Other values = max # frames in aggregation.
+	 */
 	uint8_t		ampdu_max;
 	uint32_t	reserved2;
 	uint32_t	retry[IWN_MAX_TX_RETRIES];
