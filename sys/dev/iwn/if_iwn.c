@@ -2521,6 +2521,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 			    "Rate found: 0x%08x and not translated\n", stat->rate);
 		}
 	}
+	DPRINTF(sc, IWN_DEBUG_RECV, "Tstmp : %lu\n",stat->tstamp);
 
 	IWN_UNLOCK(sc);
 
@@ -2820,18 +2821,18 @@ iwn5000_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct iwn_tx_ring *ring;
 	int qid;
 
-	qid = desc->qid & 0xf;
+	qid = desc->qid & IWN_RX_DESC_QID_MSK;
 	ring = &sc->txq[qid];
 
 	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: "
 	    "qid %d idx %d retries %d nkill %d rate %x duration %d status %x\n",
 	    __func__, desc->qid, desc->idx, stat->ackfailcnt,
 	    stat->btkillcnt, stat->rate, le16toh(stat->duration),
-	    le32toh(stat->status));
-
+	    le16toh(stat->status) & IWN_TX_STATUS_MSK);
+	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: Agg : %d\n", __func__, stat->nframes);
 #ifdef notyet
 	/* Reset TX scheduler slot. */
-	iwn5000_reset_sched(sc, desc->qid & 0xf, desc->idx);
+	iwn5000_reset_sched(sc, desc->qid & IWN_RX_DESC_QID_MSK, desc->idx);
 #endif
 
 	bus_dmamap_sync(ring->data_dmat, data->map, BUS_DMASYNC_POSTREAD);
@@ -2840,7 +2841,7 @@ iwn5000_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		    &stat->status);
 	} else {
 		iwn_tx_done(sc, desc, stat->ackfailcnt,
-		    le16toh(stat->status) & 0xff);
+		    le16toh(stat->status) & IWN_TX_STATUS_MSK);
 	}
 }
 
@@ -2852,7 +2853,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
     uint8_t status)
 {
 	struct ifnet *ifp = sc->sc_ifp;
-	struct iwn_tx_ring *ring = &sc->txq[desc->qid & 0xf];
+	struct iwn_tx_ring *ring = &sc->txq[desc->qid & IWN_RX_DESC_QID_MSK];
 	struct iwn_tx_data *data = &ring->data[desc->idx];
 	
 	struct iwn_tx_cmd *cmd;
@@ -2887,6 +2888,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
 	
 	
 	if (m->m_flags & M_TXCB) {
+		DPRINTF(sc, IWN_DEBUG_XMIT, "%s: M_TXCB found\n",__func__);
 		/*
 		 * Channels marked for "radar" require traffic to be received
 		 * to unlock before we can transmit.  Until traffic is seen
@@ -2916,10 +2918,14 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
 	 * Update rate control statistics for the node.
 	 */
 	if (status & IWN_TX_FAIL) {
+		DPRINTF(sc, IWN_DEBUG_XMIT, "%s: Status failed ackcnt: %d\n", 
+	    __func__, ackfailcnt);
 		ifp->if_oerrors++;
 		ieee80211_ratectl_tx_complete(vap, ni,
 		    IEEE80211_RATECTL_TX_FAILURE, &ackfailcnt, NULL);
 	} else {
+		DPRINTF(sc, IWN_DEBUG_XMIT, "%s: Status OK ackcnt: %d\n", 
+	    __func__, ackfailcnt);
 		ifp->if_opackets++;
 		ieee80211_ratectl_tx_complete(vap, ni,
 		    IEEE80211_RATECTL_TX_SUCCESS, &ackfailcnt, NULL);
@@ -2959,10 +2965,10 @@ iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 	
 	
 	DPRINTF(sc, IWN_DEBUG_CMD, "%s: qid: %d PAN Active : %d\n",
-	    __func__, (desc->qid & 0xf),(sc->sc_flags & IWN_FLAG_PAN_SUPPORT) );
+	    __func__, (desc->qid & IWN_RX_DESC_QID_MSK),(sc->sc_flags & IWN_FLAG_PAN_SUPPORT) );
 		
 	
-	if ((desc->qid & 0xf) != cmd_queue_num)
+	if ((desc->qid & IWN_RX_DESC_QID_MSK) != cmd_queue_num)
 		return;	/* Not a command ack. */
 	
 	ring = &sc->txq[cmd_queue_num];
@@ -3119,10 +3125,12 @@ iwn_notif_intr(struct iwn_softc *sc)
 
 		DPRINTF(sc, IWN_DEBUG_RECV,
 		    "%s: qid %x idx %d flags %x type %d(%s) len %d\n",
-		    __func__, desc->qid & 0xf, desc->idx, desc->flags,
+		    __func__, desc->qid & IWN_RX_DESC_QID_MSK, desc->idx, desc->flags,
 		    desc->type, iwn_intr_str(desc->type),
 		    le16toh(desc->len));
-
+		if (le16toh(desc->len) == 8)
+			DPRINTF(sc, IWN_DEBUG_RECV, "%s: strange inter values: 0x%08x\n",
+		    __func__,le32toh(desc->len));
 		if (!(desc->qid & IWN_UNSOLICITED_RX_NOTIF))	/* Reply to a command. */
 			iwn_cmd_done(sc, desc);
 
@@ -3168,11 +3176,12 @@ iwn_notif_intr(struct iwn_softc *sc)
 			misses = le32toh(miss->consecutive);
 
 			DPRINTF(sc, IWN_DEBUG_STATE,
-			    "%s: beacons missed %d/%d\n", __func__,
-			    misses, le32toh(miss->total));
-				
+			    "%s: beacons missed %d/%d rcv %d expect %d\n", __func__,
+			    misses, le32toh(miss->total), le32toh(miss->received),
+			    le32toh(miss->expected));
+
 			iv_bmissthreshold = vap0->iv_bmissthreshold;
-			
+
 			if(sc->ctx == IWN_RXON_PAN_CTX) {
 				iv_bmissthreshold = vap1->iv_bmissthreshold;
 				if (vap0->iv_state == IEEE80211_S_RUN &&
@@ -7380,8 +7389,8 @@ iwn_debug_register(struct iwn_softc *sc)
 		IWN_DBG_HPET_MEM,
 	};
 	DPRINTF(sc, IWN_DEBUG_REGISTER,
-    "CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)%s",
-    "\n");
+	    "CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)%s",
+	    "\n");
 	for (i = 0; i <  COUNTOF(csr_tbl); i++){
 		DPRINTF(sc, IWN_DEBUG_REGISTER,"  %10s: 0x%08x ",
 			iwn_get_csr_string(csr_tbl[i]), IWN_READ(sc, csr_tbl[i]));

@@ -91,7 +91,7 @@
 #define IWN_HW_REV_WA		0x22c
 #define IWN_DBG_HPET_MEM	0x240
 #define IWN_DBG_LINK_PWR_MGMT	0x250
-// Need nic_lock for use above
+/* Need nic_lock for use above */
 #define IWN_MEM_RADDR		0x40c
 #define IWN_MEM_WADDR		0x410
 #define IWN_MEM_WDATA		0x418
@@ -481,6 +481,7 @@ struct iwn_rx_desc {
 	 */
 } __packed;
 
+#define	IWN_RX_DESC_QID_MSK		0x1F
 #define IWN_UNSOLICITED_RX_NOTIF	0x80
 
 /* CARD_STATE_NOTIFICATION */ 
@@ -1268,6 +1269,10 @@ struct iwn_ucode_info {
 } __packed;
 
 /* Structures for IWN_TX_DONE notification. */
+#define	IWN_TX_STATUS_MSK		0xff
+#define	TX_STATUS_SUCCESS		0x01
+#define	TX_STATUS_DIRECT_DONE		0x02
+
 #define IWN_TX_SUCCESS			0x00
 #define IWN_TX_FAIL			0x80	/* all failures have 0x80 set */
 #define IWN_TX_FAIL_SHORT_LIMIT		0x82	/* too many RTS retries */
@@ -1277,19 +1282,26 @@ struct iwn_ucode_info {
 #define IWN_TX_FAIL_TX_LOCKED		0x90	/* waiting to see traffic */
 
 struct iwn5000_tx_stat {
-	uint8_t		nframes;
-	uint8_t		btkillcnt;
-	uint8_t		rtsfailcnt;
-	uint8_t		ackfailcnt;
+	uint8_t		nframes;		/* 1 no aggregation, >1 aggregation */
+	uint8_t		btkillcnt;		/* # blocked by bluetooth (unused for agg) */
+	uint8_t		rtsfailcnt;		/* # failures due to unsuccessful RTS */
+	uint8_t		ackfailcnt;		/* # failures due to no ACK (unused for agg) */
+
+	/* For non-agg:  Rate at which frame was successful.
+	 * For agg:  Rate at which all frames were transmitted. */
 	uint32_t	rate;
+
+	/* For non-agg:  RTS + CTS + frame tx attempts time + ACK.
+	 * For agg:  RTS + CTS + aggregation tx time + block-ack time. */
 	uint16_t	duration;
-	uint16_t	reserved;
+
+	uint16_t	reserved;	/* RF power amplifier measurement (not used) */
 	uint32_t	power[2];
 	uint32_t	info;
 	uint16_t	seq;
 	uint16_t	len;
 	uint8_t		tlc;
-	uint8_t		ratid;
+	uint8_t		ratid;		/* tid (0:3), sta_id (4:7) */
 	uint8_t		fc[2];
 	uint16_t	status;
 	uint16_t	sequence;
