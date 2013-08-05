@@ -75,6 +75,7 @@ __FBSDID("$FreeBSD$");
 
 #include <dev/iwn/if_iwnreg.h>
 #include <dev/iwn/if_iwnvar.h>
+#include <dev/iwn/if_iwn_devid.h>
 
 
 struct iwn_ident {
@@ -96,19 +97,19 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_x030_4, "Intel Centrino Advanced-N 6230"		},
 	{ 0x8086, IWN_DID_6150_1, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
-	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"},
-    { 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"},
+	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"	},
+    { 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"	},
 	{ 0x8086, IWN_DID_130_1, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_130_2, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_100_1, "Intel Centrino Wireless-N 100"		},
 	{ 0x8086, IWN_DID_100_2, "Intel Centrino Wireless-N 100"		},
-	{ 0x8086, 0x4229, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_1, "Intel Wireless WiFi Link 4965"		},
 	{ 0x8086, IWN_DID_6x00_1, "Intel Centrino Ultimate-N 6300"		},
 	{ 0x8086, IWN_DID_6x00_2, "Intel Centrino Advanced-N 6200"		},
-	{ 0x8086, 0x422d, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x4230, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_2, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_3, "Intel Wireless WiFi Link 4965"		},
 	{ 0x8086, IWN_DID_5x00_1, "Intel WiFi Link 5100"			},
-	{ 0x8086, 0x4233, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_4, "Intel Wireless WiFi Link 4965"		},
 	{ 0x8086, IWN_DID_5x00_3, "Intel Ultimate N WiFi Link 5300"		},
 	{ 0x8086, IWN_DID_5x00_4, "Intel Ultimate N WiFi Link 5300"		},
 	{ 0x8086, IWN_DID_5x00_2, "Intel WiFi Link 5100"			},
@@ -889,7 +890,7 @@ iwn_radiotap_attach(struct iwn_softc *sc)
 
 		DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RESET, "->%s end\n", __func__);
 
-		}
+}
 
 static void
 iwn_sysctlattach(struct iwn_softc *sc)
@@ -2637,6 +2638,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		tap->wr_dbm_antsignal = (int8_t)rssi;
 		tap->wr_dbm_antnoise = (int8_t)nf;
 		tap->wr_tsft = stat->tstamp;
+		/* XXX rate contain also antenna information */
 		switch (stat->rate) {
 		/* CCK rates. */
 		case  10: tap->wr_rate =   2; break;
@@ -2653,9 +2655,13 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		case 0x1: tap->wr_rate =  96; break;
 		case 0x3: tap->wr_rate = 108; break;
 		/* Unknown rate: should not happen. */
-		default:  tap->wr_rate =   0;
+		default:  
+			tap->wr_rate =   0;
+			DPRINTF(sc, IWN_DEBUG_RECV, 
+			    "Rate found: 0x%08x and not translated\n", stat->rate);
 		}
 	}
+	DPRINTF(sc, IWN_DEBUG_RECV, "Tstmp : %lu\n",stat->tstamp);
 
 	IWN_UNLOCK(sc);
 
@@ -3336,7 +3342,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 			    misses, le32toh(miss->total));
 				
 			iv_bmissthreshold = vap0->iv_bmissthreshold;
-			
+
 			if(sc->ctx == IWN_RXON_PAN_CTX) {
 				iv_bmissthreshold = vap1->iv_bmissthreshold;
 				if (vap0->iv_state == IEEE80211_S_RUN &&
@@ -3901,9 +3907,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) || type != IEEE80211_FC0_TYPE_DATA) {
 		if(ivp->ctx == IWN_RXON_PAN_CTX)
-			tx->id = IWN_PAN_BCAST_ID;
+			tx->id = IWN_PAN_ID_BCAST;
 		else
-			tx->id = IWN_BROADCAST_ID;
+			tx->id = IWN5000_ID_BROADCAST;
 	} else
 		tx->id = wn->id;
 
@@ -3934,7 +3940,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx->data_ntries = 15;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
 	tx->rate = iwn_rate_to_plcp(sc, ni, rate);
-	if ((tx->id == IWN_PAN_BCAST_ID) || (tx->id == IWN_BROADCAST_ID)) {
+	if ((tx->id == IWN_PAN_ID_BCAST) || (tx->id == IWN5000_ID_BROADCAST)) {
 		/* Group or management frame. */
 		tx->linkq = 0;
 		/* XXX Alternate between antenna A and B? */
@@ -4141,9 +4147,9 @@ iwn_tx_data_raw(struct iwn_softc *sc, struct mbuf *m,
 	tx->len = htole16(totlen);
 	tx->tid = 0;
 	if(ivp->ctx == IWN_RXON_PAN_CTX)
-		tx->id = IWN_PAN_BCAST_ID;
+		tx->id = IWN_PAN_ID_BCAST;
 	else
-		tx->id = IWN_BROADCAST_ID;
+		tx->id = IWN5000_ID_BROADCAST;
 	tx->rts_ntries = params->ibp_try1;
 	tx->data_ntries = params->ibp_try0;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
@@ -4520,7 +4526,14 @@ iwn5000_add_node(struct iwn_softc *sc, struct iwn_node_info *node, int async)
 {
 
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->Doing %s\n", __func__);
-
+	if (node->control == 0)
+		DPRINTF(sc, IWN_DEBUG_NODE, 
+		    "Adding node id : %d MAC : %6D flags: 0x%x\n", node->id,
+		    node->macaddr,":", node->flags);
+	else
+		DPRINTF(sc, IWN_DEBUG_NODE, 
+		    "Updating node id : %d MAC : %6D flags: 0x%x\n", node->id,
+		    node->macaddr,":", node->flags);
 	/* Direct mapping. */
 	return iwn_cmd(sc, IWN_CMD_ADD_NODE, node, sizeof (*node), async);
 }
@@ -4605,7 +4618,7 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	
 	memset(&node, 0, sizeof node);
 	IEEE80211_ADDR_COPY(node.macaddr, ifp->if_broadcastaddr);
-	node.id = IWN_BROADCAST_ID;
+	node.id = IWN5000_ID_BROADCAST;
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s: adding broadcast node\n", __func__);
 	if ((error = ops->add_node(sc, &node, async)) != 0)
 		return error;
@@ -4614,7 +4627,7 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	txant = IWN_LSB(sc->txchainmask);
 
 	memset(&linkq, 0, sizeof linkq);
-	linkq.id = IWN_BROADCAST_ID;
+	linkq.id = IWN5000_ID_BROADCAST;
 	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_AB;
 	linkq.ampdu_max = 64;
@@ -4996,19 +5009,22 @@ iwn5000_get_rssi(struct iwn_softc *sc, struct iwn_rx_stat *stat)
 {
 	struct iwn5000_rx_phystat *phy = (void *)stat->phybuf;
 	uint8_t agc;
-	int rssi;
+	int rssi, rssi_a, rssi_b, rssi_c;
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RECV, "->Doing %s\n", __func__);
 
-	agc = (le32toh(phy->agc) >> 9) & 0x7f;
+	agc = (le32toh(phy->agc) >> 9) & 0x7f;	/* 0x7f == (0xfe00 >> 9) */
 
-	rssi = MAX(le16toh(phy->rssi[0]) & 0xff,
-		   le16toh(phy->rssi[1]) & 0xff);
-	rssi = MAX(le16toh(phy->rssi[2]) & 0xff, rssi);
+	rssi_a = le16toh(phy->rssi[0]) & 0xff;
+	rssi_b = le16toh(phy->rssi[1]) & 0xff;
+	rssi_c = le16toh(phy->rssi[2]) & 0xff;
+
+	rssi = MAX(rssi_a, rssi_b); 
+	rssi = MAX(rssi_c, rssi);
 
 	DPRINTF(sc, IWN_DEBUG_RECV,
-	    "%s: agc %d rssi %d %d %d result %d\n", __func__, agc,
-	    phy->rssi[0], phy->rssi[1], phy->rssi[2],
+	    "%s: agc %d rssi ANT_A:%d ANT_B:%d ANT_C:%d result %d dBm\n", __func__, agc,
+	    rssi_a, rssi_b, rssi_c,
 	    rssi - agc - IWN_RSSI_TO_DBM);
 	return rssi - agc - IWN_RSSI_TO_DBM;
 }
@@ -5913,9 +5929,9 @@ iwn_scan(struct iwn_softc *sc)
 	tx = (struct iwn_cmd_data *)(hdr + 1);
 	tx->flags = htole32(IWN_TX_AUTO_SEQ);
 	if(ivp->ctx == IWN_RXON_PAN_CTX)
-		tx->id = IWN_PAN_BCAST_ID;
+		tx->id = IWN_PAN_ID_BCAST;
 	else
-		tx->id = IWN_BROADCAST_ID;
+		tx->id = IWN5000_ID_BROADCAST;
 
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
 
@@ -6737,12 +6753,12 @@ iwn5000_temp_offset_calibv2(struct iwn_softc *sc)
 		cmd.offset_low = htole16(IWN_DEFAULT_TEMP_OFFSET);
 		cmd.offset_high = htole16(IWN_DEFAULT_TEMP_OFFSET);
 	}
-	cmd.burntVoltageRef = htole16(sc->eeprom_voltage);
+	cmd.burnt_voltage_ref = htole16(sc->eeprom_voltage);
 	
 	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "setting radio sensor low offset to %d, high offset to %d, voltage to %d\n",
 	    le16toh(cmd.offset_low),
 		le16toh(cmd.offset_high),
-		le16toh(cmd.burntVoltageRef));
+		le16toh(cmd.burnt_voltage_ref));
 	
 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
 }
@@ -8069,8 +8085,8 @@ iwn_debug_register(struct iwn_softc *sc)
 		IWN_DBG_HPET_MEM,
 	};
 	DPRINTF(sc, IWN_DEBUG_REGISTER,
-    "CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)%s",
-    "\n");
+	    "CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)%s",
+	    "\n");
 	for (i = 0; i <  COUNTOF(csr_tbl); i++){
 		DPRINTF(sc, IWN_DEBUG_REGISTER,"  %10s: 0x%08x ",
 			iwn_get_csr_string(csr_tbl[i]), IWN_READ(sc, csr_tbl[i]));
@@ -9039,7 +9055,7 @@ iwn_add_broadcast_node_u1(struct iwn_softc *sc, int async)
 	memset(&node, 0, sizeof node);
 	IEEE80211_ADDR_COPY(node.macaddr, ifp->if_broadcastaddr);
 
-	node.id = IWN_PAN_BCAST_ID;
+	node.id = IWN_PAN_ID_BCAST;
 	node.htflags |= htole32(IWN_STA_FLAG_PAN_STATION);
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s: adding broadcast node1\n", __func__);
 	if ((error = ops->add_node(sc, &node, async)) != 0)
@@ -9049,7 +9065,7 @@ iwn_add_broadcast_node_u1(struct iwn_softc *sc, int async)
 	txant = IWN_LSB(sc->txchainmask);
 
 	memset(&linkq, 0, sizeof linkq);
-	linkq.id = IWN_PAN_BCAST_ID;
+	linkq.id = IWN_PAN_ID_BCAST;
 	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_AB;
 	linkq.ampdu_max = 64;
@@ -9134,4 +9150,3 @@ iwn_led_pattern(struct iwn_softc *sc)
 }
 
 
-	

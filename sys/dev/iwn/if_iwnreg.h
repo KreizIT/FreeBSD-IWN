@@ -19,63 +19,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
-#define IWN_CT_KILL_THRESHOLD              114             /* in Celsius */
-#define IWN_CT_KILL_EXIT_THRESHOLD         95              /* in Celsius */
 
- 
-/* ============================================================================
- *							DEVICE ID BLOCK
- * ============================================================================ 
-*/ 
- /* Device ID for 2x30 series */
-#define IWN_DID_2x30_1 	0x0887 
-#define IWN_DID_2x30_2 	0x0888 
-/* SubDevice ID */
-#define IWN_SDID_2x30_1		0x4062 // "2000 Series 2x2 BGN/BT"
-#define IWN_SDID_2x30_2 	0x4262 // "2000 Series 2x2 BGN/BT"
-#define IWN_SDID_2x30_3 	0x4462 // "2000 Series 2x2 BGN/BT"
-#define IWN_SDID_2x30_4		0x4066 // "2000 Series 2x2 BG/BT"
-#define IWN_SDID_2x30_5		0x4266 // "2000 Series 2x2 BG/BT"
-#define IWN_SDID_2x30_6 	0x4466 // "2000 Series 2x2 BG/BT"
- 
-/* 1000 Series WiFi */
-#define IWN_DID_1000_1 0x0083
-#define IWN_DID_1000_2 0x0084
-
-/* SubDevice ID */
-#define IWN_SDID_1000_1 0x1205 // iwl1000_bgn_cfg
-#define IWN_SDID_1000_2 0x1305 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_3 0x1225 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_4 0x1325 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_5 0x1215 //  iwl1000_bgn_cfg
-#define IWN_SDID_1000_6 0x1315 //  iwl1000_bgn_cfg
-
-#define IWN_SDID_1000_7 0x1206 // 	iwl1000_bg_cfg
-#define IWN_SDID_1000_8 0x1306 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_9 0x1226 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_10 0x1326 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_11 0x1216 //  iwl1000_bg_cfg
-#define IWN_SDID_1000_12 0x1316 //  iwl1000_bg_cfg
-
-/* 6x00 Series */
-#define IWN_DID_6x00_1	0x422B
-#define IWN_DID_6x00_2  0x422C
-#define IWN_DID_6x00_3	0x4238
-#define IWN_DID_6x00_4	0x4239
-/* SubDevice ID */
-#define IWN_SDID_6x00_1 0x1101 //  iwl6000_3agn_cfg
-#define IWN_SDID_6x00_2 0x1121 //  iwl6000_3agn_cfg
-#define IWN_SDID_6x00_3 0x1301 //  iwl6000i_2agn_cfg
-#define IWN_SDID_6x00_4 0x1306 //  iwl6000i_2abg_cfg
-#define IWN_SDID_6x00_5 0x1307 //  iwl6000i_2bg_cfg
-#define IWN_SDID_6x00_6 0x1321 //  iwl6000i_2agn_cfg
-#define IWN_SDID_6x00_7 0x1326 //  iwl6000i_2abg_cfg
-#define IWN_SDID_6x00_8 0x1111 //  iwl6000_3agn_cfg
-#define IWN_SDID_6x00_9 0x1311 //  iwl6000i_2agn_cfg
-#define IWN_SDID_6x00_10 0x1316 //  iwl6000i_2abg_cfg
-
- 
+#define	IWN_CT_KILL_THRESHOLD		114	/* in Celsius */
+#define	IWN_CT_KILL_EXIT_THRESHOLD	95	/* in Celsius */
 
 #define IWN_TX_RING_COUNT	256
 #define IWN_TX_RING_LOMARK	192
@@ -126,7 +72,7 @@
 #define IWN_INT			0x008
 #define IWN_INT_MASK		0x00c
 #define IWN_FH_INT		0x010
-#define IWN_GPIO_IN			0x018 /* read external chip pins */
+#define IWN_GPIO_IN		0x018	/* read external chip pins */
 #define IWN_RESET		0x020
 #define IWN_GP_CNTRL		0x024
 #define IWN_HW_REV		0x028
@@ -134,12 +80,12 @@
 #define IWN_EEPROM_GP		0x030
 #define IWN_OTP_GP		0x034
 #define IWN_GIO			0x03c
-#define IWN_GP_UCODE	0x048 
+#define IWN_GP_UCODE		0x048
 #define IWN_GP_DRIVER		0x050
 #define IWN_UCODE_GP1		0x054
-#define IWN_UCODE_GP1_SET   0x058
+#define IWN_UCODE_GP1_SET	0x058
 #define IWN_UCODE_GP1_CLR	0x05c
-#define IWN_UCODE_GP2   	0x060 
+#define IWN_UCODE_GP2		0x060
 #define IWN_LED			0x094
 #define IWN_DRAM_INT_TBL	0x0a0
 #define IWN_SHADOW_REG_CTRL	0x0a8
@@ -148,12 +94,12 @@
 #define IWN_HW_REV_WA		0x22c
 #define IWN_DBG_HPET_MEM	0x240
 #define IWN_DBG_LINK_PWR_MGMT	0x250
-// Need nic_lock for use above
+/* Need nic_lock for use above */
 #define IWN_MEM_RADDR		0x40c
 #define IWN_MEM_WADDR		0x410
 #define IWN_MEM_WDATA		0x418
 #define IWN_MEM_RDATA		0x41c
-#define IWN_TARG_MBX_C		0x430
+#define	IWN_TARG_MBX_C		0x430
 #define IWN_PRPH_WADDR  	0x444
 #define IWN_PRPH_RADDR   	0x448
 #define IWN_PRPH_WDATA  	0x44c
@@ -303,20 +249,6 @@
 #define IWN_GP_CNTRL_SLEEP		(1 << 4)			//x00000010
 #define IWN_GP_CNTRL_RFKILL		(1 << 27)			//x08000000
 
-/* Possible flags for register IWN_HW_REV. */
-#define IWN_HW_REV_TYPE_SHIFT	4
-#define IWN_HW_REV_TYPE_MASK	0x000000f0
-#define IWN_HW_REV_TYPE_4965	0
-#define IWN_HW_REV_TYPE_5300	2
-#define IWN_HW_REV_TYPE_5350	3
-#define IWN_HW_REV_TYPE_5150	4
-#define IWN_HW_REV_TYPE_5100	5
-#define IWN_HW_REV_TYPE_1000	6
-#define IWN_HW_REV_TYPE_6000	7
-#define IWN_HW_REV_TYPE_6050	8
-#define IWN_HW_REV_TYPE_6005	11
-#define IWN_HW_REV_TYPE_2230	12
-
 /* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
 #define IWN_GIO_CHICKEN_DIS_L0S_TIMER	(1 << 29)
@@ -331,14 +263,14 @@
 #define IWN_GP_DRIVER_RADIO_MSK					(0x00000003)
 #define IWN_GP_DRIVER_CALIB_VER6				(1 << 2)
 #define IWN_GP_DRIVER_6050_1X2					(1 << 3)
-#define IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT 	(0x00000080)
+#define	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT	(1 << 7)
 
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
 #define IWN_UCODE_GP1_CMD_BLOCKED	(1 << 2)
 #define IWN_UCODE_GP1_CTEMP_STOP_RF	(1 << 3)
-#define IWN_UCODE_GP1_CFG_COMPLETE  (1 << 5)
+#define	IWN_UCODE_GP1_CFG_COMPLETE	(1 << 5)
 
 /* Possible flags/values for register IWN_LED. */
 #define IWN_LED_BSM_CTRL	(1 << 5)
@@ -350,24 +282,24 @@
 #define	IWN_LED_STATIC_OFF	1
 #define	IWN_LED_SLOW_BLINK	2
 #define	IWN_LED_INT_BLINK	3
-#define	IWN_LED_UNIT		0x1388 /* 5 ms */
+#define	IWN_LED_UNIT		0x1388	/* 5 ms */
 
 static const struct {
-	uint16_t tpt;	/* Mb/s */
-	uint8_t on_time;
-	uint8_t off_time;
+	uint16_t	tpt;	/* Mb/s */
+	uint8_t		on_time;
+	uint8_t		off_time;
 } blink_tbl[] =
 {
-	{300, 5,  5},
-	{200, 8,  8},
+	{300, 5, 5},
+	{200, 8, 8},
 	{100, 11, 11},
-	{70,  13, 13},
-	{50,  15, 15},
-	{20,  17, 17},
-	{10,  19, 19},
-	{5,   22, 22},
-	{1,   26, 26},
-	{0,   33, 33},
+	{70, 13, 13},
+	{50, 15, 15},
+	{20, 17, 17},
+	{10, 19, 19},
+	{5, 22, 22},
+	{1, 26, 26},
+	{0, 33, 33},
 	/* SOLID_ON */
 };
 
@@ -518,14 +450,26 @@ struct iwn_rx_status {
 } __packed;
 
 struct iwn_rx_desc {
+	/*
+	 * The first 4 bytes of the RX frame header contain both the RX frame
+	 * size and some flags.
+	 * Bit fields:
+	 * 31:    flag flush RB request
+	 * 30:    flag ignore TC (terminal counter) request
+	 * 29:    flag fast IRQ request
+	 * 28-14: Reserved
+	 * 13-00: RX frame size
+	 */
 	uint32_t	len;
 	uint8_t		type;
 #define IWN_UC_READY			  1
 #define IWN_ADD_NODE_DONE		 24
 #define IWN_TX_DONE			 28
+#define	IWN_REPLY_LED_CMD		72
 #define IWN5000_CALIBRATION_RESULT	102
 #define IWN5000_CALIBRATION_DONE	103
 #define IWN_START_SCAN			130
+#define	IWN_NOTIF_SCAN_RESULT		131
 #define IWN_STOP_SCAN			132
 #define IWN_RX_STATISTICS		156
 #define IWN_BEACON_STATISTICS		157
@@ -536,16 +480,22 @@ struct iwn_rx_desc {
 #define IWN_RX_DONE			195
 #define IWN_RX_COMPRESSED_BA		197
 
-	uint8_t		flags;
-	uint8_t		idx;
+	uint8_t		flags;	/* 0:5 reserved, 6 abort, 7 internal */
+	uint8_t		idx;	/* position within TX queue */
 	uint8_t		qid;
+	/* 0:4 TX queue id - 5:6 reserved - 7 unsolicited RX
+	 * or uCode-originated notification
+	 */
 } __packed;
 
-/* CARD_STATE_NOTIFICATION */ 
-#define IWN_STATE_CHANGE_HW_CARD_DISABLED               0x01
-#define IWN_STATE_CHANGE_SW_CARD_DISABLED               0x02
-#define IWN_STATE_CHANGE_CT_CARD_DISABLED               0x04
-#define IWN_STATE_CHANGE_RXON_CARD_DISABLED             0x10
+#define	IWN_RX_DESC_QID_MSK		0x1F
+#define	IWN_UNSOLICITED_RX_NOTIF	0x80
+
+/* CARD_STATE_NOTIFICATION */
+#define	IWN_STATE_CHANGE_HW_CARD_DISABLED		0x01
+#define	IWN_STATE_CHANGE_SW_CARD_DISABLED		0x02
+#define	IWN_STATE_CHANGE_CT_CARD_DISABLED		0x04
+#define	IWN_STATE_CHANGE_RXON_CARD_DISABLED		0x10
 
 /* Possible RX status flags. */
 #define IWN_RX_NO_CRC_ERR	(1 <<  0)
@@ -570,8 +520,8 @@ struct iwn_tx_cmd {
 #define IWN_CMD_LINK_QUALITY		 78
 #define IWN_CMD_SET_LED			 72
 #define IWN5000_CMD_WIMAX_COEX		 90
-#define IWN_TEMP_NOTIFICATION		98
-#define IWN5000_CMD_CALIB_CONFIG	101 // CALIBRATION_CFG_CMD
+#define	IWN_TEMP_NOTIFICATION		98
+#define IWN5000_CMD_CALIB_CONFIG	101
 #define IWN5000_CMD_CALIB_RESULT	102
 #define IWN5000_CMD_CALIB_COMPLETE	103
 #define IWN_CMD_SET_POWER_MODE		119
@@ -584,19 +534,20 @@ struct iwn_tx_cmd {
 #define IWN_CMD_GET_STATISTICS		156
 #define IWN_CMD_SET_CRITICAL_TEMP	164
 #define IWN_CMD_SET_SENSITIVITY		168
-#define IWN_CMD_PHY_CALIB		    176
+#define IWN_CMD_PHY_CALIB		176
 #define IWN_CMD_BT_COEX_PRIOTABLE	204
 #define IWN_CMD_BT_COEX_PROT		205
+#define	IWN_CMD_BT_COEX_NOTIF		206
 /* PAN commands */
-#define IWN_CMD_WIPAN_PARAMS			0xb2
-#define IWN_CMD_WIPAN_RXON			0xb3
-#define IWN_CMD_WIPAN_RXON_TIMING		0xb4
-#define IWN_CMD_WIPAN_RXON_ASSOC		0xb6
-#define IWN_CMD_WIPAN_QOS_PARAM			0xb7
-#define IWN_CMD_WIPAN_WEPKEY			0xb8
-#define IWN_CMD_WIPAN_P2P_CHANNEL_SWITCH	0xb9
-#define IWN_CMD_WIPAN_NOA_NOTIFICATION		0xbc
-#define IWN_CMD_WIPAN_DEACTIVATION_COMPLETE	0xbd
+#define	IWN_CMD_WIPAN_PARAMS			0xb2
+#define	IWN_CMD_WIPAN_RXON			0xb3
+#define	IWN_CMD_WIPAN_RXON_TIMING		0xb4
+#define	IWN_CMD_WIPAN_RXON_ASSOC		0xb6
+#define	IWN_CMD_WIPAN_QOS_PARAM			0xb7
+#define	IWN_CMD_WIPAN_WEPKEY			0xb8
+#define	IWN_CMD_WIPAN_P2P_CHANNEL_SWITCH	0xb9
+#define	IWN_CMD_WIPAN_NOA_NOTIFICATION		0xbc
+#define	IWN_CMD_WIPAN_DEACTIVATION_COMPLETE	0xbd
 
 	uint8_t	flags;
 	uint8_t	idx;
@@ -620,10 +571,9 @@ struct iwn_tx_cmd {
  * does not affect the response to the IWN_CMD_GET_STATISTICS 0x9c itself.
  */
 struct iwn_statistics_cmd {
-	uint32_t configuration_flags;	/* IWN_STATS_CONF_* */
-#define IWN_STATS_CONF_CLEAR_STATS htole32(0x1)	
-#define IWN_STATS_CONF_DISABLE_NOTIF htole32(0x2)
-
+	uint32_t	configuration_flags;
+#define	IWN_STATS_CONF_CLEAR_STATS		htole32(0x1)
+#define	IWN_STATS_CONF_DISABLE_NOTIF	htole32(0x2)
 } __packed;
 
 /* Antenna flags, used in various commands. */
@@ -632,8 +582,8 @@ struct iwn_statistics_cmd {
 #define IWN_ANT_C	(1 << 2)
 /* Shortcuts. */
 #define IWN_ANT_AB	(IWN_ANT_A | IWN_ANT_B)
-#define IWN_ANT_AC	(IWN_ANT_A | IWN_ANT_C)
 #define IWN_ANT_BC	(IWN_ANT_B | IWN_ANT_C)
+#define	IWN_ANT_AC	(IWN_ANT_A | IWN_ANT_C)
 #define IWN_ANT_ABC	(IWN_ANT_A | IWN_ANT_B | IWN_ANT_C)
 
 /* Structure for command IWN_CMD_RXON. */
@@ -649,8 +599,8 @@ struct iwn_rxon {
 #define IWN_MODE_STA		3
 #define IWN_MODE_IBSS		4
 #define IWN_MODE_MONITOR	6
-#define IWN_MODE_2STA		8
-#define IWN_MODE_P2P		9
+#define	IWN_MODE_2STA		8
+#define	IWN_MODE_P2P		9
 
 	uint8_t		air;
 	uint16_t	rxchain;
@@ -749,11 +699,9 @@ struct iwn_node_info {
 	uint16_t	reserved2;
 	uint8_t		id;
 #define IWN_ID_BSS		 0
-#define IWN_STA_ID			1
+#define	IWN_STA_ID		1
 
-#define	IWN_PAN_BCAST_ID		14
-#define	IWN_BROADCAST_ID		15
-
+#define	IWN_PAN_ID_BCAST		14
 #define IWN5000_ID_BROADCAST	15
 #define IWN4965_ID_BROADCAST	31
 
@@ -955,12 +903,11 @@ struct iwn_pmgt_cmd {
 #define IWN_PS_SLEEP_OVER_DTIM	(1 << 2)
 #define IWN_PS_PCI_PMGT		(1 << 3)
 #define IWN_PS_FAST_PD		(1 << 4)
-#define IWN_PS_BEACON_FILTERING	(1 << 5)
-#define IWN_PS_SHADOW_REG	(1 << 6)
-#define IWN_PS_CT_KILL		(1 << 7)
-#define IWN_PS_BT_SCD		(1 << 8)
-#define IWN_PS_ADVANCED_PM	(1 << 9)
-
+#define	IWN_PS_BEACON_FILTERING	(1 << 5)
+#define	IWN_PS_SHADOW_REG	(1 << 6)
+#define	IWN_PS_CT_KILL		(1 << 7)
+#define	IWN_PS_BT_SCD		(1 << 8)
+#define	IWN_PS_ADVANCED_PM	(1 << 9)
 
 	uint8_t		keepalive;
 	uint8_t		debug;
@@ -998,7 +945,7 @@ struct iwn_scan_hdr {
 
 struct iwn_scan_chan {
 	uint32_t	flags;
-#define IWN_CHAN_PASSIVE	(0 << 0)
+#define	IWN_CHAN_PASSIVE	(0 << 0)
 #define IWN_CHAN_ACTIVE		(1 << 0)
 #define IWN_CHAN_NPBREQS(x)	(((1 << (x)) - 1) << 1)
 
@@ -1017,17 +964,17 @@ struct iwn_scan_chan {
 /* Maximum size of a scan command. */
 #define IWN_SCAN_MAXSZ	(MCLBYTES - 4)
 
-#define IWN_ACTIVE_DWELL_TIME_24	(30)	/* all times in msec */
-#define IWN_ACTIVE_DWELL_TIME_52	(20)
-#define IWN_ACTIVE_DWELL_FACTOR_24	(3)
-#define IWN_ACTIVE_DWELL_FACTOR_52	(2)
+#define	IWN_ACTIVE_DWELL_TIME_24	(30)	/* all times in msec */
+#define	IWN_ACTIVE_DWELL_TIME_52	(20)
+#define	IWN_ACTIVE_DWELL_FACTOR_24	(3)
+#define	IWN_ACTIVE_DWELL_FACTOR_52	(2)
 
-#define IWN_PASSIVE_DWELL_TIME_24	(20)	/* all times in msec */
-#define IWN_PASSIVE_DWELL_TIME_52	(10)
-#define IWN_PASSIVE_DWELL_BASE		(100)
-#define IWN_CHANNEL_TUNE_TIME		(5)
+#define	IWN_PASSIVE_DWELL_TIME_24	(20)	/* all times in msec */
+#define	IWN_PASSIVE_DWELL_TIME_52	(10)
+#define	IWN_PASSIVE_DWELL_BASE		(100)
+#define	IWN_CHANNEL_TUNE_TIME		(5)
 
-#define IWN_SCAN_CHAN_TIMEOUT		2
+#define	IWN_SCAN_CHAN_TIMEOUT		2
 
 /* Structure for command IWN_CMD_TXPOWER (4965AGN only.) */
 #define IWN_RIDX_MAX	32
@@ -1076,17 +1023,16 @@ struct iwn_bluetooth {
 /* Structures for enhanced command IWN_CMD_BLUETOOTH. */
 struct iwn6000_btcoex_config {
 	uint8_t		flags;
-#define IWN_BT_FLAG_COEX6000_CHAN_INHIBITION	1
-#define IWN_BT_FLAG_COEX6000_MODE_MASK			( (1 << 3) | (1 << 4) | (1 <<5 ))
-#define IWN_BT_FLAG_COEX6000_MODE_SHIFT			3
-#define IWN_BT_FLAG_COEX6000_MODE_DISABLED		0
-#define IWN_BT_FLAG_COEX6000_MODE_LEGACY_2W		1
-#define IWN_BT_FLAG_COEX6000_MODE_3W			2
-#define IWN_BT_FLAG_COEX6000_MODE_4W			3
+#define	IWN_BT_FLAG_COEX6000_CHAN_INHIBITION	1
+#define	IWN_BT_FLAG_COEX6000_MODE_MASK		((1 << 3) | (1 << 4) | (1 << 5 ))
+#define	IWN_BT_FLAG_COEX6000_MODE_SHIFT			3
+#define	IWN_BT_FLAG_COEX6000_MODE_DISABLED		0
+#define	IWN_BT_FLAG_COEX6000_MODE_LEGACY_2W		1
+#define	IWN_BT_FLAG_COEX6000_MODE_3W			2
+#define	IWN_BT_FLAG_COEX6000_MODE_4W			3
 
-#define IWN_BT_FLAG_UCODE_DEFAULT		(1 << 6)
-/* Disable Sync PSPoll on SCO/eSCO */
-#define IWN_BT_FLAG_SYNC_2_BT_DISABLE	(1 << 7)
+#define	IWN_BT_FLAG_UCODE_DEFAULT		(1 << 6)
+#define	IWN_BT_FLAG_SYNC_2_BT_DISABLE	(1 << 7)
 	uint8_t		lead_time;
 	uint8_t		max_kill;
 	uint8_t		bt3_t7_timer;
@@ -1105,7 +1051,7 @@ struct iwn6000_btcoex_config {
 
 /* Structures for enhanced command IWN_CMD_BLUETOOTH for 2000 Series. */
 struct iwn2000_btcoex_config {
-	uint8_t		flags; // Cf Flags in iwn6000_btcoex_config
+	uint8_t		flags;	/* Cf Flags in iwn6000_btcoex_config */
 	uint8_t		lead_time;
 	uint8_t		max_kill;
 	uint8_t		bt3_t7_timer;
@@ -1117,10 +1063,10 @@ struct iwn2000_btcoex_config {
 	uint32_t	lookup_table[12];
 	uint16_t	bt4_decision;
 	uint16_t	valid;
-	
-	uint32_t	prio_boost; // size change prior to iwn6000_btcoex_config
-	uint8_t		reserved; // added prior to iwn6000_btcoex_config
-	
+
+	uint32_t	prio_boost;	/* size change prior to iwn6000_btcoex_config */
+	uint8_t		reserved;	/* added prior to iwn6000_btcoex_config */
+
 	uint8_t		tx_prio_boost;
 	uint16_t	rx_prio_boost;
 } __packed;
@@ -1262,9 +1208,9 @@ struct iwn5000_phy_calib_temp_offsetv2 {
 	uint8_t		group;
 	uint8_t		ngroups;
 	uint8_t		isvalid;
-	int16_t 	offset_high;
+	int16_t		offset_high;
 	int16_t		offset_low;
-	int16_t		burntVoltageRef;
+	int16_t		burnt_voltage_ref;
 	int16_t		reserved;
 } __packed;
 
@@ -1335,6 +1281,10 @@ struct iwn_ucode_info {
 } __packed;
 
 /* Structures for IWN_TX_DONE notification. */
+#define	IWN_TX_STATUS_MSK		0xff
+#define	TX_STATUS_SUCCESS		0x01
+#define	TX_STATUS_DIRECT_DONE		0x02
+
 #define IWN_TX_SUCCESS			0x00
 #define IWN_TX_FAIL			0x80	/* all failures have 0x80 set */
 #define IWN_TX_FAIL_SHORT_LIMIT		0x82	/* too many RTS retries */
@@ -1356,7 +1306,7 @@ struct iwn4965_tx_stat {
 } __packed;
 
 struct iwn5000_tx_stat {
-	uint8_t		nframes;
+	uint8_t		nframes;	/* 1 no aggregation, >1 aggregation */
 	uint8_t		btkillcnt;
 	uint8_t		rtsfailcnt;
 	uint8_t		ackfailcnt;
@@ -1368,7 +1318,7 @@ struct iwn5000_tx_stat {
 	uint16_t	seq;
 	uint16_t	len;
 	uint8_t		tlc;
-	uint8_t		ratid;
+	uint8_t		ratid;	/* tid (0:3), sta_id (4:7) */
 	uint8_t		fc[2];
 	uint16_t	status;
 	uint16_t	sequence;
@@ -1416,6 +1366,42 @@ struct iwn_rx_stat {
 	uint16_t	chan;
 	uint8_t		phybuf[32];
 	uint32_t	rate;
+/*
+ * rate bit fields
+ *
+ * High-throughput (HT) rate format for bits 7:0 (bit 8 must be "1"):
+ *  2-0:  0)   6 Mbps
+ *        1)  12 Mbps
+ *        2)  18 Mbps
+ *        3)  24 Mbps
+ *        4)  36 Mbps
+ *        5)  48 Mbps
+ *        6)  54 Mbps
+ *        7)  60 Mbps
+ *
+ *  4-3:  0)  Single stream (SISO)
+ *        1)  Dual stream (MIMO)
+ *        2)  Triple stream (MIMO)
+ *
+ *    5:  Value of 0x20 in bits 7:0 indicates 6 Mbps HT40 duplicate data
+ *
+ * Legacy OFDM rate format for bits 7:0 (bit 8 must be "0", bit 9 "0"):
+ *  3-0:  0xD)   6 Mbps
+ *        0xF)   9 Mbps
+ *        0x5)  12 Mbps
+ *        0x7)  18 Mbps
+ *        0x9)  24 Mbps
+ *        0xB)  36 Mbps
+ *        0x1)  48 Mbps
+ *        0x3)  54 Mbps
+ *
+ * Legacy CCK rate format for bits 7:0 (bit 8 must be "0", bit 9 "1"):
+ *  6-0:   10)  1 Mbps
+ *         20)  2 Mbps
+ *         55)  5.5 Mbps
+ *        110)  11 Mbps
+ *
+ */
 	uint16_t	len;
 	uint16_t	reserve3;
 } __packed;
@@ -1638,14 +1624,14 @@ struct iwn_fw_tlv {
 #define IWN_FW_TLV_INIT_DATA		4
 #define IWN_FW_TLV_BOOT_TEXT		5
 #define IWN_FW_TLV_PBREQ_MAXLEN		6
-#define IWN_FW_TLV_PAN				7
+#define	IWN_FW_TLV_PAN				7
 #define	IWN_FW_TLV_RUNT_EVTLOG_PTR	8
 #define	IWN_FW_TLV_RUNT_EVTLOG_SIZE	9
 #define	IWN_FW_TLV_RUNT_ERRLOG_PTR	10
 #define	IWN_FW_TLV_INIT_EVTLOG_PTR	11
 #define	IWN_FW_TLV_INIT_EVTLOG_SIZE	12
 #define	IWN_FW_TLV_INIT_ERRLOG_PTR	13
-#define IWN_FW_TLV_ENH_SENS			14
+#define IWN_FW_TLV_ENH_SENS		14
 #define IWN_FW_TLV_PHY_CALIB		15
 #define	IWN_FW_TLV_WOWLAN_INST		16
 #define	IWN_FW_TLV_WOWLAN_DATA		17
@@ -1673,8 +1659,8 @@ struct iwn_fw_tlv {
 #define IWN_EEPROM_RFCFG	0x048
 #define IWN4965_EEPROM_DOMAIN	0x060
 #define IWN4965_EEPROM_BAND1	0x063
-#define IWN5000_EEPROM_REG		0x066
-#define IWN5000_EEPROM_CAL		0x067
+#define IWN5000_EEPROM_REG	0x066
+#define IWN5000_EEPROM_CAL	0x067
 #define IWN4965_EEPROM_BAND2	0x072
 #define IWN4965_EEPROM_BAND3	0x080
 #define IWN4965_EEPROM_BAND4	0x08d
@@ -1685,6 +1671,7 @@ struct iwn_fw_tlv {
 #define IWN4965_EEPROM_VOLTAGE	0x0e9
 #define IWN4965_EEPROM_BANDS	0x0ea
 /* Indirect offsets. */
+#define	IWN5000_EEPROM_NO_HT40	0x000
 #define IWN5000_EEPROM_DOMAIN	0x001
 #define IWN5000_EEPROM_BAND1	0x004
 #define IWN5000_EEPROM_BAND2	0x013
@@ -1695,9 +1682,9 @@ struct iwn_fw_tlv {
 #define IWN6000_EEPROM_BAND6	0x040
 #define IWN5000_EEPROM_BAND7	0x049
 #define IWN6000_EEPROM_ENHINFO	0x054
-#define IWN5000_EEPROM_CRYSTAL	0x128 //XTAL in linux 3.2
-#define IWN5000_EEPROM_TEMP		0x12a //KELVIN_TEMPERATURE in linux 3.2
-#define IWN5000_EEPROM_VOLT		0x12b //RAW_TEMPERATURE  in linux 3.2
+#define IWN5000_EEPROM_CRYSTAL	0x128
+#define IWN5000_EEPROM_TEMP	0x12a
+#define IWN5000_EEPROM_VOLT	0x12b
 
 /* Possible flags for IWN_EEPROM_SKU_CAP. */
 #define IWN_EEPROM_SKU_CAP_11N	(1 << 6)
@@ -1806,6 +1793,26 @@ static const uint32_t iwn6000_regulatory_bands[IWN_NBANDS] = {
 	IWN5000_EEPROM_BAND7
 };
 
+static const uint32_t iwn1000_regulatory_bands[IWN_NBANDS] = {
+	IWN5000_EEPROM_BAND1,
+	IWN5000_EEPROM_BAND2,
+	IWN5000_EEPROM_BAND3,
+	IWN5000_EEPROM_BAND4,
+	IWN5000_EEPROM_BAND5,
+	IWN5000_EEPROM_BAND6,
+	IWN5000_EEPROM_NO_HT40,
+};
+
+static const uint32_t iwn2030_regulatory_bands[IWN_NBANDS] = {
+	IWN5000_EEPROM_BAND1,
+	IWN5000_EEPROM_BAND2,
+	IWN5000_EEPROM_BAND3,
+	IWN5000_EEPROM_BAND4,
+	IWN5000_EEPROM_BAND5,
+	IWN6000_EEPROM_BAND6,
+	IWN5000_EEPROM_BAND7
+};
+
 #define IWN_CHAN_BANDS_COUNT	 7
 #define IWN_MAX_CHAN_PER_BAND	14
 static const struct iwn_chan_band {
@@ -1848,15 +1855,14 @@ static const uint8_t iwn_pan_ac_to_queue[] = {
 #define IWN_RIDX_OFDM6	4
 
 #define IWN4965_MAX_PWR_INDEX	107
+#define	IWN_POWERSAVE_LVL_NONE			0
+#define	IWN_POWERSAVE_LVL_VOIP_COMPATIBLE	1
+#define	IWN_POWERSAVE_LVL_MAX			5
 
-#define IWN_POWERSAVE_LVL_NONE 			0
-#define IWN_POWERSAVE_LVL_VOIP_COMPATIBLE 	1
-#define IWN_POWERSAVE_LVL_MAX 			5
-
-#define IWN_POWERSAVE_LVL_DEFAULT IWN_POWERSAVE_LVL_NONE
+#define	IWN_POWERSAVE_LVL_DEFAULT	IWN_POWERSAVE_LVL_NONE
 
 /* DTIM value to pass in for IWN_POWERSAVE_LVL_VOIP_COMPATIBLE */
-#define IWN_POWERSAVE_DTIM_VOIP_COMPATIBLE 2
+#define	IWN_POWERSAVE_DTIM_VOIP_COMPATIBLE	2
 
 
 /*
@@ -1991,6 +1997,7 @@ struct iwn_sensitivity_limits {
 	uint32_t	min_energy_cck;
 	uint32_t	energy_cck;
 	uint32_t	energy_ofdm;
+	uint32_t	min_corr_barker_mrc;
 };
 
 /*
@@ -2017,7 +2024,8 @@ static const struct iwn_sensitivity_limits iwn5000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	 390
 };
 
 static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
@@ -2029,7 +2037,8 @@ static const struct iwn_sensitivity_limits iwn5150_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	 390
 };
 
 static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
@@ -2041,7 +2050,8 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	170, 400,
 	 95,
 	 95,
-	 95
+	 95,
+	 390
 };
 
  /* Define several specific values for Intel 6000 series */
@@ -2052,11 +2062,24 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	128, 232,
 	125, 175,
 	160, 310,
-	 97,
-	 97,
-	100
+	110,
+	110,
+	110,
+	336
 };
 
+/* Get value from linux kernel 3.2.+ in Drivers/net/wireless/iwlwifi/iwl-2000.c*/
+static const struct iwn_sensitivity_limits iwn2030_sensitivity_limits = {
+	105,110,
+	128,232,
+	80,145,
+	128,232,
+	125,175,
+	160,310,
+	97,
+	97,
+	110
+};
 
 /* Map TID to TX scheduler's FIFO. */
 static const uint8_t iwn_tid2fifo[] = {
@@ -2144,7 +2167,17 @@ static const char * const iwn_fw_errmsg[] = {
 
 
 		
-/* Flags for managing calibration result. See calib_need in iwn_base_params struct */
+		
+		
+/* ==========================================================================
+ *                                  NIC PARAMETERS
+ *
+ * ==========================================================================
+ */
+ 
+/* Flags for managing calibration result. See calib_need 
+ * in iwn_base_params struct 
+ */
 #define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
 #define IWN_FLG_NEED_PHY_CALIB_LO				(1<<1)
 #define IWN_FLG_NEED_PHY_CALIB_TX_IQ			(1<<2)
@@ -2156,14 +2189,14 @@ static const char * const iwn_fw_errmsg[] = {
 
 		
 /* Define some parameters for managing different NIC.
- * Refer to linux specific file like iwl-xxxx.c to determine correct value for NIC
- *
+ * Refer to linux specific file like iwl-xxxx.c to determine correct value 
+ * for NIC.
  *
  * @max_ll_items: max number of OTP blocks
  * @shadow_ram_support: shadow support for OTP memory
  * @led_compensation: compensate on the led on/off time per HW according
- *	to the deviation to achieve the desired led frequency.
- *	The detail algorithm is described in iwl-led.c
+ *     to the deviation to achieve the desired led frequency.
+ *     The detail algorithm is described in iwl-led.c
  * @chain_noise_num_beacons: number of beacons used to compute chain noise
  * @adv_thermal_throttle: support advance thermal throttle
  * @support_ct_kill_exit: support ct kill exit condition
@@ -2177,16 +2210,21 @@ static const char * const iwn_fw_errmsg[] = {
  * @no_idle_support: do not support idle mode
  * @hd_v2: v2 of enhanced sensitivity value, used for 2000 series and up
  * advanced_bt_coexist : Advanced BT management
+ * bt_session_2 : NIC need a new struct for configure BT coexistence. Needed 
+ *   only if advanced_bt_coexist is true 
  * bt_sco_disable :
  * additional_nic_config: For 6005 series
  * iq_invert : ? But need it for N 2000 series
  * regulatory_bands :
- * enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True' if update_enhanced_txpower = iwl_eeprom_enhanced_txpower 
+ * enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True'
+ *  if update_enhanced_txpower = iwl_eeprom_enhanced_txpower 
  * need_temp_offset_calib : Need to compute some temp offset for calibration.
- * calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which calibration data ucode need. See calib_init_cfg in iwl-xxxx.c linux kernel file
+ * calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which 
+ *    calibration data ucode need. See calib_init_cfg in iwl-xxxx.c 
+ *    linux kernel file
+ * additional_gp_drv_bit : Specific bit to defined during nic_config
  */
 struct iwn_base_params {
-	int eeprom_size;
 	uint32_t pll_cfg_val;
 	const uint16_t max_ll_items;
 #define IWN_OTP_MAX_LL_ITEMS_1000		(3)	/* OTP blocks for 1000 */
@@ -2207,24 +2245,21 @@ struct iwn_base_params {
 	const bool bt_session_2;
 	const bool bt_sco_disable;
 	const bool additional_nic_config;
-	const bool iq_invert;
 	const uint32_t *regulatory_bands;
-	const bool enhanced_TX_power; // See iwl-xxxx.c file to determine that. 
-	const bool need_temp_offset_calib; 
+	const bool enhanced_TX_power; // See iwl-agn-devices.c file to determine that(enhanced_txpower). 
 	const uint16_t calib_need;
-	const bool running_post_alive_calib;
 	const bool no_crystal_calibration; // see no_xtal_calib in linux
 	const bool support_hostap; //Define IEEE80211_C_HOSTAP for ic_caps
 	const bool no_multi_vaps; // see iwn_vap_create
+	uint8_t additional_gp_drv_bit; //
 	
 };
 
-		
+/* NOTA : Values with comments BEFORE are not yet used in driver */
 static struct iwn_base_params iwn_default_base_params = {
-	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
-	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */4, /*OTP_MAX_LL_ITEMS_2x00,*/
-	/*.shadow_ram_support = */true,
+	IWN_ANA_PLL_INIT, // pll_cfg_val
+	4,  //max_ll_items
+	true, // shadow_ram_support
 	/*.led_compensation = */57,
 	/*.adv_thermal_throttle =*/ true,
 	/*.support_ct_kill_exit = */true,
@@ -2232,28 +2267,54 @@ static struct iwn_base_params iwn_default_base_params = {
 	/*.chain_noise_scale =*/ 1000,
 	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
 	/*.max_event_log_size =*/ 512,
-	/*.shadow_reg_enable = */false, 
+	false, //shadow_reg_enable
 	/*.hd_v2 = */true,
-	/* advanced_bt_coexist */ false,
-	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true,
-	/* additional_nic_config */ false,
-	/* iq_invert */ false,
-	/* regulatory_bands */ iwn5000_regulatory_bands,
-	/* enhanced_TX_power */ false,
-	/* need_temp_offset_calib */ false,
-	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ false,
-	/* no_crystal_calibration */ false,
+	false, // advanced_bt_coexist
+	false, // bt_session_2
+	true, // bt_sco_disable
+	false, //additional_nic_config
+	iwn5000_regulatory_bands, //regulatory_bands
+	false, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO 
+	    | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, // no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+
+static struct iwn_base_params iwn2030_base_params = {
+	 0, //pll_cfg_val
+	 IWN_OTP_MAX_LL_ITEMS_2x00, //max_ll_items
+	 true, //shadow_ram_support
+	/*.led_compensation = */ 57,
+	/*.adv_thermal_throttle = */ true,
+	/*.support_ct_kill_exit = */ true,
+	/*.plcp_delta_threshold = */ 50,
+	/*.chain_noise_scale = */ 1000,
+	/*.wd_timeout = */ 2000,
+	/*.max_event_log_size = */ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */ true,
+	true, //advanced_bt_coexist
+	true, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn2030_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ), //calib_need
+	false, //no_crystal_calibration
 	true, //support_hostap
-	false, // no_multi_vaps
+	false, //no_multi_vaps
+	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT, // additional_gp_drv_bit
 };
 
 static struct iwn_base_params iwn_1000_base_params = {
-	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
-	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */IWN_OTP_MAX_LL_ITEMS_1000, /*OTP_MAX_LL_ITEMS_2x00,*/
-	/*.shadow_ram_support = */false,
+	IWN_ANA_PLL_INIT, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_1000, //max_ll_items
+	false, //shadow_ram_support
 	/*.led_compensation = */57,
 	/*.adv_thermal_throttle =*/ true,
 	/*.support_ct_kill_exit = */true,
@@ -2261,27 +2322,25 @@ static struct iwn_base_params iwn_1000_base_params = {
 	/*.chain_noise_scale =*/ 1000,
 	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
 	/*.max_event_log_size =*/ 512,
-	/*.shadow_reg_enable = */false, 
+	false, //shadow_reg_enable
 	/*.hd_v2 = */true,
-	/* advanced_bt_coexist */ false,
-	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true,
-	/* additional_nic_config */ false,
-	/* iq_invert */ false,
-	/* regulatory_bands */ iwn5000_regulatory_bands,
-	/* enhanced_TX_power */ false,
-	/* need_temp_offset_calib */ false,
-	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ false,
-	/* no_crystal_calibration */ false,
+	false, //advanced_bt_coexist
+	false, //bt_session_2
+	false, //bt_sco_disable
+	false, //additional_nic_config
+	iwn5000_regulatory_bands, //regulatory_bands
+	false, //enhanced_TX_power
+	( IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
 };
 static struct iwn_base_params iwn_6000_base_params = {
-	/* .eeprom_size =  */ OTP_LOW_IMAGE_SIZE, 
-	/*.pll_cfg_val = */IWN_ANA_PLL_INIT,
-	/*.max_ll_items = */IWN_OTP_MAX_LL_ITEMS_6x00, /*OTP_MAX_LL_ITEMS_2x00,*/
-	/*.shadow_ram_support = */true,
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
 	/*.led_compensation = */57,
 	/*.adv_thermal_throttle =*/ true,
 	/*.support_ct_kill_exit = */true,
@@ -2289,20 +2348,180 @@ static struct iwn_base_params iwn_6000_base_params = {
 	/*.chain_noise_scale =*/ 1000,
 	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
 	/*.max_event_log_size =*/ 512,
-	/*.shadow_reg_enable = */false, 
+	false, //shadow_reg_enable
 	/*.hd_v2 = */true,
-	/* advanced_bt_coexist */ false,
-	/* bt_session_2 */ false,
-	/* bt_sco_disable */ true,
-	/* additional_nic_config */ false,
-	/* iq_invert */ false,
-	/* regulatory_bands */ iwn6000_regulatory_bands,
-	/* enhanced_TX_power */ true,
-	/* need_temp_offset_calib */ false,
-	/* calib_need */ (IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
-	/* running_post_alive_calib */ false,
-	/* no_crystal_calibration */ false,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	false, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
 	false, //support_hostap
 	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6000i_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6000g2_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6050_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x50, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	true, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_6150_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x50, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	true, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	IWN_GP_DRIVER_6050_1X2, //additional_gp_drv_bit
+};
+//IWL_DEVICE_6035 & IWL_DEVICE_6030
+static struct iwn_base_params iwn_6000g2b_base_params = {
+	0, //pll_cfg_val
+	IWN_OTP_MAX_LL_ITEMS_6x00, // max_ll_items
+	true, //shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	true, // advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn6000_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ), //calib_need
+	false, //no_crystal_calibration
+	false, //support_hostap
+	true, //no_multi_vaps
+	0, //additional_gp_drv_bit
+};
+static struct iwn_base_params iwn_5x50_base_params = {
+	IWN_ANA_PLL_INIT, // pll_cfg_val
+	4,  //max_ll_items
+	true, // shadow_ram_support
+	/*.led_compensation = */57,
+	/*.adv_thermal_throttle =*/ true,
+	/*.support_ct_kill_exit = */true,
+	/*.plcp_delta_threshold =*/ 50, /*IWL_MAX_PLCP_ERR_THRESHOLD_DEF,*/
+	/*.chain_noise_scale =*/ 1000,
+	/*.wd_timeout = */2000, /* IWL_LONG_WD_TIMEOUT,*/
+	/*.max_event_log_size =*/ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */true,
+	false, // advanced_bt_coexist
+	false, // bt_session_2
+	true, // bt_sco_disable
+	false, //additional_nic_config
+	iwn5000_regulatory_bands, //regulatory_bands
+	false, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ), //calib_need
+	true, //no_crystal_calibration
+	false, //support_hostap
+	true, // no_multi_vaps
+	0, //additional_gp_drv_bit
 };
 
