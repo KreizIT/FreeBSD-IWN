@@ -248,13 +248,13 @@ struct iwn_softc {
 	struct mtx		sc_mtx;
 
 	u_int			sc_flags;
-#define IWN_FLAG_HAS_OTPROM		(1 << 1)
-#define IWN_FLAG_CALIB_DONE		(1 << 2)
-#define IWN_FLAG_USE_ICT		(1 << 3)
+#define IWN_FLAG_HAS_OTPROM	(1 << 1)
+#define IWN_FLAG_CALIB_DONE	(1 << 2)
+#define IWN_FLAG_USE_ICT	(1 << 3)
 #define IWN_FLAG_INTERNAL_PA	(1 << 4)
-#define IWN_FLAG_HAS_11N		(1 << 6)
-#define IWN_FLAG_ENH_SENS		(1 << 7)
-#define IWN_FLAG_ADV_BTCOEX		(1 << 8)
+#define IWN_FLAG_HAS_11N	(1 << 6)
+#define IWN_FLAG_ENH_SENS	(1 << 7)
+#define IWN_FLAG_ADV_BTCOEX	(1 << 8)
 #define IWN_FLAG_PAN_SUPPORT	(1 << 9)
 
 	uint8_t 		hw_type;
@@ -405,5 +405,3 @@ struct iwn_softc {
 #define IWN_LOCK_ASSERT(_sc)		mtx_assert(&(_sc)->sc_mtx, MA_OWNED)
 #define IWN_UNLOCK(_sc)			mtx_unlock(&(_sc)->sc_mtx)
 #define IWN_LOCK_DESTROY(_sc)		mtx_destroy(&(_sc)->sc_mtx)
-#define IWN_UC_PAN_PRESENT		1
-

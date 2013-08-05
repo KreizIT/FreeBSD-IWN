@@ -204,50 +204,12 @@
 #define IWN_RESET_LINK_PWR_MGMT_DIS	(1 << 31)
 
 /* Possible flags for register IWN_GP_CNTRL. */
-/*
- * GP (general purpose) CONTROL REGISTER
- * Bit fields:
- *    27:  HW_RF_KILL_SW
- *         Indicates state of (platform's) hardware RF-Kill switch
- * 26-24:  POWER_SAVE_TYPE
- *         Indicates current power-saving mode:
- *         000 -- No power saving
- *         001 -- MAC power-down
- *         010 -- PHY (radio) power-down
- *         011 -- Error
- *   9-6:  SYS_CONFIG
- *         Indicates current system configuration, reflecting pins on chip
- *         as forced high/low by device circuit board.
- *     4:  GOING_TO_SLEEP
- *         Indicates MAC is entering a power-saving sleep power-down.
- *         Not a good time to access device-internal resources.
- *     3:  MAC_ACCESS_REQ
- *         Host sets this to request and maintain MAC wakeup, to allow host
- *         access to device-internal resources.  Host must wait for
- *         MAC_CLOCK_READY (and !GOING_TO_SLEEP) before accessing non-CSR
- *         device registers.
- *     2:  INIT_DONE
- *         Host sets this to put device into fully operational D0 power mode.
- *         Host resets this after SW_RESET to put device into low power mode.
- *     0:  MAC_CLOCK_READY
- *         Indicates MAC (ucode processor, etc.) is powered up and can run.
- *         Internal resources are accessible.
- *         NOTE:  This does not indicate that the processor is actually running.
- *         NOTE:  This does not indicate that device has completed
- *                init or post-power-down restore of internal SRAM memory.
- *                Use CSR_UCODE_DRV_GP1_BIT_MAC_SLEEP as indication that
- *                SRAM is restored and uCode is in normal operation mode.
- *                Later devices (5xxx/6xxx/1xxx) use non-volatile SRAM, and
- *                do not need to save/restore it.
- *         NOTE:  After device reset, this bit remains "0" until host sets
- *                INIT_DONE
- */
-#define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0) 		//x00000001
+#define IWN_GP_CNTRL_MAC_ACCESS_ENA	(1 << 0)
 #define IWN_GP_CNTRL_MAC_CLOCK_READY	(1 << 0)
-#define IWN_GP_CNTRL_INIT_DONE		(1 << 2)		//x00000004
-#define IWN_GP_CNTRL_MAC_ACCESS_REQ	(1 << 3)		//x00000008
-#define IWN_GP_CNTRL_SLEEP		(1 << 4)			//x00000010
-#define IWN_GP_CNTRL_RFKILL		(1 << 27)			//x08000000
+#define IWN_GP_CNTRL_INIT_DONE		(1 << 2)
+#define IWN_GP_CNTRL_MAC_ACCESS_REQ	(1 << 3)
+#define IWN_GP_CNTRL_SLEEP		(1 << 4)
+#define IWN_GP_CNTRL_RFKILL		(1 << 27)
 
 /* Possible flags for register IWN_GIO_CHICKEN. */
 #define IWN_GIO_CHICKEN_L1A_NO_L0S_RX	(1 << 23)
@@ -257,12 +219,11 @@
 #define IWN_GIO_L0S_ENA		(1 << 1)
 
 /* Possible flags for register IWN_GP_DRIVER. */
-#define IWN_GP_DRIVER_RADIO_3X3_HYB				(0 << 0)
-#define IWN_GP_DRIVER_RADIO_2X2_HYB				(1 << 0)
-#define IWN_GP_DRIVER_RADIO_2X2_IPA				(2 << 0)
-#define IWN_GP_DRIVER_RADIO_MSK					(0x00000003)
-#define IWN_GP_DRIVER_CALIB_VER6				(1 << 2)
-#define IWN_GP_DRIVER_6050_1X2					(1 << 3)
+#define IWN_GP_DRIVER_RADIO_3X3_HYB	(0 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_HYB	(1 << 0)
+#define IWN_GP_DRIVER_RADIO_2X2_IPA	(2 << 0)
+#define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
+#define IWN_GP_DRIVER_6050_1X2		(1 << 3)
 #define	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT	(1 << 7)
 
 
@@ -318,18 +279,17 @@ static const struct {
 #define IWN_BSM_WR_CTRL_START		(1 << 31)
 
 /* Possible flags for register IWN_INT. */
-#define IWN_INT_ALIVE		(1 <<  0) // x00000001
-#define IWN_INT_WAKEUP		(1 <<  1) // x00000002
-#define IWN_INT_SW_RX		(1 <<  3) // x00000008
-#define IWN_INT_CT_REACHED	(1 <<  6) // x00000040
-#define IWN_INT_RF_TOGGLED	(1 <<  7) // x00000080
-#define IWN_INT_SW_ERR		(1 << 25) // x02000000
-#define IWN_INT_SCHED		(1 << 26) // x04000000
-#define IWN_INT_FH_TX		(1 << 27) // x08000000
-#define IWN_INT_RX_PERIODIC	(1 << 28) // x10000000
-#define IWN_INT_HW_ERR		(1 << 29) // x20000000
-#define IWN_INT_FH_RX		(1 << 31) // x80000000
-
+#define IWN_INT_ALIVE		(1 <<  0)
+#define IWN_INT_WAKEUP		(1 <<  1)
+#define IWN_INT_SW_RX		(1 <<  3)
+#define IWN_INT_CT_REACHED	(1 <<  6)
+#define IWN_INT_RF_TOGGLED	(1 <<  7)
+#define IWN_INT_SW_ERR		(1 << 25)
+#define IWN_INT_SCHED		(1 << 26)
+#define IWN_INT_FH_TX		(1 << 27)
+#define IWN_INT_RX_PERIODIC	(1 << 28)
+#define IWN_INT_HW_ERR		(1 << 29)
+#define IWN_INT_FH_RX		(1 << 31)
 
 /* Shortcut. */
 #define IWN_INT_MASK_DEF						\
@@ -1160,7 +1120,7 @@ struct iwn_phy_calib {
 #define IWN5000_PHY_CALIB_DC			 8
 #define IWN5000_PHY_CALIB_LO			 9
 #define IWN5000_PHY_CALIB_TX_IQ			11
-#define IWN5000_PHY_CALIB_CRYSTAL		15 //Linux = IWL_PHY_CALIBRATE_CRYSTAL_FRQ_CMD
+#define IWN5000_PHY_CALIB_CRYSTAL		15
 #define IWN5000_PHY_CALIB_BASE_BAND		16
 #define IWN5000_PHY_CALIB_TX_IQ_PERIODIC	17
 #define IWN5000_PHY_CALIB_TEMP_OFFSET		18
@@ -1839,13 +1799,6 @@ static const uint8_t iwn_bss_ac_to_queue[] = {
 static const uint8_t iwn_pan_ac_to_queue[] = {
 	5, 4, 6, 7,
 };
-
-
-/* OTP */
-/* lower blocks contain EEPROM image and calibration data */
-#define OTP_LOW_IMAGE_SIZE		(2 * 512 * sizeof(int)) /* 2 KB */
-
-
 #define IWN1000_OTP_NBLOCKS	3 
 #define IWN6000_OTP_NBLOCKS	4 
 #define IWN6050_OTP_NBLOCKS	7
@@ -1865,18 +1818,6 @@ static const uint8_t iwn_pan_ac_to_queue[] = {
 #define	IWN_POWERSAVE_DTIM_VOIP_COMPATIBLE	2
 
 
-/*
- * If IWN_DTIM_INDICATES_UNICAST_PENDING_AT_AP is defined, then power saving
- * (including the power saving done for unicast traffic) becomes proportional
- * to the DTIM period received from the AP. Otherwise the constant DTIM
- * period IWN_POWERSAVE_DTIM_VOIP_COMPATIBLE is used.
- *
- * Per the 802.11 spec DTIM value as applicable to power saving seems to be
- * relevant only for indicating the frequency at which broadcast/multicast
- * data is sent to the PS STAs.
- * However in practice some APs may also send the unicast traffic along with
- * the DTIM.
- */
 #define IWN_DTIM_INDICATES_UNICAST_PENDING_AT_AP
 
 
@@ -2054,8 +1995,7 @@ static const struct iwn_sensitivity_limits iwn1000_sensitivity_limits = {
 	 390
 };
 
- /* Define several specific values for Intel 6000 series */
- static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
+static const struct iwn_sensitivity_limits iwn6000_sensitivity_limits = {
 	105, 110,
 	192, 232,
 	 80, 145,
