@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 Cedric GROSS <c.gross@kreiz-it.fr>
+ * Copyright (c) 2013 Cedric GROSS <cg@cgross.info>
  * Copyright (c) 2011 Intel Corporation
  * Copyright (c) 2007-2009
  *	Damien Bergamini <damien.bergamini@free.fr>
@@ -24,11 +24,12 @@
  * Driver for Intel WiFi Link 4965 and 1000/5000/6000 Series 802.11 network
  * adapters.
  */
- 
+
 #include <sys/cdefs.h>
 __FBSDID("$FreeBSD$");
 
 #include "opt_wlan.h"
+#include "opt_iwn.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -99,8 +100,8 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_x030_4, "Intel Centrino Advanced-N 6230"		},
 	{ 0x8086, IWN_DID_6150_1, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
-	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"	},
-    { 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"	},
+	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"		},
+	{ 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"		},
 	{ 0x8086, IWN_DID_130_1, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_130_2, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_100_1, "Intel Centrino Wireless-N 100"		},
@@ -307,8 +308,8 @@ static void	iwn_scan_curchan(struct ieee80211_scan_state *, unsigned long);
 static void	iwn_scan_mindwell(struct ieee80211_scan_state *);
 static void	iwn_hw_reset(void *, int);
 #ifdef	IWN_DEBUG
-static char *iwn_get_csr_string(int);
-static void iwn_debug_register(struct iwn_softc *);
+static char	*iwn_get_csr_string(int);
+static void	iwn_debug_register(struct iwn_softc *);
 #endif
 static int iwn_config_specific(struct iwn_softc *,uint16_t);
 //static int iwn_prepare_crystal_calib(struct iwn_softc *sc);
@@ -327,7 +328,7 @@ static uint16_t iwn_get_active_dwell(struct iwn_softc *, struct ieee80211_channe
 static uint16_t iwn_get_passive_dwell(struct iwn_softc *, struct ieee80211_channel *);
 static void iwn_led_pattern(struct iwn_softc *);
 
-#ifdef IWN_DEBUG
+#ifdef	IWN_DEBUG
 enum {
 	IWN_DEBUG_XMIT		= 0x00000001,	/* basic xmit operation */
 	IWN_DEBUG_RECV		= 0x00000002,	/* basic recv operation */
@@ -539,7 +540,8 @@ iwn_attach(device_t dev)
 	IWN_LOCK_INIT(sc);
 
 	/* Read hardware revision and attach. */
-	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0xff;
+	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> IWN_HW_REV_TYPE_SHIFT)
+	    & IWN_HW_REV_TYPE_MASK;
 	sc->subdevice_id=pci_get_subdevice(dev);
 #ifdef IWN_4965
 	if (sc->hw_type == IWN_HW_REV_TYPE_4965)
@@ -749,7 +751,6 @@ iwn_attach(device_t dev)
 	TASK_INIT(&sc->sc_radioon_task, 0, iwn_radio_on, sc);
 	TASK_INIT(&sc->sc_radiooff_task, 0, iwn_radio_off, sc);
 
-	
 	iwn_sysctlattach(sc);
 
 	/*
@@ -784,7 +785,7 @@ static int
 iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 {
 	struct iwn_ops *ops = &sc->ops;
-	
+
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RESET, "->%s begin\n", __func__);
 
 	ops->load_firmware = iwn5000_load_firmware;
@@ -1038,7 +1039,7 @@ static int
 iwn_nic_lock(struct iwn_softc *sc)
 {
 	int ntries;
-	
+
 	/* Request exclusive access to NIC. */
 	IWN_SETBITS(sc, IWN_GP_CNTRL, IWN_GP_CNTRL_MAC_ACCESS_REQ);
 
@@ -1047,7 +1048,7 @@ iwn_nic_lock(struct iwn_softc *sc)
 		if ((IWN_READ(sc, IWN_GP_CNTRL) &
 		     (IWN_GP_CNTRL_MAC_ACCESS_ENA | IWN_GP_CNTRL_SLEEP)) ==
 		    IWN_GP_CNTRL_MAC_ACCESS_ENA)
-				return 0;
+			return 0;
 		DELAY(10);
 	}
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_FATAL, "->%s timeout\n", __func__);
@@ -1181,7 +1182,7 @@ iwn_init_otprom(struct iwn_softc *sc)
 	int count, error;
 
 	DPRINTF(sc, IWN_DEBUG_TRACE| IWN_DEBUG_RESET, "->%s begin\n", __func__);
-	
+
 	/* Wait for clock stabilization before accessing prph. */
 	if ((error = iwn_clock_wait(sc)) != 0)
 		return error;
@@ -1705,7 +1706,7 @@ iwn_read_eeprom(struct iwn_softc *sc, uint8_t macaddr[IEEE80211_ADDR_LEN])
 	int error;
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RESET, "->%s begin\n", __func__);
-	
+
 	/* Check whether adapter has an EEPROM or an OTPROM. */
 	if (sc->hw_type >= IWN_HW_REV_TYPE_1000 &&
 	    (IWN_READ(sc, IWN_OTP_GP) & IWN_OTP_GP_DEV_SEL_OTP))
@@ -1740,7 +1741,6 @@ iwn_read_eeprom(struct iwn_softc *sc, uint8_t macaddr[IEEE80211_ADDR_LEN])
 	}
 
 	iwn_read_prom_data(sc, IWN_EEPROM_SKU_CAP, &val, 2);
-	
 	DPRINTF(sc, IWN_DEBUG_RESET, "SKU capabilities=0x%04x\n", le16toh(val));
 	/* Check if HT support is bonded out. */
 	if (val & htole16(IWN_EEPROM_SKU_CAP_11N))
@@ -1766,7 +1766,7 @@ iwn_read_eeprom(struct iwn_softc *sc, uint8_t macaddr[IEEE80211_ADDR_LEN])
 	iwn_eeprom_unlock(sc);
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RESET, "->%s end\n", __func__);
-	
+
 	return 0;
 }
 
@@ -1926,7 +1926,7 @@ iwn_read_eeprom_ht40(struct iwn_softc *sc, int n)
 
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s start\n", __func__);
 
-	if (!(sc->sc_flags & IWN_FLAG_HAS_11N)){
+	if (!(sc->sc_flags & IWN_FLAG_HAS_11N)) {
 		DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RESET, "->%s end no 11n\n", __func__);
 		return;
 	}
@@ -2189,12 +2189,12 @@ iwn_rate_to_plcp(struct iwn_softc *sc, struct ieee80211_node *ni,
 		/*
 		 * Set the channel width and guard interval.
 		 */
-			if (IEEE80211_IS_CHAN_HT40(ni->ni_chan)) {
-				plcp |= IWN_RFLAG_HT40;
-				if (ni->ni_htcap & IEEE80211_HTCAP_SHORTGI40)
-					plcp |= IWN_RFLAG_SGI;
-		} else if (ni->ni_htcap & IEEE80211_HTCAP_SHORTGI20) {
+		if (IEEE80211_IS_CHAN_HT40(ni->ni_chan)) {
+			plcp |= IWN_RFLAG_HT40;
+			if (ni->ni_htcap & IEEE80211_HTCAP_SHORTGI40)
 				plcp |= IWN_RFLAG_SGI;
+		} else if (ni->ni_htcap & IEEE80211_HTCAP_SHORTGI20) {
+			plcp |= IWN_RFLAG_SGI;
 		}
 
 		/*
@@ -2204,9 +2204,9 @@ iwn_rate_to_plcp(struct iwn_softc *sc, struct ieee80211_node *ni,
 		 * XXX three stream rates?
 		 */
 		if (rate > 0x87)
-				plcp |= IWN_RFLAG_ANT(txant1 | txant2);
-			else
-				plcp |= IWN_RFLAG_ANT(txant1);
+			plcp |= IWN_RFLAG_ANT(txant1 | txant2);
+		else
+			plcp |= IWN_RFLAG_ANT(txant1);
 	} else {
 		/*
 		 * Set the initial PLCP - fine for both
@@ -2223,13 +2223,13 @@ iwn_rate_to_plcp(struct iwn_softc *sc, struct ieee80211_node *ni,
 		 */
 		ridx = ieee80211_legacy_rate_lookup(ic->ic_rt,
 		    rate & IEEE80211_RATE_VAL);
-			if (ridx < IWN_RIDX_OFDM6 &&
-			    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
-				plcp |= IWN_RFLAG_CCK;
+		if (ridx < IWN_RIDX_OFDM6 &&
+		    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+			plcp |= IWN_RFLAG_CCK;
 
 		/* Set antenna configuration */
-			plcp |= IWN_RFLAG_ANT(txant1);
-		}
+		plcp |= IWN_RFLAG_ANT(txant1);
+	}
 
 	DPRINTF(sc, IWN_DEBUG_TXRATE, "%s: rate=0x%02x, plcp=0x%08x\n",
 	    __func__,
@@ -2821,7 +2821,7 @@ iwn5000_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct iwn_tx_ring *ring;
 	int qid;
 
-	qid = desc->qid & 0xF;
+	qid = desc->qid & 0xf;
 	ring = &sc->txq[qid];
 
 	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: "
@@ -2853,7 +2853,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
     uint8_t status)
 {
 	struct ifnet *ifp = sc->sc_ifp;
-	struct iwn_tx_ring *ring = &sc->txq[desc->qid & 0xF];
+	struct iwn_tx_ring *ring = &sc->txq[desc->qid & 0xf];
 	struct iwn_tx_data *data = &ring->data[desc->idx];
 	
 	struct iwn_tx_cmd *cmd;
@@ -3599,7 +3599,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct iwn_vap *ivp = IWN_VAP(vap);
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_XMIT, "->%s begin\n", __func__);
-	
+
 	IWN_LOCK_ASSERT(sc);
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -7338,7 +7338,7 @@ static char *iwn_get_csr_string(int csr)
 		IWN_DESC(IWN_RESET);
 		IWN_DESC(IWN_GP_CNTRL);
 		IWN_DESC(IWN_HW_REV);	
-		IWN_DESC(IWN_EEPROM	);	
+		IWN_DESC(IWN_EEPROM);	
 		IWN_DESC(IWN_EEPROM_GP);
 		IWN_DESC(IWN_OTP_GP);	
 		IWN_DESC(IWN_GIO);
