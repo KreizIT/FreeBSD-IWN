@@ -24,9 +24,10 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/sys/dev/iwn/if_iwn.c 253705 2013-07-27 14:58:23Z adrian $");
+__FBSDID("$FreeBSD$");
 
 #include "opt_wlan.h"
+#include "opt_iwn.h"
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -73,6 +74,7 @@ __FBSDID("$FreeBSD: head/sys/dev/iwn/if_iwn.c 253705 2013-07-27 14:58:23Z adrian
 
 #include <dev/iwn/if_iwnreg.h>
 #include <dev/iwn/if_iwnvar.h>
+#include <dev/iwn/if_iwn_devid.h>
 
 struct iwn_ident {
 	uint16_t	vendor;
@@ -81,40 +83,40 @@ struct iwn_ident {
 };
 
 static const struct iwn_ident iwn_ident_table[] = {
-	{ 0x8086, 0x0082, "Intel Centrino Advanced-N 6205"		},
-	{ 0x8086, 0x0083, "Intel Centrino Wireless-N 1000"		},
-	{ 0x8086, 0x0084, "Intel Centrino Wireless-N 1000"		},
-	{ 0x8086, 0x0085, "Intel Centrino Advanced-N 6205"		},
-	{ 0x8086, 0x0087, "Intel Centrino Advanced-N + WiMAX 6250"	},
-	{ 0x8086, 0x0089, "Intel Centrino Advanced-N + WiMAX 6250"	},
-	{ 0x8086, 0x008a, "Intel Centrino Wireless-N 1030"		},
-	{ 0x8086, 0x008b, "Intel Centrino Wireless-N 1030"		},
-	{ 0x8086, 0x0090, "Intel Centrino Advanced-N 6230"		},
-	{ 0x8086, 0x0091, "Intel Centrino Advanced-N 6230"		},
-	{ 0x8086, 0x0885, "Intel Centrino Wireless-N + WiMAX 6150"	},
-	{ 0x8086, 0x0886, "Intel Centrino Wireless-N + WiMAX 6150"	},
-	{ 0x8086, 0x0887, "Intel Centrino Wireless-N 2230"		},
-	{ 0x8086, 0x0888, "Intel Centrino Wireless-N 2230"		},
-	{ 0x8086, 0x0896, "Intel Centrino Wireless-N 130"		},
-	{ 0x8086, 0x0897, "Intel Centrino Wireless-N 130"		},
-	{ 0x8086, 0x08ae, "Intel Centrino Wireless-N 100"		},
-	{ 0x8086, 0x08af, "Intel Centrino Wireless-N 100"		},
-	{ 0x8086, 0x4229, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x422b, "Intel Centrino Ultimate-N 6300"		},
-	{ 0x8086, 0x422c, "Intel Centrino Advanced-N 6200"		},
-	{ 0x8086, 0x422d, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x4230, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x4232, "Intel WiFi Link 5100"			},
-	{ 0x8086, 0x4233, "Intel Wireless WiFi Link 4965"		},
-	{ 0x8086, 0x4235, "Intel Ultimate N WiFi Link 5300"		},
-	{ 0x8086, 0x4236, "Intel Ultimate N WiFi Link 5300"		},
-	{ 0x8086, 0x4237, "Intel WiFi Link 5100"			},
-	{ 0x8086, 0x4238, "Intel Centrino Ultimate-N 6300"		},
-	{ 0x8086, 0x4239, "Intel Centrino Advanced-N 6200"		},
-	{ 0x8086, 0x423a, "Intel WiMAX/WiFi Link 5350"			},
-	{ 0x8086, 0x423b, "Intel WiMAX/WiFi Link 5350"			},
-	{ 0x8086, 0x423c, "Intel WiMAX/WiFi Link 5150"			},
-	{ 0x8086, 0x423d, "Intel WiMAX/WiFi Link 5150"			},
+	{ 0x8086, IWN_DID_6x05_1, "Intel Centrino Advanced-N 6205"		},
+	{ 0x8086, IWN_DID_1000_1, "Intel Centrino Wireless-N 1000"		},
+	{ 0x8086, IWN_DID_1000_2, "Intel Centrino Wireless-N 1000"		},
+	{ 0x8086, IWN_DID_6x05_2, "Intel Centrino Advanced-N 6205"		},
+	{ 0x8086, IWN_DID_6050_1, "Intel Centrino Advanced-N + WiMAX 6250"	},
+	{ 0x8086, IWN_DID_6050_2, "Intel Centrino Advanced-N + WiMAX 6250"	},
+	{ 0x8086, IWN_DID_x030_1, "Intel Centrino Wireless-N 1030"		},
+	{ 0x8086, IWN_DID_x030_2, "Intel Centrino Wireless-N 1030"		},
+	{ 0x8086, IWN_DID_x030_3, "Intel Centrino Advanced-N 6230"		},
+	{ 0x8086, IWN_DID_x030_4, "Intel Centrino Advanced-N 6230"		},
+	{ 0x8086, IWN_DID_6150_1, "Intel Centrino Wireless-N + WiMAX 6150"	},
+	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
+	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"		},
+	{ 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"		},
+	{ 0x8086, IWN_DID_130_1, "Intel Centrino Wireless-N 130"		},
+	{ 0x8086, IWN_DID_130_2, "Intel Centrino Wireless-N 130"		},
+	{ 0x8086, IWN_DID_100_1, "Intel Centrino Wireless-N 100"		},
+	{ 0x8086, IWN_DID_100_2, "Intel Centrino Wireless-N 100"		},
+	{ 0x8086, IWN_DID_4965_1, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_6x00_1, "Intel Centrino Ultimate-N 6300"		},
+	{ 0x8086, IWN_DID_6x00_2, "Intel Centrino Advanced-N 6200"		},
+	{ 0x8086, IWN_DID_4965_2, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_4965_3, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_5x00_1, "Intel WiFi Link 5100"			},
+	{ 0x8086, IWN_DID_4965_4, "Intel Wireless WiFi Link 4965"		},
+	{ 0x8086, IWN_DID_5x00_3, "Intel Ultimate N WiFi Link 5300"		},
+	{ 0x8086, IWN_DID_5x00_4, "Intel Ultimate N WiFi Link 5300"		},
+	{ 0x8086, IWN_DID_5x00_2, "Intel WiFi Link 5100"			},
+	{ 0x8086, IWN_DID_6x00_3, "Intel Centrino Ultimate-N 6300"		},
+	{ 0x8086, IWN_DID_6x00_4, "Intel Centrino Advanced-N 6200"		},
+	{ 0x8086, IWN_DID_5x50_1, "Intel WiMAX/WiFi Link 5350"			},
+	{ 0x8086, IWN_DID_5x50_2, "Intel WiMAX/WiFi Link 5350"			},
+	{ 0x8086, IWN_DID_5x50_3, "Intel WiMAX/WiFi Link 5150"			},
+	{ 0x8086, IWN_DID_5x50_4, "Intel WiMAX/WiFi Link 5150"			},
 	{ 0, 0, NULL }
 };
 
@@ -323,8 +325,8 @@ static void	iwn_scan_curchan(struct ieee80211_scan_state *, unsigned long);
 static void	iwn_scan_mindwell(struct ieee80211_scan_state *);
 static void	iwn_hw_reset(void *, int);
 #ifdef	IWN_DEBUG
-static char *iwn_get_csr_string(int);
-static void iwn_debug_register(struct iwn_softc *);
+static char	*iwn_get_csr_string(int);
+static void	iwn_debug_register(struct iwn_softc *);
 #endif
 
 #ifdef	IWN_DEBUG
@@ -517,7 +519,8 @@ iwn_attach(device_t dev)
 	IWN_LOCK_INIT(sc);
 
 	/* Read hardware revision and attach. */
-	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> 4) & 0xf;
+	sc->hw_type = (IWN_READ(sc, IWN_HW_REV) >> IWN_HW_REV_TYPE_SHIFT)
+	    & IWN_HW_REV_TYPE_MASK;
 	if (sc->hw_type == IWN_HW_REV_TYPE_4965)
 		error = iwn4965_attach(sc, pci_get_device(dev));
 	else
@@ -3231,7 +3234,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 #ifdef	IWN_DEBUG
 			struct iwn_start_scan *scan =
 			    (struct iwn_start_scan *)(desc + 1);
-				DPRINTF(sc, IWN_DEBUG_ANY,
+			DPRINTF(sc, IWN_DEBUG_ANY,
 			    "%s: scanning channel %d status %x\n",
 			    __func__, scan->chan, le32toh(scan->status));
 #endif
@@ -7482,11 +7485,11 @@ iwn_hw_reset(void *arg0, int pending)
 	ieee80211_notify_radio(ic, 1);
 }
 #ifdef	IWN_DEBUG
-#define IWN_DESC(x) case x:	return #x
-#define COUNTOF(array) (sizeof(array) / sizeof(array[0]))
+#define	IWN_DESC(x) case x:	return #x
+#define	COUNTOF(array) (sizeof(array) / sizeof(array[0]))
 
 /*
- * Transate CSR code to string
+ * Translate CSR code to string
  */
 static char *iwn_get_csr_string(int csr)
 {
@@ -7520,7 +7523,7 @@ static char *iwn_get_csr_string(int csr)
 }
 
 /*
- * This function print firmawre register
+ * This function print firmware register
  */
 static void
 iwn_debug_register(struct iwn_softc *sc)
@@ -7552,8 +7555,8 @@ iwn_debug_register(struct iwn_softc *sc)
 		IWN_DBG_HPET_MEM,
 	};
 	DPRINTF(sc, IWN_DEBUG_REGISTER,
-    "CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)%s",
-    "\n");
+	    "CSR values: (2nd byte of IWN_INT_COALESCING is IWN_INT_PERIODIC)%s",
+	    "\n");
 	for (i = 0; i <  COUNTOF(csr_tbl); i++){
 		DPRINTF(sc, IWN_DEBUG_REGISTER,"  %10s: 0x%08x ",
 			iwn_get_csr_string(csr_tbl[i]), IWN_READ(sc, csr_tbl[i]));
