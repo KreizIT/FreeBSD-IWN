@@ -2821,7 +2821,7 @@ iwn5000_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	struct iwn_tx_ring *ring;
 	int qid;
 
-	qid = desc->qid & IWN_RX_DESC_QID_MSK;
+	qid = desc->qid & 0xF;
 	ring = &sc->txq[qid];
 
 	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: "
@@ -2853,7 +2853,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
     uint8_t status)
 {
 	struct ifnet *ifp = sc->sc_ifp;
-	struct iwn_tx_ring *ring = &sc->txq[desc->qid & IWN_RX_DESC_QID_MSK];
+	struct iwn_tx_ring *ring = &sc->txq[desc->qid & 0xF];
 	struct iwn_tx_data *data = &ring->data[desc->idx];
 	
 	struct iwn_tx_cmd *cmd;
@@ -2868,6 +2868,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_XMIT, "->%s begin\n", __func__);
 
+	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: qid %x msk F: %x msk 1F: %x\n", __func__,desc->qid, desc->qid & 0xf, desc->qid & 0x1f); 
 	/* Unmap and free mbuf. */
 	uint8_t ridx;
 	bus_dmamap_sync(ring->data_dmat, data->map, BUS_DMASYNC_POSTWRITE);
@@ -2964,8 +2965,8 @@ iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
 		cmd_queue_num = IWN_CMD_QUEUE_NUM;
 	
 	
-	DPRINTF(sc, IWN_DEBUG_CMD, "%s: qid: %d PAN Active : %d\n",
-	    __func__, (desc->qid & IWN_RX_DESC_QID_MSK),(sc->sc_flags & IWN_FLAG_PAN_SUPPORT) );
+	DPRINTF(sc, IWN_DEBUG_CMD, "%s: qid: %d\n",
+	    __func__, (desc->qid & IWN_RX_DESC_QID_MSK));
 		
 	
 	if ((desc->qid & IWN_RX_DESC_QID_MSK) != cmd_queue_num)
@@ -3124,11 +3125,11 @@ iwn_notif_intr(struct iwn_softc *sc)
 		desc = mtod(data->m, struct iwn_rx_desc *);
 
 		DPRINTF(sc, IWN_DEBUG_RECV,
-		    "%s: qid %x idx %d flags %x type %d(%s) len %d\n",
-		    __func__, desc->qid & IWN_RX_DESC_QID_MSK, desc->idx, desc->flags,
+		    "%s: qid %x/%x idx %d flags %x type %d(%s) len %d\n",
+		    __func__, desc->qid, IWN_RX_RING_COUNT, desc->idx, desc->flags,
 		    desc->type, iwn_intr_str(desc->type),
 		    le16toh(desc->len));
-		if (le16toh(desc->len) == 8)
+		if (le16toh(desc->len) == 8 && desc->qid == 0)
 			DPRINTF(sc, IWN_DEBUG_RECV, "%s: strange inter values: 0x%08x\n",
 		    __func__,le32toh(desc->len));
 		if (!(desc->qid & IWN_UNSOLICITED_RX_NOTIF))	/* Reply to a command. */
