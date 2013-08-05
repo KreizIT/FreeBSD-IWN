@@ -5771,7 +5771,6 @@ iwn_config(struct iwn_softc *sc)
 		/* Should not get there. */
 		break;
 	}
-
 	sc->rxon->cck_mask  = 0x0f;	/* not yet negotiated */
 	sc->rxon->ofdm_mask = 0xff;	/* not yet negotiated */
 	sc->rxon->ht_single_mask = 0xff;
@@ -5782,7 +5781,6 @@ iwn_config(struct iwn_softc *sc)
 	    IWN_RXCHAIN_MIMO_COUNT(2) |
 	    IWN_RXCHAIN_IDLE_COUNT(2);
 	sc->rxon->rxchain = htole16(rxchain);
-
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s: setting configuration\n", __func__);
 	error = iwn_cmd(sc, IWN_CMD_RXON, sc->rxon, sc->rxonsz, 0);
 	if (error != 0) {
