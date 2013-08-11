@@ -43,10 +43,9 @@
 #define IWN_ICT_SIZE		4096
 #define IWN_ICT_COUNT		(IWN_ICT_SIZE / sizeof (uint32_t))
 
-/* For cards with PAN command default is IWN_CMD_QUEUE_NUM */
+/* For cards with PAN command, default is IWN_CMD_QUEUE_NUM */
 #define	IWN_CMD_QUEUE_NUM		4
 #define	IWN_PAN_CMD_QUEUE		9
-
 
 /* Maximum number of DMA segments for TX. */
 #define IWN_MAX_SCATTER	20
@@ -225,7 +224,6 @@
 #define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
 #define IWN_GP_DRIVER_6050_1X2		(1 << 3)
 #define	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT	(1 << 7)
-
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
@@ -920,7 +918,6 @@ struct iwn_scan_chan {
 #define	IWN_SCAN_CRC_TH_DEFAULT		htole16(1)
 #define	IWN_SCAN_CRC_TH_NEVER		htole16(0xffff)
 
-
 /* Maximum size of a scan command. */
 #define IWN_SCAN_MAXSZ	(MCLBYTES - 4)
 
@@ -980,7 +977,6 @@ struct iwn_bluetooth {
 	uint32_t	kill_cts;
 } __packed;
 
-/* Structures for enhanced command IWN_CMD_BLUETOOTH. */
 struct iwn6000_btcoex_config {
 	uint8_t		flags;
 #define	IWN_BT_FLAG_COEX6000_CHAN_INHIBITION	1
@@ -1009,7 +1005,7 @@ struct iwn6000_btcoex_config {
 	uint16_t	rx_prio_boost;
 } __packed;
 
-/* Structures for enhanced command IWN_CMD_BLUETOOTH for 2000 Series. */
+/* Structure for enhanced command IWN_CMD_BLUETOOTH for 2000 Series. */
 struct iwn2000_btcoex_config {
 	uint8_t		flags;	/* Cf Flags in iwn6000_btcoex_config */
 	uint8_t		lead_time;
@@ -1030,7 +1026,6 @@ struct iwn2000_btcoex_config {
 	uint8_t		tx_prio_boost;
 	uint16_t	rx_prio_boost;
 } __packed;
-
 
 struct iwn_btcoex_priotable {
 	uint8_t		calib_init1;
@@ -1110,8 +1105,8 @@ struct iwn_enhanced_sensitivity_cmd {
 } __packed;
 
 /* Define maximal number of calib result send to runtime firmware 
-PS: TEMP_OFFSET count for 2 (std and v2)
-*/
+ * PS: TEMP_OFFSET count for 2 (std and v2)
+ */
 #define IWN5000_PHY_CALIB_MAX_RESULT	8
 /* Structures for command IWN_CMD_PHY_CALIB. */
 struct iwn_phy_calib {
@@ -1710,15 +1705,15 @@ struct iwn4965_eeprom_band {
 	struct	iwn4965_eeprom_chan_samples chans[2];
 } __packed;
 
-/* ADD / MODIFY STATION Command (Op Code 18) -  byte 76-18 -bit13
-	STA_FLAG_PAN_STATION bit:
-	This bit is set (1) for a station in PAN mode */
+/* 
+ * ADD / MODIFY STATION Command (Op Code 18) -  byte 76-18 -bit13
+ * STA_FLAG_PAN_STATION bit:
+ * This bit is set (1) for a station in PAN mode 
+ */
 #define IWN_STA_FLAG_PAN_STATION		(1 << 13)
 
 #define IWN_BEACON_INTERVAL_DEFAULT		200
 #define IWN_SLOT_TIME_MIN		20
-
-
 
 /*
  * Offsets of channels descriptions in EEPROM.
@@ -1817,10 +1812,7 @@ static const uint8_t iwn_pan_ac_to_queue[] = {
 /* DTIM value to pass in for IWN_POWERSAVE_LVL_VOIP_COMPATIBLE */
 #define	IWN_POWERSAVE_DTIM_VOIP_COMPATIBLE	2
 
-
 #define IWN_DTIM_INDICATES_UNICAST_PENDING_AT_AP
-
-
 
 /*
  * RF Tx gain values from highest to lowest power (values obtained from
@@ -2105,10 +2097,6 @@ static const char * const iwn_fw_errmsg[] = {
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
-
-		
-		
-		
 /* ==========================================================================
  *                                  NIC PARAMETERS
  *

@@ -26,7 +26,6 @@ enum iwn_rxon_ctx_id {
 		IWN_NUM_RXON_CTX
 };
 
-
 struct iwn_pan_slot {
 	uint16_t	time;
 	uint8_t		type;
@@ -41,7 +40,6 @@ struct iwn_pan_params_cmd {
 	uint8_t num_slots;
 	struct iwn_pan_slot slots[10];
 } __packed;
-
 
 struct iwn_led_mode
 {
@@ -387,9 +385,10 @@ struct iwn_softc {
 	/* The power save level originally configured by user */
 	int			desired_pwrsave_level;
 
-	/* The current power save level, this may differ from the configured value due to
-	 * thermal throttling etc.
-	 * */
+	/*
+	 * The current power save level, this may differ from the
+	 * configured value due to thermal throttling etc.
+	 */
 	int			current_pwrsave_level;
 
 	/* For specifique params */
