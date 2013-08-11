@@ -739,9 +739,11 @@ struct iwn_node_info {
 } __packed;
 
 
+#define	IWN_RFLAG_MCS_DUPLICATE	(1 << 5)
 #define IWN_RFLAG_MCS		(1 << 8)
 #define IWN_RFLAG_CCK		(1 << 9)
 #define IWN_RFLAG_GREENFIELD	(1 << 10)
+/* This one define channel width of 40MHz */
 #define IWN_RFLAG_HT40		(1 << 11)
 #define IWN_RFLAG_DUPLICATE	(1 << 12)
 #define IWN_RFLAG_SGI		(1 << 13)

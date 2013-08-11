@@ -310,6 +310,7 @@ static void	iwn_hw_reset(void *, int);
 #ifdef	IWN_DEBUG
 static char	*iwn_get_csr_string(int);
 static void	iwn_debug_register(struct iwn_softc *);
+static void	iwn_print_rate(struct iwn_softc *, uint32_t);
 #endif
 static int iwn_config_specific(struct iwn_softc *,uint16_t);
 //static int iwn_prepare_crystal_calib(struct iwn_softc *sc);
@@ -1143,6 +1144,11 @@ iwn_mem_set_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t val,
 		iwn_mem_write(sc, addr, val);
 }
 
+static __inline int
+iwn_get_antenna(uint32_t rate_n_flag)
+{
+	return (rate_n_flag & 0x1c000) >> IWN_RATE_MCS_ANT_POS;
+}
 static int
 iwn_eeprom_lock(struct iwn_softc *sc)
 {
@@ -1330,7 +1336,7 @@ iwn_dma_contig_free(struct iwn_dma_info *dma)
 			bus_dmamap_sync(dma->tag, dma->map,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(dma->tag, dma->map);
-			bus_dmamem_free(dma->tag, &dma->vaddr, dma->map);
+			bus_dmamem_free(dma->tag, dma->vaddr, dma->map);
 			dma->vaddr = NULL;
 		}
 		bus_dmamap_destroy(dma->tag, dma->map);
@@ -2172,12 +2178,14 @@ iwn_rate_to_plcp(struct iwn_softc *sc, struct ieee80211_node *ni,
 	 * and set the relevant flags based on the node config.
 	 */
 	if (IEEE80211_IS_CHAN_HT(ni->ni_chan)) {
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "%s: Calculate PLCP for HT chan\n",
+		    __func__);
 		/*
 		 * Set the initial PLCP value to be between 0->31 for
 		 * MCS 0 -> MCS 31, then set the "I'm an MCS rate!"
 		 * flag.
 		 */
-		plcp = RV(rate) | IWN_RFLAG_MCS;
+		plcp = 3 | IWN_RFLAG_MCS; //RV(rate) | IWN_RFLAG_MCS;
 
 		/*
 		 * XXX the following should only occur if both
@@ -2231,9 +2239,9 @@ iwn_rate_to_plcp(struct iwn_softc *sc, struct ieee80211_node *ni,
 		plcp |= IWN_RFLAG_ANT(txant1);
 	}
 
-	DPRINTF(sc, IWN_DEBUG_TXRATE, "%s: rate=0x%02x, plcp=0x%08x\n",
+	DPRINTF(sc, IWN_DEBUG_TXRATE, "%s: rate=0x%02x, RsRate %d plcp=0x%08x\n",
 	    __func__,
-	    rate,
+	    rate,RV(ni->ni_htrates.rs_rates[rate]),
 	    plcp);
 
 	return (htole32(plcp));
@@ -2825,11 +2833,13 @@ iwn5000_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	ring = &sc->txq[qid];
 
 	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: "
-	    "qid %d idx %d retries %d nkill %d rate %x duration %d status %x\n",
+	    "qid %d idx %d retries %d nkill %d rate %x ant %d duration %d status %x\n",
 	    __func__, desc->qid, desc->idx, stat->ackfailcnt,
-	    stat->btkillcnt, stat->rate, le16toh(stat->duration),
-	    le16toh(stat->status) & IWN_TX_STATUS_MSK);
-	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: Agg : %d\n", __func__, stat->nframes);
+	    stat->btkillcnt, stat->rate, iwn_get_antenna(stat->rate),
+	    le16toh(stat->duration), le16toh(stat->status) & IWN_TX_STATUS_MSK);
+#ifdef	IWN_DEBUG
+	iwn_print_rate(sc, stat->rate);
+#endif
 #ifdef notyet
 	/* Reset TX scheduler slot. */
 	iwn5000_reset_sched(sc, desc->qid & IWN_RX_DESC_QID_MSK, desc->idx);
@@ -2853,7 +2863,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
     uint8_t status)
 {
 	struct ifnet *ifp = sc->sc_ifp;
-	struct iwn_tx_ring *ring = &sc->txq[desc->qid & 0xf];
+	struct iwn_tx_ring *ring = &sc->txq[desc->qid & IWN_RX_DESC_QID_MSK];
 	struct iwn_tx_data *data = &ring->data[desc->idx];
 	
 	struct iwn_tx_cmd *cmd;
@@ -2868,7 +2878,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc, int ackfailcnt,
 
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_XMIT, "->%s begin\n", __func__);
 
-	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: qid %x msk F: %x msk 1F: %x\n", __func__,desc->qid, desc->qid & 0xf, desc->qid & 0x1f); 
+	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: qid %x\n", __func__,desc->qid); 
 	/* Unmap and free mbuf. */
 	uint8_t ridx;
 	bus_dmamap_sync(ring->data_dmat, data->map, BUS_DMASYNC_POSTWRITE);
@@ -3637,19 +3647,24 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	/* Choose a TX rate index. */
 	tp = &vap->iv_txparms[ieee80211_chan2mode(ni->ni_chan)];
-	if (type == IEEE80211_FC0_TYPE_MGT)
+	if (type == IEEE80211_FC0_TYPE_MGT) {
 		rate = tp->mgmtrate;
-	else if (IEEE80211_IS_MULTICAST(wh->i_addr1))
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "Rate mgmt : %x", rate);
+	} else if (IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 		rate = tp->mcastrate;
-	else if (tp->ucastrate != IEEE80211_FIXED_RATE_NONE)
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "Rate mcast : %x", rate);
+	} else if (tp->ucastrate != IEEE80211_FIXED_RATE_NONE) {
 		rate = tp->ucastrate;
-	else {
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "Rate ucast : %x", rate);
+	} else {
 		/* XXX pass pktlen */
 		(void) ieee80211_ratectl_rate(ni, NULL, 0);
 		rate = ni->ni_txrate;
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "Rate : %x", rate);
 	}
 	ridx = ieee80211_legacy_rate_lookup(ic->ic_rt,
 	    rate & IEEE80211_RATE_VAL);
+	DPRINTF(sc, IWN_DEBUG_TXRATE, " Ridx : %x\n", ridx);
 
 	/* Encrypt the frame if need be. */
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -3730,9 +3745,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) || type != IEEE80211_FC0_TYPE_DATA) {
 		if(ivp->ctx == IWN_RXON_PAN_CTX)
-			tx->id = IWN_PAN_BCAST_ID;
+			tx->id = IWN_PAN_ID_BCAST;
 		else
-			tx->id = IWN_BROADCAST_ID;
+			tx->id = sc->broadcast_id;
 	} else
 		tx->id = wn->id;
 
@@ -3763,7 +3778,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	tx->data_ntries = 15;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
 	tx->rate = iwn_rate_to_plcp(sc, ni, rate);
-	if ((tx->id == IWN_PAN_BCAST_ID) || (tx->id == IWN_BROADCAST_ID)) {
+	if ((tx->id == IWN_PAN_ID_BCAST) || (tx->id == sc->broadcast_id)) {
 		/* Group or management frame. */
 		tx->linkq = 0;
 		/* XXX Alternate between antenna A and B? */
@@ -3819,7 +3834,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	DPRINTF(sc, IWN_DEBUG_XMIT, "%s: qid %d idx %d len %d nsegs %d\n",
 	    __func__, ring->qid, ring->cur, m->m_pkthdr.len, nsegs);
-
+#ifdef	IWN_DEBUG
+	iwn_print_rate(sc, le32toh(tx->rate));
+#endif
 	/* Fill TX descriptor. */
 	desc->nsegs = 1;
 	if (m->m_len != 0)
@@ -3979,9 +3996,9 @@ iwn_tx_data_raw(struct iwn_softc *sc, struct mbuf *m,
 	tx->len = htole16(totlen);
 	tx->tid = 0;
 	if(ivp->ctx == IWN_RXON_PAN_CTX)
-		tx->id = IWN_PAN_BCAST_ID;
+		tx->id = IWN_PAN_ID_BCAST;
 	else
-		tx->id = IWN_BROADCAST_ID;
+		tx->id = sc->broadcast_id;
 	tx->rts_ntries = params->ibp_try1;
 	tx->data_ntries = params->ibp_try0;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
@@ -4385,6 +4402,7 @@ iwn_set_link_quality(struct iwn_softc *sc, struct ieee80211_node *ni)
 		else
 			rate = RV(rs->rs_rates[txrate]);
 
+		DPRINTF(sc, IWN_DEBUG_TXRATE,"Rate n%d :%x\n", i, rate);
 		/* Do rate -> PLCP config mapping */
 		plcp = iwn_rate_to_plcp(sc, ni, rate);
 		linkq.retry[i] = plcp;
@@ -4424,7 +4442,7 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	
 	memset(&node, 0, sizeof node);
 	IEEE80211_ADDR_COPY(node.macaddr, ifp->if_broadcastaddr);
-	node.id = IWN_BROADCAST_ID;
+	node.id = sc->broadcast_id;
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s: adding broadcast node\n", __func__);
 	if ((error = ops->add_node(sc, &node, async)) != 0)
 		return error;
@@ -4433,7 +4451,7 @@ iwn_add_broadcast_node(struct iwn_softc *sc, int async)
 	txant = IWN_LSB(sc->txchainmask);
 
 	memset(&linkq, 0, sizeof linkq);
-	linkq.id = IWN_BROADCAST_ID;
+	linkq.id = sc->broadcast_id;
 	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_AB;
 	linkq.ampdu_max = 64;
@@ -5224,7 +5242,7 @@ iwn_send_advanced_btcoex(struct iwn_softc *sc)
 		return error;
 
 	/* Force BT state machine change. */
-	memset(&btprot, 0, sizeof btprio);
+	memset(&btprot, 0, sizeof btprot);
 	btprot.open = 1;
 	btprot.type = 1;
 	error = iwn_cmd(sc, IWN_CMD_BT_COEX_PROT, &btprot, sizeof(btprot), 1);
@@ -5473,9 +5491,9 @@ iwn_scan(struct iwn_softc *sc)
 	tx = (struct iwn_cmd_data *)(hdr + 1);
 	tx->flags = htole32(IWN_TX_AUTO_SEQ);
 	if(ivp->ctx == IWN_RXON_PAN_CTX)
-		tx->id = IWN_PAN_BCAST_ID;
+		tx->id = IWN_PAN_ID_BCAST;
 	else
-		tx->id = IWN_BROADCAST_ID;
+		tx->id = sc->broadcast_id;
 
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
 
@@ -5807,7 +5825,7 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 		    "%s: could not add BSS node, error %d\n", __func__, error);
 		return error;
 	}
-	/*XXX Not done in iwl */
+	/*XXX Not done in iwl 
 	DPRINTF(sc, IWN_DEBUG_STATE, "%s: setting link quality for node %d\n",
 	    __func__, node.id);
 	if ((error = iwn_set_link_quality(sc, ni)) != 0) {
@@ -5828,7 +5846,7 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 	sc->calib_cnt = 0;
 	callout_reset(&sc->calib_to, msecs_to_ticks(500), iwn_calib_timeout,
 	    sc);
-
+	*/
 	
 	/* Link LED always on while associated. */
 	iwn_set_led(sc, IWN_LED_LINK, 0, 1,IWN_LED_STATIC_ON);
@@ -6239,12 +6257,12 @@ iwn5000_temp_offset_calibv2(struct iwn_softc *sc)
 		cmd.offset_low = htole16(IWN_DEFAULT_TEMP_OFFSET);
 		cmd.offset_high = htole16(IWN_DEFAULT_TEMP_OFFSET);
 	}
-	cmd.burntVoltageRef = htole16(sc->eeprom_voltage);
+	cmd.burnt_voltage_ref = htole16(sc->eeprom_voltage);
 	
 	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "setting radio sensor low offset to %d, high offset to %d, voltage to %d\n",
 	    le16toh(cmd.offset_low),
 		le16toh(cmd.offset_high),
-		le16toh(cmd.burntVoltageRef));
+		le16toh(cmd.burnt_voltage_ref));
 	
 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
 }
@@ -8360,7 +8378,7 @@ iwn_add_broadcast_node_u1(struct iwn_softc *sc, int async)
 	memset(&node, 0, sizeof node);
 	IEEE80211_ADDR_COPY(node.macaddr, ifp->if_broadcastaddr);
 
-	node.id = IWN_PAN_BCAST_ID;
+	node.id = IWN_PAN_ID_BCAST;
 	node.htflags |= htole32(IWN_STA_FLAG_PAN_STATION);
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s: adding broadcast node1\n", __func__);
 	if ((error = ops->add_node(sc, &node, async)) != 0)
@@ -8370,7 +8388,7 @@ iwn_add_broadcast_node_u1(struct iwn_softc *sc, int async)
 	txant = IWN_LSB(sc->txchainmask);
 
 	memset(&linkq, 0, sizeof linkq);
-	linkq.id = IWN_PAN_BCAST_ID;
+	linkq.id = IWN_PAN_ID_BCAST;
 	linkq.antmsk_1stream = txant;
 	linkq.antmsk_2stream = IWN_ANT_AB;
 	linkq.ampdu_max = 64;
@@ -8453,6 +8471,75 @@ iwn_led_pattern(struct iwn_softc *sc)
 		iwn_set_led(sc, IWN_LED_LINK,blink_tbl[j].off_time,
 		    blink_tbl[j].on_time, IWN_LED_INT_BLINK);
 }
+
+#ifdef	IWN_DEBUG
+static void
+iwn_print_rate(struct iwn_softc *sc, uint32_t rate_n_flag)
+{
+	int	rate;
+	if ((rate_n_flag & IWN_RFLAG_MCS_DUPLICATE))
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "%s: 6 Mbps HT40 duplicate data\n",__func__);
+	if ((rate_n_flag & (IWN_RFLAG_MCS | IWN_RFLAG_CCK)) == 0) {
+		switch (rate_n_flag & 0xFF) {
+		case 0xD:
+			rate=6;
+			break;
+		case 0xF:
+			rate=9;
+			break;
+		case 0x5:
+			rate=12;
+			break;
+		case 0x7:
+			rate=18;
+			break;
+		case 0x9:
+			rate=24;
+			break;
+		case 0xB:
+			rate=36;
+			break;
+		case 0x1:
+			rate=48;
+			break;
+		case 0x3:
+			rate=54;
+			break;
+		default:
+			rate=0;
+		}
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "OFDM Rate :%d Mbps Stream :%d",
+		    rate, ((rate_n_flag & 0x18) >> 3)+1);
+	}
+	if (rate_n_flag & IWN_RFLAG_MCS) {
+		switch (rate_n_flag & 0xFF) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			rate=((rate_n_flag & 0xFF) + 1) * 6;
+			break;
+		case 4:
+			rate=((rate_n_flag & 0xFF) + 2) * 6;
+			break;
+		case 5:
+		case 6:
+		case 7:
+			rate=((rate_n_flag & 0xFF) + 3) * 6;
+			break;
+		default:
+			rate=0;
+		}
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "HT Rate :%d Mbps Stream :%d",
+		    rate, ((rate_n_flag & 0x18) >> 3)+1);
+	}
+
+	if (rate_n_flag & IWN_RFLAG_CCK)
+		DPRINTF(sc, IWN_DEBUG_TXRATE, "CCK Rate :%d/2 Mbps Stream :%d",
+		    rate_n_flag & 0xFF, ((rate_n_flag & 0x18) >> 3)+1);
+	DPRINTF(sc, IWN_DEBUG_TXRATE, " GI : %d\n", (rate_n_flag & 0x2000) >> 13);
+}
+#endif
 #ifdef IWN_4965
 #include "if_iwn4965.c"
 #endif
