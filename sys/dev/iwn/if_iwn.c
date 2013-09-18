@@ -249,7 +249,7 @@ static int	iwn_send_sensitivity(struct iwn_softc *);
 static int	iwn_set_pslevel(struct iwn_softc *, int, int, int);
 static int	iwn_send_btcoex(struct iwn_softc *);
 static int	iwn_send_advanced_btcoex(struct iwn_softc *);
-//static int	iwn5000_runtime_calib(struct iwn_softc *);
+static int	iwn5000_runtime_calib(struct iwn_softc *);
 static int	iwn_config(struct iwn_softc *);
 static uint8_t	*ieee80211_add_ssid(uint8_t *, const uint8_t *, u_int);
 static int	iwn_scan(struct iwn_softc *);
@@ -1710,6 +1710,7 @@ iwn_read_eeprom(struct iwn_softc *sc, uint8_t macaddr[IEEE80211_ADDR_LEN])
 	if (sc->hw_type >= IWN_HW_REV_TYPE_1000 &&
 	    (IWN_READ(sc, IWN_OTP_GP) & IWN_OTP_GP_DEV_SEL_OTP))
 		sc->sc_flags |= IWN_FLAG_HAS_OTPROM;
+
 	DPRINTF(sc, IWN_DEBUG_RESET, "%s found\n",
 	    (sc->sc_flags & IWN_FLAG_HAS_OTPROM) ? "OTPROM" : "EEPROM");
 
@@ -2804,6 +2805,14 @@ iwn_rx_statistics(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		    "received statistics without RSSI");
 		return;
 	}
+
+	/*
+	 * XXX Differential gain calibration makes the 6005 firmware
+	 * crap out, so skip it for now.  This effectively disables
+	 * sensitivity tuning as well.
+	 */
+	if (sc->hw_type == IWN_HW_REV_TYPE_6005)
+		return;
 
 	if (calib->state == IWN_CALIB_STATE_ASSOC)
 		iwn_collect_noise(sc, &stats->rx.general);
@@ -5233,6 +5242,18 @@ iwn_send_advanced_btcoex(struct iwn_softc *sc)
 	return iwn_cmd(sc, IWN_CMD_BT_COEX_PROT, &btprot, sizeof(btprot), 1);
 }
 
+int
+iwn5000_runtime_calib(struct iwn_softc *sc)
+{
+	struct iwn5000_calib_config cmd;
+
+	memset(&cmd, 0, sizeof cmd);
+	cmd.ucode.once.enable = 0xffffffff;
+	cmd.ucode.once.start = IWN5000_CALIB_DC;
+	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "configuring runtime calibration\n");
+	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
+}
+
 static int
 iwn_config(struct iwn_softc *sc)
 {
@@ -5245,8 +5266,14 @@ iwn_config(struct iwn_softc *sc)
 	
 	DPRINTF(sc, IWN_DEBUG_TRACE | IWN_DEBUG_RESET, "->%s begin\n", __func__);
 
-	if ((sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET)  && (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2)) {
-		device_printf(sc->sc_dev,"%s: temp_offset and temp_offsetv2 are exclusive each together. Review NIC config file. Conf :  0x%08x Flags :  0x%08x  \n", __func__,sc->base_params->calib_need,(IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET | IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2));
+	if ((sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET)
+	&& (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2)) {
+		device_printf(sc->sc_dev,"%s: temp_offset and temp_offsetv2 are"
+			" exclusive each together. Review NIC config file. Conf"
+			" :  0x%08x Flags :  0x%08x  \n", __func__,
+			sc->base_params->calib_need,
+			(IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET |
+		 	 IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2));
 		return EINVAL;
 	}
 	/* Compute temperature calib if needed. Will be send by send calib */
@@ -5262,6 +5289,16 @@ iwn_config(struct iwn_softc *sc)
 		if (error != 0) {
 			device_printf(sc->sc_dev,
 				"%s: could not compute temperature offset v2\n", __func__);
+			return error;
+		}
+	}
+	if (sc->hw_type == IWN_HW_REV_TYPE_6050 ||
+	    sc->hw_type == IWN_HW_REV_TYPE_6005) {
+		/* Configure runtime DC calibration. */
+		error = iwn5000_runtime_calib(sc);
+		if (error != 0) {
+			device_printf(sc->sc_dev,
+				"%s: could not configure runtime calibration\n", __func__);
 			return error;
 		}
 	}
