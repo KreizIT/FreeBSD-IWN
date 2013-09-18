@@ -1136,8 +1136,8 @@ struct iwn_enhanced_sensitivity_cmd {
 } __packed;
 
 /* Define maximal number of calib result send to runtime firmware 
-PS: TEMP_OFFSET count for 2 (std and v2)
-*/
+ * PS: TEMP_OFFSET count for 2 (std and v2)
+ */
 #define IWN5000_PHY_CALIB_MAX_RESULT	8
 /* Structures for command IWN_CMD_PHY_CALIB. */
 struct iwn_phy_calib {
@@ -1748,9 +1748,11 @@ struct iwn5000_eeprom_calib_hdr {
 
 #define IWN_NBANDS	8
 
-/* ADD / MODIFY STATION Command (Op Code 18) -  byte 76-18 -bit13
-	STA_FLAG_PAN_STATION bit:
-	This bit is set (1) for a station in PAN mode */
+/* 
+ * ADD / MODIFY STATION Command (Op Code 18) -  byte 76-18 -bit13
+ * STA_FLAG_PAN_STATION bit:
+ * This bit is set (1) for a station in PAN mode 
+ */
 #define IWN_STA_FLAG_PAN_STATION		(1 << 13)
 
 #define IWN_BEACON_INTERVAL_DEFAULT		200
@@ -2092,9 +2094,6 @@ static const char * const iwn_fw_errmsg[] = {
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
-		
-		
-		
 /* ==========================================================================
  *                                  NIC PARAMETERS
  *
@@ -2151,34 +2150,34 @@ static const char * const iwn_fw_errmsg[] = {
  * additional_gp_drv_bit : Specific bit to defined during nic_config
  */
 struct iwn_base_params {
-	uint32_t pll_cfg_val;
-	const uint16_t max_ll_items;
+	uint32_t	pll_cfg_val;
+	const uint16_t	max_ll_items;
 #define IWN_OTP_MAX_LL_ITEMS_1000		(3)	/* OTP blocks for 1000 */
 #define IWN_OTP_MAX_LL_ITEMS_6x00		(4)	/* OTP blocks for 6x00 */
 #define IWN_OTP_MAX_LL_ITEMS_6x50		(7)	/* OTP blocks for 6x50 */
 #define IWN_OTP_MAX_LL_ITEMS_2x00		(4)	/* OTP blocks for 2x00 */
-	const bool shadow_ram_support;
-	uint16_t led_compensation;
-	bool adv_thermal_throttle;
-	bool support_ct_kill_exit;
-	uint8_t plcp_delta_threshold;
-	int chain_noise_scale;
-	unsigned int wd_timeout;
-	uint32_t max_event_log_size;
-	const bool shadow_reg_enable;
-	const bool hd_v2;
-	const bool advanced_bt_coexist;
-	const bool bt_session_2;
-	const bool bt_sco_disable;
-	const bool additional_nic_config;
-	const uint32_t *regulatory_bands;
-	const bool enhanced_TX_power; // See iwl-agn-devices.c file to determine that(enhanced_txpower). 
-	const uint16_t calib_need;
-	const bool no_crystal_calibration; // see no_xtal_calib in linux
-	const bool support_hostap; //Define IEEE80211_C_HOSTAP for ic_caps
-	const bool no_multi_vaps; // see iwn_vap_create
-	uint8_t additional_gp_drv_bit; //
-	
+	const bool	shadow_ram_support;
+	uint16_t	led_compensation;
+	bool	adv_thermal_throttle;
+	bool	support_ct_kill_exit;
+	uint8_t	plcp_delta_threshold;
+	int	chain_noise_scale;
+	unsigned int	wd_timeout;
+	uint32_t	max_event_log_size;
+	const bool	shadow_reg_enable;
+	const bool	hd_v2;
+	const bool	advanced_bt_coexist;
+	const bool	bt_session_2;
+	const bool	bt_sco_disable;
+	const bool	additional_nic_config;
+	const uint32_t	*regulatory_bands;
+	const bool	enhanced_TX_power; // See iwl-agn-devices.c file to determine that(enhanced_txpower). 
+	const uint16_t	calib_need;
+	const bool	no_crystal_calibration; // see no_xtal_calib in linux
+	const bool	support_hostap; //Define IEEE80211_C_HOSTAP for ic_caps
+	const bool	no_multi_vaps; // see iwn_vap_create
+	uint8_t	additional_gp_drv_bit;
+	const bool	has_bt;
 };
 
 /* NOTA : Values with comments BEFORE are not yet used in driver */
@@ -2207,6 +2206,36 @@ static struct iwn_base_params iwn_default_base_params = {
 	false, //support_hostap
 	true, // no_multi_vaps
 	0, //additional_gp_drv_bit
+	false,
+};
+
+static struct iwn_base_params iwn2000_base_params = {
+	 0, //pll_cfg_val
+	 IWN_OTP_MAX_LL_ITEMS_2x00, //max_ll_items
+	 true, //shadow_ram_support
+	/*.led_compensation = */ 51,
+	/*.adv_thermal_throttle = */ true,
+	/*.support_ct_kill_exit = */ true,
+	/*.plcp_delta_threshold = */ 50,
+	/*.chain_noise_scale = */ 1000,
+	/*.wd_timeout = */ 2000,
+	/*.max_event_log_size = */ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */ true,
+	false, //advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn2030_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ), //calib_need
+	false, //no_crystal_calibration
+	true, //support_hostap
+	false, //no_multi_vaps
+	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT, // additional_gp_drv_bit
+	false,
 };
 
 static struct iwn_base_params iwn2030_base_params = {
@@ -2234,7 +2263,8 @@ static struct iwn_base_params iwn2030_base_params = {
 	false, //no_crystal_calibration
 	true, //support_hostap
 	false, //no_multi_vaps
-	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT, // additional_gp_drv_bit
+	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT,	// additional_gp_drv_bit
+	true
 };
 
 
@@ -2263,6 +2293,7 @@ static struct iwn_base_params iwn_1000_base_params = {
 	false, //support_hostap
 	true, //no_multi_vaps
 	0, //additional_gp_drv_bit
+	false,
 };
 static struct iwn_base_params iwn_6000_base_params = {
 	0, //pll_cfg_val
@@ -2289,6 +2320,7 @@ static struct iwn_base_params iwn_6000_base_params = {
 	false, //support_hostap
 	true, //no_multi_vaps
 	0, //additional_gp_drv_bit
+	true,
 };
 static struct iwn_base_params iwn_6000i_base_params = {
 	0, //pll_cfg_val
@@ -2315,6 +2347,7 @@ static struct iwn_base_params iwn_6000i_base_params = {
 	false, //support_hostap
 	true, //no_multi_vaps
 	0, //additional_gp_drv_bit
+	true,
 };
 static struct iwn_base_params iwn_6000g2_base_params = {
 	0, //pll_cfg_val
@@ -2342,6 +2375,7 @@ static struct iwn_base_params iwn_6000g2_base_params = {
 	false, //support_hostap
 	true, //no_multi_vaps
 	0, //additional_gp_drv_bit
+	true,	//has_bt
 };
 static struct iwn_base_params iwn_6050_base_params = {
 	0, //pll_cfg_val
@@ -2369,6 +2403,7 @@ static struct iwn_base_params iwn_6050_base_params = {
 	false, //support_hostap
 	true, //no_multi_vaps
 	0, //additional_gp_drv_bit
+	true,	//has_bt
 };
 static struct iwn_base_params iwn_6150_base_params = {
 	0, //pll_cfg_val
@@ -2396,6 +2431,7 @@ static struct iwn_base_params iwn_6150_base_params = {
 	false, //support_hostap
 	true, //no_multi_vaps
 	IWN_GP_DRIVER_6050_1X2, //additional_gp_drv_bit
+	true,	//has_bt
 };
 //IWL_DEVICE_6035 & IWL_DEVICE_6030
 static struct iwn_base_params iwn_6000g2b_base_params = {
@@ -2424,6 +2460,7 @@ static struct iwn_base_params iwn_6000g2b_base_params = {
 	false, //support_hostap
 	true, //no_multi_vaps
 	0, //additional_gp_drv_bit
+	true,	//has_bt
 };
 static struct iwn_base_params iwn_5x50_base_params = {
 	IWN_ANA_PLL_INIT, // pll_cfg_val
@@ -2450,5 +2487,36 @@ static struct iwn_base_params iwn_5x50_base_params = {
 	false, //support_hostap
 	true, // no_multi_vaps
 	0, //additional_gp_drv_bit
+	true,	//has_bt
+};
+/* uCode API values for OFDM high-throughput (HT) bit rates */
+enum {
+	IWN_RATE_SISO_6M_PLCP = 0,
+	IWN_RATE_SISO_12M_PLCP = 1,
+	IWN_RATE_SISO_18M_PLCP = 2,
+	IWN_RATE_SISO_24M_PLCP = 3,
+	IWN_RATE_SISO_36M_PLCP = 4,
+	IWN_RATE_SISO_48M_PLCP = 5,
+	IWN_RATE_SISO_54M_PLCP = 6,
+	IWN_RATE_SISO_60M_PLCP = 7,
+	IWN_RATE_MIMO2_6M_PLCP  = 0x8,
+	IWN_RATE_MIMO2_12M_PLCP = 0x9,
+	IWN_RATE_MIMO2_18M_PLCP = 0xa,
+	IWN_RATE_MIMO2_24M_PLCP = 0xb,
+	IWN_RATE_MIMO2_36M_PLCP = 0xc,
+	IWN_RATE_MIMO2_48M_PLCP = 0xd,
+	IWN_RATE_MIMO2_54M_PLCP = 0xe,
+	IWN_RATE_MIMO2_60M_PLCP = 0xf,
+	IWN_RATE_MIMO3_6M_PLCP  = 0x10,
+	IWN_RATE_MIMO3_12M_PLCP = 0x11,
+	IWN_RATE_MIMO3_18M_PLCP = 0x12,
+	IWN_RATE_MIMO3_24M_PLCP = 0x13,
+	IWN_RATE_MIMO3_36M_PLCP = 0x14,
+	IWN_RATE_MIMO3_48M_PLCP = 0x15,
+	IWN_RATE_MIMO3_54M_PLCP = 0x16,
+	IWN_RATE_MIMO3_60M_PLCP = 0x17,
+	IWN_RATE_SISO_INVM_PLCP,
+	IWN_RATE_MIMO2_INVM_PLCP = IWN_RATE_SISO_INVM_PLCP,
+	IWN_RATE_MIMO3_INVM_PLCP = IWN_RATE_SISO_INVM_PLCP,
 };
 

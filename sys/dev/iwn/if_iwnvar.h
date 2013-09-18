@@ -405,9 +405,10 @@ struct iwn_softc {
 	/* The power save level originally configured by user */
 	int			desired_pwrsave_level;
 
-	/* The current power save level, this may differ from the configured value due to
-	 * thermal throttling etc.
-	 * */
+	/*
+	 * The current power save level, this may differ from the
+	 * configured value due to thermal throttling etc.
+	 */
 	int			current_pwrsave_level;
 
 	/* For specifique params */
