@@ -73,12 +73,12 @@ __FBSDID("$FreeBSD$");
 #include <net80211/ieee80211_regdomain.h>
 #include <net80211/ieee80211_ratectl.h>
 
-#include <dev/iwn/if_iwnreg.h>
-#include <dev/iwn/if_iwnvar.h>
-#include <dev/iwn/if_iwn_devid.h>
+#include "if_iwnreg.h"
+#include "if_iwnvar.h"
+#include "if_iwn_devid.h"
 
 #ifdef IWN_4965
-#include <dev/iwn/if_iwnreg4965.h>
+#include "if_iwnreg4965.h"
 #endif
 struct iwn_ident {
 	uint16_t	vendor;
@@ -4579,7 +4579,11 @@ iwn_set_timing(struct iwn_softc *sc, struct ieee80211_node *ni)
 	DPRINTF(sc, IWN_DEBUG_RESET, "timing bintval=%u tstamp=%ju, init=%u\n",
 	    le16toh(cmd.bintval), le64toh(cmd.tstamp), (uint32_t)(val - mod));
 
+#ifdef IWN_DEBUG
 	return iwn_cmd(sc, IWN_CMD_TIMING | IWN_DEBUG_RESET, &cmd, sizeof cmd, 0);
+#else
+	return iwn_cmd(sc, IWN_CMD_TIMING, &cmd, sizeof cmd, 0);
+#endif
 }
 
 /*
