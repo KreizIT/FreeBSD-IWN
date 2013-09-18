@@ -3270,11 +3270,11 @@ iwn_notif_intr(struct iwn_softc *sc)
 			callout_stop(&sc->ct_kill_exit_to);
 			/* XXX: exit CT kill */
 		}
-			/*
-			 * State change allows hardware switch change to be
-			 * noted. However, we handle this in iwn_intr as we
-			 * get both the enable/disble intr.
-			 */
+		/*
+		 * State change allows hardware switch change to be
+		 * noted. However, we handle this in iwn_intr as we
+		 * get both the enable/disble intr.
+		 */
 
 		DPRINTF(sc, IWN_DEBUG_INTR, "state changed to %x\n",
 			    le32toh(*status));
@@ -4579,11 +4579,7 @@ iwn_set_timing(struct iwn_softc *sc, struct ieee80211_node *ni)
 	DPRINTF(sc, IWN_DEBUG_RESET, "timing bintval=%u tstamp=%ju, init=%u\n",
 	    le16toh(cmd.bintval), le64toh(cmd.tstamp), (uint32_t)(val - mod));
 
-#ifdef IWN_DEBUG
-	return iwn_cmd(sc, IWN_CMD_TIMING | IWN_DEBUG_RESET, &cmd, sizeof cmd, 0);
-#else
 	return iwn_cmd(sc, IWN_CMD_TIMING, &cmd, sizeof cmd, 0);
-#endif
 }
 
 /*
