@@ -3293,11 +3293,11 @@ iwn_notif_intr(struct iwn_softc *sc)
 			callout_stop(&sc->ct_kill_exit_to);
 			/* XXX: exit CT kill */
 		}
-			/*
-			 * State change allows hardware switch change to be
-			 * noted. However, we handle this in iwn_intr as we
-			 * get both the enable/disble intr.
-			 */
+		/*
+		 * State change allows hardware switch change to be
+		 * noted. However, we handle this in iwn_intr as we
+		 * get both the enable/disble intr.
+		 */
 
 		DPRINTF(sc, IWN_DEBUG_INTR, "state changed to %x\n",
 			    le32toh(*status));
