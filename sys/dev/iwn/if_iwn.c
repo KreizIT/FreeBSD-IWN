@@ -338,7 +338,7 @@ static int iwn_config_specific(struct iwn_softc *,uint16_t);
 static int iwn_set_statistics_request(struct iwn_softc *,bool ,bool ,int);
 static int iwn_cfg_ucode_post_alive(struct iwn_softc *);
 static int iwn_iv_reset(struct ieee80211vap *, u_long);
-static int iwn_newstate_u1(struct ieee80211vap *, enum ieee80211_state , int);
+static int iwn_newstate_u1(struct ieee80211vap *, enum ieee80211_state, int);
 static int iwn_auth_u1(struct iwn_softc *, struct ieee80211vap *);
 static int iwn_run_u1(struct iwn_softc *, struct ieee80211vap *);
 static int iwn_set_timing_u1(struct iwn_softc *);
@@ -3312,8 +3312,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 		{
 			struct iwn_beacon_missed *miss =
 			    (struct iwn_beacon_missed *)(desc + 1);
-			int misses;
-			int iv_bmissthreshold;
+			int misses,iv_bmissthreshold;
 			int DoReinit =0 ;
 			struct ieee80211vap *vap0 = sc->ivap[IWN_RXON_BSS_CTX];
 			struct ieee80211vap *vap1 = sc->ivap[IWN_RXON_PAN_CTX];
@@ -4404,8 +4403,7 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 	struct iwn_tx_cmd *cmd;
 	struct mbuf *m;
 	bus_addr_t paddr;
-	int totlen, error;
-	int cmd_queue_num;
+	int totlen, error,cmd_queue_num;
 
 	if((sc->uc_scan_progress == 1) && (code != IWN_CMD_SCAN)) {
 		DPRINTF(sc,IWN_DEBUG_CMD,"Scanning in progress..not sending cmd %x.\n",code);
@@ -4751,7 +4749,7 @@ iwn_set_timing(struct iwn_softc *sc, struct ieee80211_node *ni)
 	DPRINTF(sc, IWN_DEBUG_RESET, "timing bintval=%u tstamp=%ju, init=%u\n",
 	    le16toh(cmd.bintval), le64toh(cmd.tstamp), (uint32_t)(val - mod));
 
-	return iwn_cmd(sc, IWN_CMD_TIMING | IWN_DEBUG_RESET, &cmd, sizeof cmd, 0);
+	return iwn_cmd(sc, IWN_CMD_TIMING, &cmd, sizeof cmd, 0);
 }
 
 static void
@@ -5719,17 +5717,19 @@ iwn_config(struct iwn_softc *sc)
 		}
 	}
 
-	/* Configure bluetooth coexistence. */
-	if (sc->base_params->advanced_bt_coexist) 
-		error = iwn_send_advanced_btcoex(sc);
-	else
-		error = iwn_send_btcoex(sc);
+	/* Configure bluetooth coexistence if needed. */
+	if (sc->base_params->has_bt){
+		if (sc->base_params->advanced_bt_coexist) 
+			error = iwn_send_advanced_btcoex(sc);
+		else
+			error = iwn_send_btcoex(sc);
 
-	if (error != 0) {
-		device_printf(sc->sc_dev,
-		    "%s: could not configure bluetooth coexistence, error %d\n",
-		    __func__, error);
-		return error;
+		if (error != 0) {
+			device_printf(sc->sc_dev,
+				"%s: could not configure bluetooth coexistence, error %d\n",
+				__func__, error);
+			return error;
+		}
 	}
 
 	/* Configure valid TX chains for >=5000 Series. */
@@ -5849,6 +5849,8 @@ iwn_scan(struct iwn_softc *sc)
 	struct ieee80211com *ic = ifp->if_l2com;
 	struct ieee80211_scan_state *ss = ic->ic_scan;	/*XXX*/
 	struct ieee80211_node *ni = ss->ss_vap->iv_bss;
+	struct ieee80211vap *vap = ni->ni_vap;
+	struct iwn_vap *ivp = IWN_VAP(vap);
 	struct iwn_scan_hdr *hdr;
 	struct iwn_cmd_data *tx;
 	struct iwn_scan_essid *essid;
@@ -5866,8 +5868,6 @@ iwn_scan(struct iwn_softc *sc)
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 
 
-	struct ieee80211vap *vap = ni->ni_vap;
-	struct iwn_vap *ivp = IWN_VAP(vap);
 
 	if(ivp->ctx == IWN_RXON_BSS_CTX)
 		sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
