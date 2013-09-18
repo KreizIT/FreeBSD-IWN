@@ -5873,7 +5873,7 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 		    "%s: could not add BSS node, error %d\n", __func__, error);
 		return error;
 	}
-	/*XXX Not done in iwl 
+	/*XXX Not done in iwl  */
 	DPRINTF(sc, IWN_DEBUG_STATE, "%s: setting link quality for node %d\n",
 	    __func__, node.id);
 	if ((error = iwn_set_link_quality(sc, ni)) != 0) {
@@ -5894,7 +5894,6 @@ iwn_run(struct iwn_softc *sc, struct ieee80211vap *vap)
 	sc->calib_cnt = 0;
 	callout_reset(&sc->calib_to, msecs_to_ticks(500), iwn_calib_timeout,
 	    sc);
-	*/
 
 	/* Link LED always on while associated. */
 	iwn_set_led(sc, IWN_LED_LINK, 0, 1,IWN_LED_STATIC_ON);
