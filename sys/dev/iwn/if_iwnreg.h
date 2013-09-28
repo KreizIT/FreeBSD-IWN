@@ -2202,6 +2202,35 @@ static struct iwn_base_params iwn_default_base_params = {
 	false,
 };
 
+static struct iwn_base_params iwn2000_base_params = {
+	 0, //pll_cfg_val
+	 IWN_OTP_MAX_LL_ITEMS_2x00, //max_ll_items
+	 true, //shadow_ram_support
+	/*.led_compensation = */ 51,
+	/*.adv_thermal_throttle = */ true,
+	/*.support_ct_kill_exit = */ true,
+	/*.plcp_delta_threshold = */ 50,
+	/*.chain_noise_scale = */ 1000,
+	/*.wd_timeout = */ 2000,
+	/*.max_event_log_size = */ 512,
+	false, //shadow_reg_enable
+	/*.hd_v2 = */ true,
+	false, //advanced_bt_coexist
+	false, //bt_session_2
+	true, //bt_sco_disable
+	false, //additional_nic_config
+	iwn2030_regulatory_bands, //regulatory_bands
+	true, //enhanced_TX_power
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ), //calib_need
+	false, //no_crystal_calibration
+	true, //support_hostap
+	false, //no_multi_vaps
+	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT, // additional_gp_drv_bit
+	false,
+};
+
 static struct iwn_base_params iwn2030_base_params = {
 	 0, //pll_cfg_val
 	 IWN_OTP_MAX_LL_ITEMS_2x00, //max_ll_items

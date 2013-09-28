@@ -99,6 +99,8 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_6150_2, "Intel Centrino Wireless-N + WiMAX 6150"	},
 	{ 0x8086, IWN_DID_2x30_1, "Intel Centrino Wireless-N 2230"		},
 	{ 0x8086, IWN_DID_2x30_2, "Intel Centrino Wireless-N 2230"		},
+	{ 0x8086, IWN_DID_2x00_1, "Intel Centrino Wireless-N 2200"		},
+	{ 0x8086, IWN_DID_2x00_2, "Intel Centrino Wireless-N 2200"		},
 	{ 0x8086, IWN_DID_130_1, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_130_2, "Intel Centrino Wireless-N 130"		},
 	{ 0x8086, IWN_DID_100_1, "Intel Centrino Wireless-N 100"		},
@@ -8292,6 +8294,27 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 		}
 		break;
 
+/* 2x00 Series */
+	case IWN_DID_2x00_1:
+	case IWN_DID_2x00_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_2x00_1:
+			case IWN_SDID_2x00_2:
+			case IWN_SDID_2x00_3:
+			//iwl2000_2bgn_cfg
+			case IWN_SDID_2x00_4:
+			//iwl2000_2bgn_d_cfg
+				sc->limits = &iwn2030_sensitivity_limits;
+				sc->base_params = &iwn2000_base_params; 
+				sc->fwname = "iwn2000fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice) \n",
+				    pid, sc->subdevice_id, sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
 /* 2x30 Series */
 	case IWN_DID_2x30_1:
 	case IWN_DID_2x30_2:
