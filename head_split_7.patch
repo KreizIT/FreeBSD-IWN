@@ -26,7 +26,11 @@ Index: sys/dev/iwn/if_iwn.c
  static int	iwn4965_add_node(struct iwn_softc *, struct iwn_node_info *,
  		    int);
  static int	iwn5000_add_node(struct iwn_softc *, struct iwn_node_info *,
-@@ -329,37 +328,7 @@
+@@ -326,40 +325,11 @@
+ static void	iwn_scan_curchan(struct ieee80211_scan_state *, unsigned long);
+ static void	iwn_scan_mindwell(struct ieee80211_scan_state *);
+ static void	iwn_hw_reset(void *, int);
++static int	iwn_config_specific(struct iwn_softc *, uint16_t);
  #ifdef	IWN_DEBUG
  static char	*iwn_get_csr_string(int);
  static void	iwn_debug_register(struct iwn_softc *);
@@ -65,7 +69,7 @@ Index: sys/dev/iwn/if_iwn.c
  iwn_intr_str(uint8_t cmd)
  {
  	switch (cmd) {
-@@ -401,8 +370,6 @@
+@@ -401,8 +371,6 @@
  	}
  	return "UNKNOWN INTR NOTIF/CMD";
  }
@@ -74,7 +78,30 @@ Index: sys/dev/iwn/if_iwn.c
  #endif
  
  static device_method_t iwn_methods[] = {
-@@ -919,6 +886,13 @@
+@@ -788,6 +756,7 @@
+ iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
+ {
+ 	struct iwn_ops *ops = &sc->ops;
++	int error;
+ 
+ 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
+ 
+@@ -818,6 +787,14 @@
+ 	sc->reset_noise_gain = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
+ 	sc->noise_gain = IWN5000_PHY_CALIB_NOISE_GAIN;
+ 
++	/* Nota: this is done before just to minimize changes
++	 * So only new parameter value will be used.
++	 * Switch below will be remove in next split.
++	 */
++	error = iwn_config_specific(sc,pid);
++	if (error != 0)
++		return error;
++
+ 	switch (sc->hw_type) {
+ 	case IWN_HW_REV_TYPE_5100:
+ 		sc->limits = &iwn5000_sensitivity_limits;
+@@ -919,6 +896,13 @@
  
  	IEEE80211_ADDR_COPY(mac1, mac);
  
@@ -88,7 +115,7 @@ Index: sys/dev/iwn/if_iwn.c
  	ivp = (struct iwn_vap *) malloc(sizeof(struct iwn_vap),
  	    M_80211_VAP, M_NOWAIT | M_ZERO);
  	if (ivp == NULL)
-@@ -925,13 +899,27 @@
+@@ -925,13 +909,27 @@
  		return NULL;
  	vap = &ivp->iv_vap;
  	ieee80211_vap_setup(ic, vap, name, unit, opmode, flags, bssid, mac1);
@@ -122,7 +149,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	ieee80211_ratectl_init(vap);
  	/* Complete setup. */
-@@ -944,7 +932,11 @@
+@@ -944,7 +942,11 @@
  iwn_vap_delete(struct ieee80211vap *vap)
  {
  	struct iwn_vap *ivp = IWN_VAP(vap);
@@ -134,7 +161,7 @@ Index: sys/dev/iwn/if_iwn.c
  	ieee80211_ratectl_deinit(vap);
  	ieee80211_vap_detach(vap);
  	free(ivp, M_80211_VAP);
-@@ -2317,7 +2309,7 @@
+@@ -2317,7 +2319,7 @@
  #undef	RV
  }
  
@@ -143,7 +170,7 @@ Index: sys/dev/iwn/if_iwn.c
  iwn_newassoc(struct ieee80211_node *ni, int isnew)
  {
  	/* Doesn't do anything at the moment */
-@@ -2668,8 +2660,12 @@
+@@ -2668,8 +2670,12 @@
  		KASSERT(ni != NULL, ("no node"));
  		KASSERT(m != NULL, ("no mbuf"));
  
@@ -157,7 +184,7 @@ Index: sys/dev/iwn/if_iwn.c
  		txq->queued--;
  		txq->read = (txq->read + 1) % IWN_TX_RING_COUNT;
  	}
-@@ -2790,6 +2786,7 @@
+@@ -2790,6 +2796,7 @@
  	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
  	struct iwn_calib_state *calib = &sc->calib;
  	struct iwn_stats *stats = (struct iwn_stats *)(desc + 1);
@@ -165,7 +192,7 @@ Index: sys/dev/iwn/if_iwn.c
  	int temp;
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
-@@ -2801,6 +2798,13 @@
+@@ -2801,6 +2808,13 @@
  	    __func__);
  		return;
  	}
@@ -179,7 +206,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	bus_dmamap_sync(sc->rxq.data_dmat, data->map, BUS_DMASYNC_POSTREAD);
  
-@@ -2930,6 +2934,29 @@
+@@ -2930,6 +2944,29 @@
  	ni = data->ni, data->ni = NULL;
  	vap = ni->ni_vap;
  
@@ -209,7 +236,7 @@ Index: sys/dev/iwn/if_iwn.c
  	/*
  	 * Update rate control statistics for the node.
  	 */
-@@ -2942,28 +2969,9 @@
+@@ -2942,28 +2979,9 @@
  		ieee80211_ratectl_tx_complete(vap, ni,
  		    IEEE80211_RATECTL_TX_SUCCESS, &ackfailcnt, NULL);
  	}
@@ -240,7 +267,7 @@ Index: sys/dev/iwn/if_iwn.c
  	sc->sc_tx_timer = 0;
  	if (--ring->queued < IWN_TX_RING_LOMARK) {
  		sc->qfullmsk &= ~(1 << ring->qid);
-@@ -2985,12 +2993,19 @@
+@@ -2985,12 +3003,19 @@
  static void
  iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
  {
@@ -262,7 +289,7 @@ Index: sys/dev/iwn/if_iwn.c
  	data = &ring->data[desc->idx];
  
  	/* If the command was mapped in an mbuf, free it. */
-@@ -3083,8 +3098,12 @@
+@@ -3083,8 +3108,12 @@
  		KASSERT(ni != NULL, ("no node"));
  		KASSERT(m != NULL, ("no mbuf"));
  
@@ -276,7 +303,7 @@ Index: sys/dev/iwn/if_iwn.c
  		ring->queued--;
  		ring->read = (ring->read + 1) % IWN_TX_RING_COUNT;
  	}
-@@ -3142,7 +3161,7 @@
+@@ -3142,7 +3171,7 @@
  		    desc->type, iwn_intr_str(desc->type),
  		    le16toh(desc->len));
  
@@ -285,7 +312,7 @@ Index: sys/dev/iwn/if_iwn.c
  			iwn_cmd_done(sc, desc);
  
  		switch (desc->type) {
-@@ -3175,7 +3194,10 @@
+@@ -3175,7 +3204,10 @@
  		{
  			struct iwn_beacon_missed *miss =
  			    (struct iwn_beacon_missed *)(desc + 1);
@@ -297,7 +324,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  			bus_dmamap_sync(sc->rxq.data_dmat, data->map,
  			    BUS_DMASYNC_POSTREAD);
-@@ -3182,17 +3204,31 @@
+@@ -3182,17 +3214,31 @@
  			misses = le32toh(miss->consecutive);
  
  			DPRINTF(sc, IWN_DEBUG_STATE,
@@ -334,7 +361,7 @@ Index: sys/dev/iwn/if_iwn.c
  					IWN_UNLOCK(sc);
  					ieee80211_beacon_miss(ic);
  					IWN_LOCK(sc);
-@@ -3556,6 +3592,7 @@
+@@ -3556,6 +3602,7 @@
  	const struct ieee80211_txparam *tp;
  	struct ieee80211vap *vap = ni->ni_vap;
  	struct ieee80211com *ic = ni->ni_ic;
@@ -342,7 +369,7 @@ Index: sys/dev/iwn/if_iwn.c
  	struct iwn_node *wn = (void *)ni;
  	struct iwn_tx_ring *ring;
  	struct iwn_tx_desc *desc;
-@@ -3588,21 +3625,23 @@
+@@ -3588,21 +3635,23 @@
  		qos = 0;
  		tid = 0;
  	}
@@ -376,7 +403,7 @@ Index: sys/dev/iwn/if_iwn.c
  	desc = &ring->desc[ring->cur];
  	data = &ring->data[ring->cur];
  
-@@ -3695,9 +3734,12 @@
+@@ -3695,9 +3744,12 @@
  	}
  
  	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
@@ -392,7 +419,7 @@ Index: sys/dev/iwn/if_iwn.c
  		tx->id = wn->id;
  
  	if (type == IEEE80211_FC0_TYPE_MGT) {
-@@ -3727,7 +3769,7 @@
+@@ -3727,7 +3779,7 @@
  	tx->data_ntries = 15;
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
  	tx->rate = iwn_rate_to_plcp(sc, ni, rate);
@@ -401,7 +428,7 @@ Index: sys/dev/iwn/if_iwn.c
  		/* Group or management frame. */
  		tx->linkq = 0;
  		/* XXX Alternate between antenna A and B? */
-@@ -3844,7 +3886,7 @@
+@@ -3844,7 +3896,7 @@
  	u_int hdrlen;
  	int ac, totlen, error, pad, nsegs = 0, i, rate;
  	uint8_t ridx, type, txant;
@@ -410,7 +437,7 @@ Index: sys/dev/iwn/if_iwn.c
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
  	IWN_LOCK_ASSERT(sc);
-@@ -3934,7 +3976,10 @@
+@@ -3934,7 +3986,10 @@
  
  	tx->len = htole16(totlen);
  	tx->tid = 0;
@@ -422,7 +449,7 @@ Index: sys/dev/iwn/if_iwn.c
  	tx->rts_ntries = params->ibp_try1;
  	tx->data_ntries = params->ibp_try0;
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
-@@ -4192,16 +4237,16 @@
+@@ -4192,16 +4247,16 @@
  /*
   * Send a command to the firmware.
   */
@@ -442,7 +469,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
-@@ -4208,6 +4253,12 @@
+@@ -4208,6 +4263,12 @@
  	if (async == 0)
  		IWN_LOCK_ASSERT(sc);
  
@@ -455,7 +482,40 @@ Index: sys/dev/iwn/if_iwn.c
  	desc = &ring->desc[ring->cur];
  	data = &ring->data[ring->cur];
  	totlen = 4 + size;
-@@ -5534,6 +5585,8 @@
+@@ -5431,19 +5492,21 @@
+ 		}
+ 	}
+ 
+-	/* Configure bluetooth coexistence. */
+-	if (sc->sc_flags & IWN_FLAG_ADV_BTCOEX)
+-		error = iwn_send_advanced_btcoex(sc);
+-	else
+-		error = iwn_send_btcoex(sc);
+-	if (error != 0) {
+-		device_printf(sc->sc_dev,
+-		    "%s: could not configure bluetooth coexistence, error %d\n",
+-		    __func__, error);
+-		return error;
++	/* Configure bluetooth coexistence if needed. */
++	if (sc->base_params->bt_mode != NONE) {
++		if (sc->sc_flags & IWN_FLAG_ADV_BTCOEX)
++			error = iwn_send_advanced_btcoex(sc);
++		else
++			error = iwn_send_btcoex(sc);
++		if (error != 0) {
++			device_printf(sc->sc_dev,
++				"%s: could not configure bluetooth coexistence, error %d\n",
++				__func__, error);
++			return error;
++		}
+ 	}
+ 
+-	/* Set mode, channel, RX filter and enable RX. */
++		/* Set mode, channel, RX filter and enable RX. */
+ 	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
+ 	memset(sc->rxon, 0, sizeof (struct iwn_rxon));
+ 	IEEE80211_ADDR_COPY(sc->rxon->myaddr, IF_LLADDR(ifp));
+@@ -5534,6 +5597,8 @@
  	struct ieee80211com *ic = ifp->if_l2com;
  	struct ieee80211_scan_state *ss = ic->ic_scan;	/*XXX*/
  	struct ieee80211_node *ni = ss->ss_vap->iv_bss;
@@ -464,7 +524,7 @@ Index: sys/dev/iwn/if_iwn.c
  	struct iwn_scan_hdr *hdr;
  	struct iwn_cmd_data *tx;
  	struct iwn_scan_essid *essid;
-@@ -5548,7 +5601,11 @@
+@@ -5548,7 +5613,11 @@
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
@@ -477,7 +537,7 @@ Index: sys/dev/iwn/if_iwn.c
  	buf = malloc(IWN_SCAN_MAXSZ, M_DEVBUF, M_NOWAIT | M_ZERO);
  	if (buf == NULL) {
  		device_printf(sc->sc_dev,
-@@ -5580,7 +5637,11 @@
+@@ -5580,7 +5649,11 @@
  
  	tx = (struct iwn_cmd_data *)(hdr + 1);
  	tx->flags = htole32(IWN_TX_AUTO_SEQ);
@@ -490,7 +550,7 @@ Index: sys/dev/iwn/if_iwn.c
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
  
  	if (IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan)) {
-@@ -5617,7 +5678,7 @@
+@@ -5617,7 +5690,7 @@
  	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
  	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
  	IEEE80211_ADDR_COPY(wh->i_addr1, ifp->if_broadcastaddr);
@@ -499,7 +559,7 @@ Index: sys/dev/iwn/if_iwn.c
  	IEEE80211_ADDR_COPY(wh->i_addr3, ifp->if_broadcastaddr);
  	*(uint16_t *)&wh->i_dur[0] = 0;	/* filled by HW */
  	*(uint16_t *)&wh->i_seq[0] = 0;	/* filled by HW */
-@@ -5769,6 +5830,15 @@
+@@ -5769,6 +5842,15 @@
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
  	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
@@ -515,7 +575,7 @@ Index: sys/dev/iwn/if_iwn.c
  	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
  		/* Link LED blinks while monitoring. */
  		iwn_set_led(sc, IWN_LED_LINK, 5, 5);
-@@ -6408,7 +6478,11 @@
+@@ -6408,7 +6490,11 @@
  	IWN_SETBITS(sc, IWN_FH_TX_CHICKEN, IWN_FH_TX_CHICKEN_SCHED_RETRY);
  
  	/* Enable chain mode for all queues, except command queue. */
@@ -528,7 +588,7 @@ Index: sys/dev/iwn/if_iwn.c
  	iwn_prph_write(sc, IWN5000_SCHED_AGGR_SEL, 0);
  
  	for (qid = 0; qid < IWN5000_NTXQUEUES; qid++) {
-@@ -6428,11 +6502,20 @@
+@@ -6428,11 +6514,20 @@
  	/* Identify TX FIFO rings (0-7). */
  	iwn_prph_write(sc, IWN5000_SCHED_TXFACT, 0xff);
  
@@ -554,6 +614,458 @@ Index: sys/dev/iwn/if_iwn.c
  	}
  	iwn_nic_unlock(sc);
  
+@@ -7527,6 +7622,428 @@
+ 	iwn_init(sc);
+ 	ieee80211_notify_radio(ic, 1);
+ }
++
++/*
++ * Define specific configuration based on device id and subdevice id
++ * pid : PCI device id
++ */
++static int
++iwn_config_specific(struct iwn_softc *sc, uint16_t pid)
++{
++	switch(pid) {
++/* 1000 Series */
++	case IWN_DID_1000_1:
++	case IWN_DID_1000_2:
++		switch(sc->subdevice_id) {
++			case	IWN_SDID_1000_1:
++			case	IWN_SDID_1000_2:
++			case	IWN_SDID_1000_3:
++			case	IWN_SDID_1000_4:
++			case	IWN_SDID_1000_5:
++			case	IWN_SDID_1000_6:
++			case	IWN_SDID_1000_7:
++			case	IWN_SDID_1000_8:
++			case	IWN_SDID_1000_9:
++			case	IWN_SDID_1000_10:
++			case	IWN_SDID_1000_11:
++			case	IWN_SDID_1000_12:
++				sc->limits = &iwn1000_sensitivity_limits;
++				sc->base_params = &iwn_1000_base_params;
++				sc->fwname = "iwn1000fw";
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 6x00 Series */
++	case IWN_DID_6x00_2:
++	case IWN_DID_6x00_4:
++	case IWN_DID_6x00_1:
++	case IWN_DID_6x00_3:
++		sc->fwname = "iwn6000fw";
++		sc->limits = &iwn6000_sensitivity_limits;
++		switch(sc->subdevice_id) {
++			case IWN_SDID_6x00_1:
++			case IWN_SDID_6x00_2:
++			case IWN_SDID_6x00_8:
++				//iwl6000_3agn_cfg
++				sc->base_params = &iwn_6000_base_params;
++				break;
++			case IWN_SDID_6x00_3:
++			case IWN_SDID_6x00_6:
++			case IWN_SDID_6x00_9:
++				////iwl6000i_2agn
++			case IWN_SDID_6x00_4:
++			case IWN_SDID_6x00_7:
++			case IWN_SDID_6x00_10:
++				//iwl6000i_2abg_cfg
++			case IWN_SDID_6x00_5:
++				//iwl6000i_2bg_cfg
++				sc->base_params = &iwn_6000i_base_params;
++				sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
++				sc->txchainmask = IWN_ANT_BC;
++				sc->rxchainmask = IWN_ANT_BC;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 6x05 Series */
++	case IWN_DID_6x05_1:
++	case IWN_DID_6x05_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_6x05_1:
++			case IWN_SDID_6x05_4:
++			case IWN_SDID_6x05_6:
++				//iwl6005_2agn_cfg
++			case IWN_SDID_6x05_2:
++			case IWN_SDID_6x05_5:
++			case IWN_SDID_6x05_7:
++				//iwl6005_2abg_cfg
++			case IWN_SDID_6x05_3:
++				//iwl6005_2bg_cfg
++			case IWN_SDID_6x05_8:
++			case IWN_SDID_6x05_9:
++				//iwl6005_2agn_sff_cfg
++			case IWN_SDID_6x05_10:
++				//iwl6005_2agn_d_cfg
++			case IWN_SDID_6x05_11:
++				//iwl6005_2agn_mow1_cfg
++			case IWN_SDID_6x05_12:
++				//iwl6005_2agn_mow2_cfg
++				sc->fwname = "iwn6000g2afw";
++				sc->limits = &iwn6000_sensitivity_limits;
++				sc->base_params = &iwn_6000g2_base_params;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 6x35 Series */
++	case IWN_DID_6035_1:
++	case IWN_DID_6035_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_6035_1:
++			case IWN_SDID_6035_2:
++			case IWN_SDID_6035_3:
++			case IWN_SDID_6035_4:
++				sc->fwname = "iwn6000g2bfw";
++				sc->limits = &iwn6000_sensitivity_limits;
++				sc->base_params = &iwn_6000g2b_base_params;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 6x50 WiFi/WiMax Series */
++	case IWN_DID_6050_1:
++	case IWN_DID_6050_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_6050_1:
++			case IWN_SDID_6050_3:
++			case IWN_SDID_6050_5:
++				//iwl6050_2agn_cfg
++			case IWN_SDID_6050_2:
++			case IWN_SDID_6050_4:
++			case IWN_SDID_6050_6:
++				//iwl6050_2abg_cfg
++				sc->fwname = "iwn6050fw";
++				sc->txchainmask = IWN_ANT_AB;
++				sc->rxchainmask = IWN_ANT_AB;
++				sc->limits = &iwn6000_sensitivity_limits;
++				sc->base_params = &iwn_6050_base_params;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 6150 WiFi/WiMax Series */
++	case IWN_DID_6150_1:
++	case IWN_DID_6150_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_6150_1:
++			case IWN_SDID_6150_3:
++			case IWN_SDID_6150_5:
++				// iwl6150_bgn_cfg
++			case IWN_SDID_6150_2:
++			case IWN_SDID_6150_4:
++			case IWN_SDID_6150_6:
++				//iwl6150_bg_cfg
++				sc->fwname = "iwn6050fw";
++				sc->limits = &iwn6000_sensitivity_limits;
++				sc->base_params = &iwn_6150_base_params;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 6030 Series and 1030 Series */
++	case IWN_DID_x030_1:
++	case IWN_DID_x030_2:
++	case IWN_DID_x030_3:
++	case IWN_DID_x030_4:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_x030_1:
++			case IWN_SDID_x030_3:
++			case IWN_SDID_x030_5:
++			// iwl1030_bgn_cfg
++			case IWN_SDID_x030_2:
++			case IWN_SDID_x030_4:
++			case IWN_SDID_x030_6:
++			//iwl1030_bg_cfg
++			case IWN_SDID_x030_7:
++			case IWN_SDID_x030_10:
++			case IWN_SDID_x030_14:
++			//iwl6030_2agn_cfg
++			case IWN_SDID_x030_8:
++			case IWN_SDID_x030_11:
++			case IWN_SDID_x030_15:
++			// iwl6030_2bgn_cfg
++			case IWN_SDID_x030_9:
++			case IWN_SDID_x030_12:
++			case IWN_SDID_x030_16:
++			// iwl6030_2abg_cfg
++			case IWN_SDID_x030_13:
++			//iwl6030_2bg_cfg
++				sc->fwname = "iwn6000g2bfw";
++				sc->limits = &iwn6000_sensitivity_limits;
++				sc->base_params = &iwn_6000g2b_base_params;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 130 Series WiFi */
++/* XXX: This series will need adjustment for rate.
++ * see rx_with_siso_diversity in linux kernel
++ */
++	case IWN_DID_130_1:
++	case IWN_DID_130_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_130_1:
++			case IWN_SDID_130_3:
++			case IWN_SDID_130_5:
++			//iwl130_bgn_cfg
++			case IWN_SDID_130_2:
++			case IWN_SDID_130_4:
++			case IWN_SDID_130_6:
++			//iwl130_bg_cfg
++				sc->fwname = "iwn6000g2bfw";
++				sc->limits = &iwn6000_sensitivity_limits;
++				sc->base_params = &iwn_6000g2b_base_params;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 100 Series WiFi */
++	case IWN_DID_100_1:
++	case IWN_DID_100_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_100_1:
++			case IWN_SDID_100_2:
++			case IWN_SDID_100_3:
++			case IWN_SDID_100_4:
++			case IWN_SDID_100_5:
++			case IWN_SDID_100_6:
++				sc->limits = &iwn1000_sensitivity_limits;
++				sc->base_params = &iwn_1000_base_params;
++				sc->fwname = "iwn100fw";
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++#ifdef notyet
++/* 2x00 Series */
++	case IWN_DID_2x00_1:
++	case IWN_DID_2x00_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_2x00_1:
++			case IWN_SDID_2x00_2:
++			case IWN_SDID_2x00_3:
++			//iwl2000_2bgn_cfg
++			case IWN_SDID_2x00_4:
++			//iwl2000_2bgn_d_cfg
++				sc->limits = &iwn2030_sensitivity_limits;
++				sc->base_params = &iwn2000_base_params;
++				sc->fwname = "iwn2000fw";
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice) \n",
++				    pid, sc->subdevice_id, sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 2x30 Series */
++	case IWN_DID_2x30_1:
++	case IWN_DID_2x30_2:
++		switch(sc->subdevice_id) {
++			case IWN_SDID_2x30_1:
++			case IWN_SDID_2x30_3:
++			case IWN_SDID_2x30_5:
++			//iwl100_bgn_cfg
++			case IWN_SDID_2x30_2:
++			case IWN_SDID_2x30_4:
++			case IWN_SDID_2x30_6:
++			//iwl100_bg_cfg
++				sc->limits = &iwn2030_sensitivity_limits;
++				sc->base_params = &iwn2030_base_params;
++				sc->fwname = "iwn2030fw";
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++#endif
++/* 5x00 Series */
++	case IWN_DID_5x00_1:
++	case IWN_DID_5x00_2:
++	case IWN_DID_5x00_3:
++	case IWN_DID_5x00_4:
++		sc->limits = &iwn5000_sensitivity_limits;
++		sc->base_params = &iwn_default_base_params;
++		sc->fwname = "iwn5000fw";
++		switch(sc->subdevice_id) {
++			case IWN_SDID_5x00_1:
++			case IWN_SDID_5x00_2:
++			case IWN_SDID_5x00_3:
++			case IWN_SDID_5x00_4:
++			case IWN_SDID_5x00_9:
++			case IWN_SDID_5x00_10:
++			case IWN_SDID_5x00_11:
++			case IWN_SDID_5x00_12:
++			case IWN_SDID_5x00_17:
++			case IWN_SDID_5x00_18:
++			case IWN_SDID_5x00_19:
++			case IWN_SDID_5x00_20:
++			//iwl5100_agn_cfg
++				sc->txchainmask = IWN_ANT_B;
++				sc->rxchainmask = IWN_ANT_AB;
++				break;
++			case IWN_SDID_5x00_5:
++			case IWN_SDID_5x00_6:
++			case IWN_SDID_5x00_13:
++			case IWN_SDID_5x00_14:
++			case IWN_SDID_5x00_21:
++			case IWN_SDID_5x00_22:
++			//iwl5100_bgn_cfg
++				sc->txchainmask = IWN_ANT_B;
++				sc->rxchainmask = IWN_ANT_AB;
++				break;
++			case IWN_SDID_5x00_7:
++			case IWN_SDID_5x00_8:
++			case IWN_SDID_5x00_15:
++			case IWN_SDID_5x00_16:
++			case IWN_SDID_5x00_23:
++			case IWN_SDID_5x00_24:
++			//iwl5100_abg_cfg
++				sc->txchainmask = IWN_ANT_B;
++				sc->rxchainmask = IWN_ANT_AB;
++				break;
++			case IWN_SDID_5x00_25:
++			case IWN_SDID_5x00_26:
++			case IWN_SDID_5x00_27:
++			case IWN_SDID_5x00_28:
++			case IWN_SDID_5x00_29:
++			case IWN_SDID_5x00_30:
++			case IWN_SDID_5x00_31:
++			case IWN_SDID_5x00_32:
++			case IWN_SDID_5x00_33:
++			case IWN_SDID_5x00_34:
++			case IWN_SDID_5x00_35:
++			case IWN_SDID_5x00_36:
++			//iwl5300_agn_cfg
++				sc->txchainmask = IWN_ANT_ABC;
++				sc->rxchainmask = IWN_ANT_ABC;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++/* 5x50 Series */
++	case IWN_DID_5x50_1:
++	case IWN_DID_5x50_2:
++	case IWN_DID_5x50_3:
++	case IWN_DID_5x50_4:
++		sc->limits = &iwn5000_sensitivity_limits;
++		sc->base_params = &iwn_default_base_params;
++		sc->fwname = "iwn5000fw";
++		switch(sc->subdevice_id) {
++			case IWN_SDID_5x50_1:
++			case IWN_SDID_5x50_2:
++			case IWN_SDID_5x50_3:
++			//iwl5350_agn_cfg
++				sc->limits = &iwn5000_sensitivity_limits;
++				sc->base_params = &iwn_default_base_params;
++				sc->fwname = "iwn5000fw";
++				break;
++			case IWN_SDID_5x50_4:
++			case IWN_SDID_5x50_5:
++			case IWN_SDID_5x50_8:
++			case IWN_SDID_5x50_9:
++			case IWN_SDID_5x50_10:
++			case IWN_SDID_5x50_11:
++			//iwl5150_agn_cfg
++			case IWN_SDID_5x50_6:
++			case IWN_SDID_5x50_7:
++			case IWN_SDID_5x50_12:
++			case IWN_SDID_5x50_13:
++			//iwl5150_abg_cfg
++				sc->limits = &iwn5000_sensitivity_limits;
++				sc->fwname = "iwn5150fw";
++				sc->base_params = &iwn_5x50_base_params;
++				break;
++			default:
++				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
++				    "0x%04x rev %d not supported (subdevice)\n", pid,
++				    sc->subdevice_id,sc->hw_type);
++				return ENOTSUP;
++		}
++		break;
++	default:
++		device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x"
++		    "rev 0x%08x not supported (device)\n", pid, sc->subdevice_id,
++		     sc->hw_type);
++		return ENOTSUP;
++	}
++	return 0;
++}
++
+ #ifdef	IWN_DEBUG
+ #define	IWN_DESC(x) case x:	return #x
+ #define	COUNTOF(array) (sizeof(array) / sizeof(array[0]))
+Index: sys/dev/iwn/if_iwn_devid.h
+===================================================================
+--- sys/dev/iwn/if_iwn_devid.h	(revision 255924)
++++ sys/dev/iwn/if_iwn_devid.h	(working copy)
+@@ -43,6 +43,18 @@
+ */
+ /*
+  * --------------------------------------------------------------------------
++ * Device ID for 2x00 series
++ * --------------------------------------------------------------------------
++ */
++#define	IWN_DID_2x00_1		0x0890
++#define	IWN_DID_2x00_2		0x0891
++/* SubDevice ID */
++#define	IWN_SDID_2x00_1		0x4022
++#define	IWN_SDID_2x00_2		0x4222
++#define	IWN_SDID_2x00_3		0x4422
++#define	IWN_SDID_2x00_4		0x4822
++/*
++ * --------------------------------------------------------------------------
+  * Device ID for 2x30 series
+  * --------------------------------------------------------------------------
+  */
 Index: sys/dev/iwn/if_iwn_pan.c
 ===================================================================
 --- sys/dev/iwn/if_iwn_pan.c	(revision 0)
@@ -1199,7 +1711,52 @@ Index: sys/dev/iwn/if_iwnreg.h
 ===================================================================
 --- sys/dev/iwn/if_iwnreg.h	(revision 255924)
 +++ sys/dev/iwn/if_iwnreg.h	(working copy)
-@@ -2052,3 +2052,36 @@
+@@ -2,6 +2,8 @@
+ /*	$OpenBSD: if_iwnreg.h,v 1.40 2010/05/05 19:41:57 damien Exp $	*/
+ 
+ /*-
++ * Copyright (c) 2013 Cedric GROSS <cg@cgross.info>
++ * Copyright (c) 2011 Intel Corporation
+  * Copyright (c) 2007, 2008
+  *	Damien Bergamini <damien.bergamini@free.fr>
+  *
+@@ -222,6 +224,7 @@
+ #define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
+ #define IWN_GP_DRIVER_6050_1X2		(1 << 3)
+ #define	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT	(1 << 7)
++#define	IWN_GP_DRIVER_NONE	0
+ 
+ /* Possible flags for register IWN_UCODE_GP1_CLR. */
+ #define IWN_UCODE_GP1_RFKILL		(1 << 1)
+@@ -1731,6 +1734,16 @@
+ 	IWN5000_EEPROM_NO_HT40,
+ };
+ 
++static const uint32_t iwn2030_regulatory_bands[IWN_NBANDS] = {
++	IWN5000_EEPROM_BAND1,
++	IWN5000_EEPROM_BAND2,
++	IWN5000_EEPROM_BAND3,
++	IWN5000_EEPROM_BAND4,
++	IWN5000_EEPROM_BAND5,
++	IWN6000_EEPROM_BAND6,
++	IWN5000_EEPROM_BAND7
++};
++
+ #define IWN_CHAN_BANDS_COUNT	 7
+ #define IWN_MAX_CHAN_PER_BAND	14
+ static const struct iwn_chan_band {
+@@ -1757,8 +1770,8 @@
+ static const uint8_t iwn_pan_ac_to_queue[] = {
+ 	5, 4, 6, 7,
+ };
+-#define IWN1000_OTP_NBLOCKS	3 
+-#define IWN6000_OTP_NBLOCKS	4 
++#define IWN1000_OTP_NBLOCKS	3
++#define IWN6000_OTP_NBLOCKS	4
+ #define IWN6050_OTP_NBLOCKS	7
+ 
+ /* HW rate indices. */
+@@ -2052,3 +2065,320 @@
  #define IWN_BARRIER_READ_WRITE(sc)					\
  	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
  	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
@@ -1236,12 +1793,302 @@ Index: sys/dev/iwn/if_iwnreg.h
 +#define DPRINTF(sc, m, fmt, ...) do { (void) sc; } while (0)
 +#endif
 +
++/* ==========================================================================
++ *                                  NIC PARAMETERS
++ *
++ * ==========================================================================
++ */
++
++ /* Flags for managing calibration result. See calib_need
++ * in iwn_base_params struct
++ */
++#define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
++#define IWN_FLG_NEED_PHY_CALIB_LO				(1<<1)
++#define IWN_FLG_NEED_PHY_CALIB_TX_IQ			(1<<2)
++#define IWN_FLG_NEED_PHY_CALIB_CRYSTAL			(1<<3)
++#define IWN_FLG_NEED_PHY_CALIB_BASE_BAND		(1<<4)
++#define IWN_FLG_NEED_PHY_CALIB_TX_IQ_PERIODIC	(1<<5)
++#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET		(1<<6)
++#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2	(1<<7)
++
++/* Define some parameters for managing different NIC.
++ * Refer to linux specific file like iwl-xxxx.c to determine correct value
++ * for NIC.
++ *
++ * @max_ll_items: max number of OTP blocks
++ * @shadow_ram_support: shadow support for OTP memory
++ * @shadow_reg_enable: HW shadhow register bit
++ * @no_idle_support: do not support idle mode
++ * @advanced_bt_coexist : Advanced BT management
++ * @bt_session_2 : NIC need a new struct for configure BT coexistence. Needed
++ *   only if advanced_bt_coexist is true
++ * @bt_sco_disable :
++ * @additional_nic_config: For 6005 series
++ * @iq_invert : ? But need it for N 2000 series
++ * @regulatory_bands : XXX
++ * @enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True'
++ *    if update_enhanced_txpower = iwl_eeprom_enhanced_txpower.
++ *    See iwl-agn-devices.c file to determine that(enhanced_txpower)
++ * @need_temp_offset_calib : Need to compute some temp offset for calibration.
++ * @calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which
++ *    calibration data ucode need. See calib_init_cfg in iwl-xxxx.c
++ *    linux kernel file
++ * @no_crystal_calibration : See no_xtal_calib in linux
++ * @support_hostap: Define IEEE80211_C_HOSTAP for ic_caps
++ * @no_multi_vaps: See iwn_vap_create
++ * @additional_gp_drv_bit : Specific bit to defined during nic_config
++ * @bt_mode: BT configuration mode
++ */
++enum bt_mode_enum {
++	NONE,
++	SIMPLE,
++	ADVANCED
++};
++
++struct iwn_base_params {
++	uint32_t	pll_cfg_val;
++	const uint16_t	max_ll_items;
++#define IWN_OTP_MAX_LL_ITEMS_1000		(3)	/* OTP blocks for 1000 */
++#define IWN_OTP_MAX_LL_ITEMS_6x00		(4)	/* OTP blocks for 6x00 */
++#define IWN_OTP_MAX_LL_ITEMS_6x50		(7)	/* OTP blocks for 6x50 */
++#define IWN_OTP_MAX_LL_ITEMS_2x00		(4)	/* OTP blocks for 2x00 */
++	const bool	shadow_ram_support;
++	const bool	shadow_reg_enable;
++	const bool	bt_session_2;
++	const bool	bt_sco_disable;
++	const bool	additional_nic_config;
++	const uint32_t	*regulatory_bands;
++	const bool	enhanced_TX_power;
++	const uint16_t	calib_need;
++	const bool	no_crystal_calibration;
++	const bool	support_hostap;
++	const bool	no_multi_vaps;
++	uint8_t	additional_gp_drv_bit;
++	enum bt_mode_enum	bt_mode;
++};
++
++static const struct iwn_base_params iwn_default_base_params = {
++	IWN_ANA_PLL_INIT,	/* pll_cfg_val; */
++	IWN_OTP_MAX_LL_ITEMS_6x00,	/* max_ll_items */
++	true,	/* shadow_ram_support */
++	false,	/* shadow_reg_enable */
++	false,	/* bt_session_2 */
++	true,	/* bt_sco_disable */
++	false,	/* additional_nic_config */
++	iwn5000_regulatory_bands,	/* regulatory_bands */
++	false,	/* enhanced_TX_power */
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO
++	    | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
++	false,	/* no_crystal_calibration */
++	false,	/* support_hostap */
++	true,	/* no_multi_vaps */
++	IWN_GP_DRIVER_NONE,	/* additional_gp_drv_bit */
++	NONE,	/* bt_mode */
++};
++
++static const struct iwn_base_params iwn2000_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_2x00,
++	true,
++	false,
++	false,
++	true,
++	false,
++	iwn2030_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
++	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ),
++	false,
++	true,
++	false,
++	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT,
++	NONE,
++};
++
++static const struct iwn_base_params iwn2030_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_2x00,
++	true,
++	false,
++	true,
++	true,
++	false,
++	iwn2030_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
++	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ),
++	false,
++	true,
++	false,
++	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT,
++	ADVANCED,
++};
++
++static const struct iwn_base_params iwn_1000_base_params = {
++	IWN_ANA_PLL_INIT,
++	IWN_OTP_MAX_LL_ITEMS_1000,
++	false,
++	false,
++	false,
++	false,
++	false,
++	iwn5000_regulatory_bands,
++	false,
++	( IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
++	false,
++	false,
++	true,
++	IWN_GP_DRIVER_NONE,
++	NONE,
++};
++static const struct iwn_base_params iwn_6000_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_6x00,
++	true,
++	false,
++	false,
++	false,
++	false,
++	iwn6000_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
++	false,
++	false,
++	true,
++	IWN_GP_DRIVER_NONE,
++	SIMPLE,
++};
++static const struct iwn_base_params iwn_6000i_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_6x00,
++	true,
++	false,
++	false,
++	true,
++	false,
++	iwn6000_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
++	false,
++	false,
++	true,
++	IWN_GP_DRIVER_NONE,
++	SIMPLE,
++};
++static const struct iwn_base_params iwn_6000g2_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_6x00,
++	true,
++	false,
++	false,
++	true,
++	false,
++	iwn6000_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
++	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
++	false,
++	false,
++	true,
++	0,
++	SIMPLE,
++};
++static const struct iwn_base_params iwn_6050_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_6x50,
++	true,
++	false,
++	false,
++	true,
++	true,
++	iwn6000_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
++	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
++	false,
++	false,
++	true,
++	IWN_GP_DRIVER_NONE,
++	SIMPLE,
++};
++static const struct iwn_base_params iwn_6150_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_6x50,
++	true,
++	false,
++	false,
++	true,
++	true,
++	iwn6000_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
++	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
++	false,
++	false,
++	true,
++	IWN_GP_DRIVER_6050_1X2,
++	SIMPLE,
++};
++
++/* IWL_DEVICE_6035 & IWL_DEVICE_6030 */
++static const struct iwn_base_params iwn_6000g2b_base_params = {
++	0,
++	IWN_OTP_MAX_LL_ITEMS_6x00,
++	true,
++	false,
++	false,
++	true,
++	false,
++	iwn6000_regulatory_bands,
++	true,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
++	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
++	false,
++	false,
++	true,
++	IWN_GP_DRIVER_NONE,
++	ADVANCED,
++};
++static const struct iwn_base_params iwn_5x50_base_params = {
++	IWN_ANA_PLL_INIT,
++	IWN_OTP_MAX_LL_ITEMS_6x00,
++	true,
++	false,
++	false,
++	true,
++	false,
++	iwn5000_regulatory_bands,
++	false,
++	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
++	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
++	true,
++	false,
++	true,
++	IWN_GP_DRIVER_NONE,
++	SIMPLE,
++};
++
 Index: sys/dev/iwn/if_iwnvar.h
 ===================================================================
 --- sys/dev/iwn/if_iwnvar.h	(revision 255924)
 +++ sys/dev/iwn/if_iwnvar.h	(working copy)
-@@ -391,6 +391,12 @@
- 	struct iwn_base_params *base_params;
+@@ -387,10 +387,16 @@
+ 	 */
+ 	int			current_pwrsave_level;
+ 
+-	/* For specifique params */
+-	struct iwn_base_params *base_params;
++	/* For specific params */
++	const struct iwn_base_params *base_params;
  };
  
 +extern	int iwn_cmd(struct iwn_softc *, int, const void *, int, int);

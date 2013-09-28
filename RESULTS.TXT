@@ -2,3 +2,4 @@
 Compile OK
 
 Doesn't work with 2230 NIC has we still need to include some new feature.
+Better detection of NIC anyway

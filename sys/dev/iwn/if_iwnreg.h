@@ -2,6 +2,8 @@
 /*	$OpenBSD: if_iwnreg.h,v 1.40 2010/05/05 19:41:57 damien Exp $	*/
 
 /*-
+ * Copyright (c) 2013 Cedric GROSS <cg@cgross.info>
+ * Copyright (c) 2011 Intel Corporation
  * Copyright (c) 2007, 2008
  *	Damien Bergamini <damien.bergamini@free.fr>
  *
@@ -222,6 +224,7 @@
 #define IWN_GP_DRIVER_CALIB_VER6	(1 << 2)
 #define IWN_GP_DRIVER_6050_1X2		(1 << 3)
 #define	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT	(1 << 7)
+#define	IWN_GP_DRIVER_NONE	0
 
 /* Possible flags for register IWN_UCODE_GP1_CLR. */
 #define IWN_UCODE_GP1_RFKILL		(1 << 1)
@@ -1731,6 +1734,16 @@ static const uint32_t iwn1000_regulatory_bands[IWN_NBANDS] = {
 	IWN5000_EEPROM_NO_HT40,
 };
 
+static const uint32_t iwn2030_regulatory_bands[IWN_NBANDS] = {
+	IWN5000_EEPROM_BAND1,
+	IWN5000_EEPROM_BAND2,
+	IWN5000_EEPROM_BAND3,
+	IWN5000_EEPROM_BAND4,
+	IWN5000_EEPROM_BAND5,
+	IWN6000_EEPROM_BAND6,
+	IWN5000_EEPROM_BAND7
+};
+
 #define IWN_CHAN_BANDS_COUNT	 7
 #define IWN_MAX_CHAN_PER_BAND	14
 static const struct iwn_chan_band {
@@ -1757,8 +1770,8 @@ static const uint8_t iwn_bss_ac_to_queue[] = {
 static const uint8_t iwn_pan_ac_to_queue[] = {
 	5, 4, 6, 7,
 };
-#define IWN1000_OTP_NBLOCKS	3 
-#define IWN6000_OTP_NBLOCKS	4 
+#define IWN1000_OTP_NBLOCKS	3
+#define IWN6000_OTP_NBLOCKS	4
 #define IWN6050_OTP_NBLOCKS	7
 
 /* HW rate indices. */
@@ -2084,4 +2097,288 @@ enum {
 #else
 #define DPRINTF(sc, m, fmt, ...) do { (void) sc; } while (0)
 #endif
+
+/* ==========================================================================
+ *                                  NIC PARAMETERS
+ *
+ * ==========================================================================
+ */
+
+ /* Flags for managing calibration result. See calib_need
+ * in iwn_base_params struct
+ */
+#define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
+#define IWN_FLG_NEED_PHY_CALIB_LO				(1<<1)
+#define IWN_FLG_NEED_PHY_CALIB_TX_IQ			(1<<2)
+#define IWN_FLG_NEED_PHY_CALIB_CRYSTAL			(1<<3)
+#define IWN_FLG_NEED_PHY_CALIB_BASE_BAND		(1<<4)
+#define IWN_FLG_NEED_PHY_CALIB_TX_IQ_PERIODIC	(1<<5)
+#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET		(1<<6)
+#define IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2	(1<<7)
+
+/* Define some parameters for managing different NIC.
+ * Refer to linux specific file like iwl-xxxx.c to determine correct value
+ * for NIC.
+ *
+ * @max_ll_items: max number of OTP blocks
+ * @shadow_ram_support: shadow support for OTP memory
+ * @shadow_reg_enable: HW shadhow register bit
+ * @no_idle_support: do not support idle mode
+ * @advanced_bt_coexist : Advanced BT management
+ * @bt_session_2 : NIC need a new struct for configure BT coexistence. Needed
+ *   only if advanced_bt_coexist is true
+ * @bt_sco_disable :
+ * @additional_nic_config: For 6005 series
+ * @iq_invert : ? But need it for N 2000 series
+ * @regulatory_bands : XXX
+ * @enhanced_TX_power : EEPROM Has advanced TX power options. Set 'True'
+ *    if update_enhanced_txpower = iwl_eeprom_enhanced_txpower.
+ *    See iwl-agn-devices.c file to determine that(enhanced_txpower)
+ * @need_temp_offset_calib : Need to compute some temp offset for calibration.
+ * @calib_need : Use IWN_FLG_NEED_PHY_CALIB_* flags to specify which
+ *    calibration data ucode need. See calib_init_cfg in iwl-xxxx.c
+ *    linux kernel file
+ * @no_crystal_calibration : See no_xtal_calib in linux
+ * @support_hostap: Define IEEE80211_C_HOSTAP for ic_caps
+ * @no_multi_vaps: See iwn_vap_create
+ * @additional_gp_drv_bit : Specific bit to defined during nic_config
+ * @bt_mode: BT configuration mode
+ */
+enum bt_mode_enum {
+	NONE,
+	SIMPLE,
+	ADVANCED
+};
+
+struct iwn_base_params {
+	uint32_t	pll_cfg_val;
+	const uint16_t	max_ll_items;
+#define IWN_OTP_MAX_LL_ITEMS_1000		(3)	/* OTP blocks for 1000 */
+#define IWN_OTP_MAX_LL_ITEMS_6x00		(4)	/* OTP blocks for 6x00 */
+#define IWN_OTP_MAX_LL_ITEMS_6x50		(7)	/* OTP blocks for 6x50 */
+#define IWN_OTP_MAX_LL_ITEMS_2x00		(4)	/* OTP blocks for 2x00 */
+	const bool	shadow_ram_support;
+	const bool	shadow_reg_enable;
+	const bool	bt_session_2;
+	const bool	bt_sco_disable;
+	const bool	additional_nic_config;
+	const uint32_t	*regulatory_bands;
+	const bool	enhanced_TX_power;
+	const uint16_t	calib_need;
+	const bool	no_crystal_calibration;
+	const bool	support_hostap;
+	const bool	no_multi_vaps;
+	uint8_t	additional_gp_drv_bit;
+	enum bt_mode_enum	bt_mode;
+};
+
+static const struct iwn_base_params iwn_default_base_params = {
+	IWN_ANA_PLL_INIT,	/* pll_cfg_val; */
+	IWN_OTP_MAX_LL_ITEMS_6x00,	/* max_ll_items */
+	true,	/* shadow_ram_support */
+	false,	/* shadow_reg_enable */
+	false,	/* bt_session_2 */
+	true,	/* bt_sco_disable */
+	false,	/* additional_nic_config */
+	iwn5000_regulatory_bands,	/* regulatory_bands */
+	false,	/* enhanced_TX_power */
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO
+	    | IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
+	false,	/* no_crystal_calibration */
+	false,	/* support_hostap */
+	true,	/* no_multi_vaps */
+	IWN_GP_DRIVER_NONE,	/* additional_gp_drv_bit */
+	NONE,	/* bt_mode */
+};
+
+static const struct iwn_base_params iwn2000_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_2x00,
+	true,
+	false,
+	false,
+	true,
+	false,
+	iwn2030_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ),
+	false,
+	true,
+	false,
+	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT,
+	NONE,
+};
+
+static const struct iwn_base_params iwn2030_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_2x00,
+	true,
+	false,
+	true,
+	true,
+	false,
+	iwn2030_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2 ),
+	false,
+	true,
+	false,
+	IWN_GP_DRIVER_REG_BIT_RADIO_IQ_INVERT,
+	ADVANCED,
+};
+
+static const struct iwn_base_params iwn_1000_base_params = {
+	IWN_ANA_PLL_INIT,
+	IWN_OTP_MAX_LL_ITEMS_1000,
+	false,
+	false,
+	false,
+	false,
+	false,
+	iwn5000_regulatory_bands,
+	false,
+	( IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
+	false,
+	false,
+	true,
+	IWN_GP_DRIVER_NONE,
+	NONE,
+};
+static const struct iwn_base_params iwn_6000_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_6x00,
+	true,
+	false,
+	false,
+	false,
+	false,
+	iwn6000_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
+	false,
+	false,
+	true,
+	IWN_GP_DRIVER_NONE,
+	SIMPLE,
+};
+static const struct iwn_base_params iwn_6000i_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_6x00,
+	true,
+	false,
+	false,
+	true,
+	false,
+	iwn6000_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
+	false,
+	false,
+	true,
+	IWN_GP_DRIVER_NONE,
+	SIMPLE,
+};
+static const struct iwn_base_params iwn_6000g2_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_6x00,
+	true,
+	false,
+	false,
+	true,
+	false,
+	iwn6000_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
+	false,
+	false,
+	true,
+	0,
+	SIMPLE,
+};
+static const struct iwn_base_params iwn_6050_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_6x50,
+	true,
+	false,
+	false,
+	true,
+	true,
+	iwn6000_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
+	false,
+	false,
+	true,
+	IWN_GP_DRIVER_NONE,
+	SIMPLE,
+};
+static const struct iwn_base_params iwn_6150_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_6x50,
+	true,
+	false,
+	false,
+	true,
+	true,
+	iwn6000_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
+	false,
+	false,
+	true,
+	IWN_GP_DRIVER_6050_1X2,
+	SIMPLE,
+};
+
+/* IWL_DEVICE_6035 & IWL_DEVICE_6030 */
+static const struct iwn_base_params iwn_6000g2b_base_params = {
+	0,
+	IWN_OTP_MAX_LL_ITEMS_6x00,
+	true,
+	false,
+	false,
+	true,
+	false,
+	iwn6000_regulatory_bands,
+	true,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND |
+	    IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET ),
+	false,
+	false,
+	true,
+	IWN_GP_DRIVER_NONE,
+	ADVANCED,
+};
+static const struct iwn_base_params iwn_5x50_base_params = {
+	IWN_ANA_PLL_INIT,
+	IWN_OTP_MAX_LL_ITEMS_6x00,
+	true,
+	false,
+	false,
+	true,
+	false,
+	iwn5000_regulatory_bands,
+	false,
+	(IWN_FLG_NEED_PHY_CALIB_DC | IWN_FLG_NEED_PHY_CALIB_LO |
+	    IWN_FLG_NEED_PHY_CALIB_TX_IQ | IWN_FLG_NEED_PHY_CALIB_BASE_BAND ),
+	true,
+	false,
+	true,
+	IWN_GP_DRIVER_NONE,
+	SIMPLE,
+};
 

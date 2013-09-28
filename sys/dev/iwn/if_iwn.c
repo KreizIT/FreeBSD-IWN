@@ -325,6 +325,7 @@ static void	iwn_set_channel(struct ieee80211com *);
 static void	iwn_scan_curchan(struct ieee80211_scan_state *, unsigned long);
 static void	iwn_scan_mindwell(struct ieee80211_scan_state *);
 static void	iwn_hw_reset(void *, int);
+static int	iwn_config_specific(struct iwn_softc *, uint16_t);
 #ifdef	IWN_DEBUG
 static char	*iwn_get_csr_string(int);
 static void	iwn_debug_register(struct iwn_softc *);
@@ -755,6 +756,7 @@ static int
 iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 {
 	struct iwn_ops *ops = &sc->ops;
+	int error;
 
 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
 
@@ -784,6 +786,14 @@ iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
 	sc->sched_txfact_addr = IWN5000_SCHED_TXFACT;
 	sc->reset_noise_gain = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
 	sc->noise_gain = IWN5000_PHY_CALIB_NOISE_GAIN;
+
+	/* Nota: this is done before just to minimize changes
+	 * So only new parameter value will be used.
+	 * Switch below will be remove in next split.
+	 */
+	error = iwn_config_specific(sc,pid);
+	if (error != 0)
+		return error;
 
 	switch (sc->hw_type) {
 	case IWN_HW_REV_TYPE_5100:
@@ -5482,19 +5492,21 @@ iwn_config(struct iwn_softc *sc)
 		}
 	}
 
-	/* Configure bluetooth coexistence. */
-	if (sc->sc_flags & IWN_FLAG_ADV_BTCOEX)
-		error = iwn_send_advanced_btcoex(sc);
-	else
-		error = iwn_send_btcoex(sc);
-	if (error != 0) {
-		device_printf(sc->sc_dev,
-		    "%s: could not configure bluetooth coexistence, error %d\n",
-		    __func__, error);
-		return error;
+	/* Configure bluetooth coexistence if needed. */
+	if (sc->base_params->bt_mode != NONE) {
+		if (sc->sc_flags & IWN_FLAG_ADV_BTCOEX)
+			error = iwn_send_advanced_btcoex(sc);
+		else
+			error = iwn_send_btcoex(sc);
+		if (error != 0) {
+			device_printf(sc->sc_dev,
+				"%s: could not configure bluetooth coexistence, error %d\n",
+				__func__, error);
+			return error;
+		}
 	}
 
-	/* Set mode, channel, RX filter and enable RX. */
+		/* Set mode, channel, RX filter and enable RX. */
 	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
 	memset(sc->rxon, 0, sizeof (struct iwn_rxon));
 	IEEE80211_ADDR_COPY(sc->rxon->myaddr, IF_LLADDR(ifp));
@@ -7610,6 +7622,428 @@ iwn_hw_reset(void *arg0, int pending)
 	iwn_init(sc);
 	ieee80211_notify_radio(ic, 1);
 }
+
+/*
+ * Define specific configuration based on device id and subdevice id
+ * pid : PCI device id
+ */
+static int
+iwn_config_specific(struct iwn_softc *sc, uint16_t pid)
+{
+	switch(pid) {
+/* 1000 Series */
+	case IWN_DID_1000_1:
+	case IWN_DID_1000_2:
+		switch(sc->subdevice_id) {
+			case	IWN_SDID_1000_1:
+			case	IWN_SDID_1000_2:
+			case	IWN_SDID_1000_3:
+			case	IWN_SDID_1000_4:
+			case	IWN_SDID_1000_5:
+			case	IWN_SDID_1000_6:
+			case	IWN_SDID_1000_7:
+			case	IWN_SDID_1000_8:
+			case	IWN_SDID_1000_9:
+			case	IWN_SDID_1000_10:
+			case	IWN_SDID_1000_11:
+			case	IWN_SDID_1000_12:
+				sc->limits = &iwn1000_sensitivity_limits;
+				sc->base_params = &iwn_1000_base_params;
+				sc->fwname = "iwn1000fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 6x00 Series */
+	case IWN_DID_6x00_2:
+	case IWN_DID_6x00_4:
+	case IWN_DID_6x00_1:
+	case IWN_DID_6x00_3:
+		sc->fwname = "iwn6000fw";
+		sc->limits = &iwn6000_sensitivity_limits;
+		switch(sc->subdevice_id) {
+			case IWN_SDID_6x00_1:
+			case IWN_SDID_6x00_2:
+			case IWN_SDID_6x00_8:
+				//iwl6000_3agn_cfg
+				sc->base_params = &iwn_6000_base_params;
+				break;
+			case IWN_SDID_6x00_3:
+			case IWN_SDID_6x00_6:
+			case IWN_SDID_6x00_9:
+				////iwl6000i_2agn
+			case IWN_SDID_6x00_4:
+			case IWN_SDID_6x00_7:
+			case IWN_SDID_6x00_10:
+				//iwl6000i_2abg_cfg
+			case IWN_SDID_6x00_5:
+				//iwl6000i_2bg_cfg
+				sc->base_params = &iwn_6000i_base_params;
+				sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
+				sc->txchainmask = IWN_ANT_BC;
+				sc->rxchainmask = IWN_ANT_BC;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 6x05 Series */
+	case IWN_DID_6x05_1:
+	case IWN_DID_6x05_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_6x05_1:
+			case IWN_SDID_6x05_4:
+			case IWN_SDID_6x05_6:
+				//iwl6005_2agn_cfg
+			case IWN_SDID_6x05_2:
+			case IWN_SDID_6x05_5:
+			case IWN_SDID_6x05_7:
+				//iwl6005_2abg_cfg
+			case IWN_SDID_6x05_3:
+				//iwl6005_2bg_cfg
+			case IWN_SDID_6x05_8:
+			case IWN_SDID_6x05_9:
+				//iwl6005_2agn_sff_cfg
+			case IWN_SDID_6x05_10:
+				//iwl6005_2agn_d_cfg
+			case IWN_SDID_6x05_11:
+				//iwl6005_2agn_mow1_cfg
+			case IWN_SDID_6x05_12:
+				//iwl6005_2agn_mow2_cfg
+				sc->fwname = "iwn6000g2afw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6000g2_base_params;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 6x35 Series */
+	case IWN_DID_6035_1:
+	case IWN_DID_6035_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_6035_1:
+			case IWN_SDID_6035_2:
+			case IWN_SDID_6035_3:
+			case IWN_SDID_6035_4:
+				sc->fwname = "iwn6000g2bfw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6000g2b_base_params;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 6x50 WiFi/WiMax Series */
+	case IWN_DID_6050_1:
+	case IWN_DID_6050_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_6050_1:
+			case IWN_SDID_6050_3:
+			case IWN_SDID_6050_5:
+				//iwl6050_2agn_cfg
+			case IWN_SDID_6050_2:
+			case IWN_SDID_6050_4:
+			case IWN_SDID_6050_6:
+				//iwl6050_2abg_cfg
+				sc->fwname = "iwn6050fw";
+				sc->txchainmask = IWN_ANT_AB;
+				sc->rxchainmask = IWN_ANT_AB;
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6050_base_params;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 6150 WiFi/WiMax Series */
+	case IWN_DID_6150_1:
+	case IWN_DID_6150_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_6150_1:
+			case IWN_SDID_6150_3:
+			case IWN_SDID_6150_5:
+				// iwl6150_bgn_cfg
+			case IWN_SDID_6150_2:
+			case IWN_SDID_6150_4:
+			case IWN_SDID_6150_6:
+				//iwl6150_bg_cfg
+				sc->fwname = "iwn6050fw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6150_base_params;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 6030 Series and 1030 Series */
+	case IWN_DID_x030_1:
+	case IWN_DID_x030_2:
+	case IWN_DID_x030_3:
+	case IWN_DID_x030_4:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_x030_1:
+			case IWN_SDID_x030_3:
+			case IWN_SDID_x030_5:
+			// iwl1030_bgn_cfg
+			case IWN_SDID_x030_2:
+			case IWN_SDID_x030_4:
+			case IWN_SDID_x030_6:
+			//iwl1030_bg_cfg
+			case IWN_SDID_x030_7:
+			case IWN_SDID_x030_10:
+			case IWN_SDID_x030_14:
+			//iwl6030_2agn_cfg
+			case IWN_SDID_x030_8:
+			case IWN_SDID_x030_11:
+			case IWN_SDID_x030_15:
+			// iwl6030_2bgn_cfg
+			case IWN_SDID_x030_9:
+			case IWN_SDID_x030_12:
+			case IWN_SDID_x030_16:
+			// iwl6030_2abg_cfg
+			case IWN_SDID_x030_13:
+			//iwl6030_2bg_cfg
+				sc->fwname = "iwn6000g2bfw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6000g2b_base_params;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 130 Series WiFi */
+/* XXX: This series will need adjustment for rate.
+ * see rx_with_siso_diversity in linux kernel
+ */
+	case IWN_DID_130_1:
+	case IWN_DID_130_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_130_1:
+			case IWN_SDID_130_3:
+			case IWN_SDID_130_5:
+			//iwl130_bgn_cfg
+			case IWN_SDID_130_2:
+			case IWN_SDID_130_4:
+			case IWN_SDID_130_6:
+			//iwl130_bg_cfg
+				sc->fwname = "iwn6000g2bfw";
+				sc->limits = &iwn6000_sensitivity_limits;
+				sc->base_params = &iwn_6000g2b_base_params;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 100 Series WiFi */
+	case IWN_DID_100_1:
+	case IWN_DID_100_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_100_1:
+			case IWN_SDID_100_2:
+			case IWN_SDID_100_3:
+			case IWN_SDID_100_4:
+			case IWN_SDID_100_5:
+			case IWN_SDID_100_6:
+				sc->limits = &iwn1000_sensitivity_limits;
+				sc->base_params = &iwn_1000_base_params;
+				sc->fwname = "iwn100fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+#ifdef notyet
+/* 2x00 Series */
+	case IWN_DID_2x00_1:
+	case IWN_DID_2x00_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_2x00_1:
+			case IWN_SDID_2x00_2:
+			case IWN_SDID_2x00_3:
+			//iwl2000_2bgn_cfg
+			case IWN_SDID_2x00_4:
+			//iwl2000_2bgn_d_cfg
+				sc->limits = &iwn2030_sensitivity_limits;
+				sc->base_params = &iwn2000_base_params;
+				sc->fwname = "iwn2000fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice) \n",
+				    pid, sc->subdevice_id, sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 2x30 Series */
+	case IWN_DID_2x30_1:
+	case IWN_DID_2x30_2:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_2x30_1:
+			case IWN_SDID_2x30_3:
+			case IWN_SDID_2x30_5:
+			//iwl100_bgn_cfg
+			case IWN_SDID_2x30_2:
+			case IWN_SDID_2x30_4:
+			case IWN_SDID_2x30_6:
+			//iwl100_bg_cfg
+				sc->limits = &iwn2030_sensitivity_limits;
+				sc->base_params = &iwn2030_base_params;
+				sc->fwname = "iwn2030fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+#endif
+/* 5x00 Series */
+	case IWN_DID_5x00_1:
+	case IWN_DID_5x00_2:
+	case IWN_DID_5x00_3:
+	case IWN_DID_5x00_4:
+		sc->limits = &iwn5000_sensitivity_limits;
+		sc->base_params = &iwn_default_base_params;
+		sc->fwname = "iwn5000fw";
+		switch(sc->subdevice_id) {
+			case IWN_SDID_5x00_1:
+			case IWN_SDID_5x00_2:
+			case IWN_SDID_5x00_3:
+			case IWN_SDID_5x00_4:
+			case IWN_SDID_5x00_9:
+			case IWN_SDID_5x00_10:
+			case IWN_SDID_5x00_11:
+			case IWN_SDID_5x00_12:
+			case IWN_SDID_5x00_17:
+			case IWN_SDID_5x00_18:
+			case IWN_SDID_5x00_19:
+			case IWN_SDID_5x00_20:
+			//iwl5100_agn_cfg
+				sc->txchainmask = IWN_ANT_B;
+				sc->rxchainmask = IWN_ANT_AB;
+				break;
+			case IWN_SDID_5x00_5:
+			case IWN_SDID_5x00_6:
+			case IWN_SDID_5x00_13:
+			case IWN_SDID_5x00_14:
+			case IWN_SDID_5x00_21:
+			case IWN_SDID_5x00_22:
+			//iwl5100_bgn_cfg
+				sc->txchainmask = IWN_ANT_B;
+				sc->rxchainmask = IWN_ANT_AB;
+				break;
+			case IWN_SDID_5x00_7:
+			case IWN_SDID_5x00_8:
+			case IWN_SDID_5x00_15:
+			case IWN_SDID_5x00_16:
+			case IWN_SDID_5x00_23:
+			case IWN_SDID_5x00_24:
+			//iwl5100_abg_cfg
+				sc->txchainmask = IWN_ANT_B;
+				sc->rxchainmask = IWN_ANT_AB;
+				break;
+			case IWN_SDID_5x00_25:
+			case IWN_SDID_5x00_26:
+			case IWN_SDID_5x00_27:
+			case IWN_SDID_5x00_28:
+			case IWN_SDID_5x00_29:
+			case IWN_SDID_5x00_30:
+			case IWN_SDID_5x00_31:
+			case IWN_SDID_5x00_32:
+			case IWN_SDID_5x00_33:
+			case IWN_SDID_5x00_34:
+			case IWN_SDID_5x00_35:
+			case IWN_SDID_5x00_36:
+			//iwl5300_agn_cfg
+				sc->txchainmask = IWN_ANT_ABC;
+				sc->rxchainmask = IWN_ANT_ABC;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 5x50 Series */
+	case IWN_DID_5x50_1:
+	case IWN_DID_5x50_2:
+	case IWN_DID_5x50_3:
+	case IWN_DID_5x50_4:
+		sc->limits = &iwn5000_sensitivity_limits;
+		sc->base_params = &iwn_default_base_params;
+		sc->fwname = "iwn5000fw";
+		switch(sc->subdevice_id) {
+			case IWN_SDID_5x50_1:
+			case IWN_SDID_5x50_2:
+			case IWN_SDID_5x50_3:
+			//iwl5350_agn_cfg
+				sc->limits = &iwn5000_sensitivity_limits;
+				sc->base_params = &iwn_default_base_params;
+				sc->fwname = "iwn5000fw";
+				break;
+			case IWN_SDID_5x50_4:
+			case IWN_SDID_5x50_5:
+			case IWN_SDID_5x50_8:
+			case IWN_SDID_5x50_9:
+			case IWN_SDID_5x50_10:
+			case IWN_SDID_5x50_11:
+			//iwl5150_agn_cfg
+			case IWN_SDID_5x50_6:
+			case IWN_SDID_5x50_7:
+			case IWN_SDID_5x50_12:
+			case IWN_SDID_5x50_13:
+			//iwl5150_abg_cfg
+				sc->limits = &iwn5000_sensitivity_limits;
+				sc->fwname = "iwn5150fw";
+				sc->base_params = &iwn_5x50_base_params;
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice)\n", pid,
+				    sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+	default:
+		device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x"
+		    "rev 0x%08x not supported (device)\n", pid, sc->subdevice_id,
+		     sc->hw_type);
+		return ENOTSUP;
+	}
+	return 0;
+}
+
 #ifdef	IWN_DEBUG
 #define	IWN_DESC(x) case x:	return #x
 #define	COUNTOF(array) (sizeof(array) / sizeof(array[0]))

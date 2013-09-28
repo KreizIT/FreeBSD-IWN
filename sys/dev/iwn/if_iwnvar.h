@@ -387,8 +387,8 @@ struct iwn_softc {
 	 */
 	int			current_pwrsave_level;
 
-	/* For specifique params */
-	struct iwn_base_params *base_params;
+	/* For specific params */
+	const struct iwn_base_params *base_params;
 };
 
 extern	int iwn_cmd(struct iwn_softc *, int, const void *, int, int);
