@@ -1704,6 +1704,15 @@ struct iwn4965_eeprom_band {
 	uint8_t	hi;	/* high channel number */
 	struct	iwn4965_eeprom_chan_samples chans[2];
 } __packed;
+/* 
+ * ADD / MODIFY STATION Command (Op Code 18) -  byte 76-18 -bit13
+ * STA_FLAG_PAN_STATION bit:
+ * This bit is set (1) for a station in PAN mode 
+ */
+#define IWN_STA_FLAG_PAN_STATION		(1 << 13)
+
+#define IWN_BEACON_INTERVAL_DEFAULT		200
+#define IWN_SLOT_TIME_MIN		20
 
 /*
  * Offsets of channels descriptions in EEPROM.

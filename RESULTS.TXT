@@ -1,0 +1,9 @@
+- 09/28/2013
+Compile OK
+Work with 2230 NIC
+
+2230 Results:
+Use of wlan_amrr lead to quick decreasing of rate but driver speed is not 
+impact by wlan_amrr (Mess between MCS rate and plcp value)
+
+Speed is really poor : 20 kB/s

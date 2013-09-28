@@ -3,7 +3,7 @@
 .PATH:  ${.CURDIR}/../../dev/iwn
 
 KMOD    = if_iwn
-SRCS    = if_iwn.c device_if.h bus_if.h pci_if.h opt_wlan.h
+SRCS    = if_iwn.c device_if.h bus_if.h pci_if.h opt_wlan.h opt_iwn.h
 
 .if !defined(KERNBUILDDIR)
 opt_wlan.h:
