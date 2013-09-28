@@ -5278,7 +5278,8 @@ iwn5000_runtime_calib(struct iwn_softc *sc)
 	memset(&cmd, 0, sizeof cmd);
 	cmd.ucode.once.enable = 0xffffffff;
 	cmd.ucode.once.start = IWN5000_CALIB_DC;
-	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "configuring runtime calibration\n");
+	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "%s: Configuring runtime calibration\n",
+	    __func__);
 	return iwn_cmd(sc, IWN5000_CMD_CALIB_CONFIG, &cmd, sizeof(cmd), 0);
 }
 
