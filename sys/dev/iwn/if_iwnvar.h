@@ -391,6 +391,12 @@ struct iwn_softc {
 	struct iwn_base_params *base_params;
 };
 
+extern	int iwn_cmd(struct iwn_softc *, int, const void *, int, int);
+extern	void iwn_newassoc(struct ieee80211_node *, int);
+#ifdef	IWN_DEBUG
+extern	const char *iwn_intr_str(uint8_t);
+#endif
+
 #define IWN_LOCK_INIT(_sc) \
 	mtx_init(&(_sc)->sc_mtx, device_get_nameunit((_sc)->sc_dev), \
 	    MTX_NETWORK_LOCK, MTX_DEF)

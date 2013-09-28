@@ -2052,3 +2052,36 @@ static const char * const iwn_fw_errmsg[] = {
 #define IWN_BARRIER_READ_WRITE(sc)					\
 	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
+
+#ifdef	IWN_DEBUG
+enum {
+	IWN_DEBUG_XMIT		= 0x00000001,	/* basic xmit operation */
+	IWN_DEBUG_RECV		= 0x00000002,	/* basic recv operation */
+	IWN_DEBUG_STATE		= 0x00000004,	/* 802.11 state transitions */
+	IWN_DEBUG_TXPOW		= 0x00000008,	/* tx power processing */
+	IWN_DEBUG_RESET		= 0x00000010,	/* reset processing */
+	IWN_DEBUG_OPS		= 0x00000020,	/* iwn_ops processing */
+	IWN_DEBUG_BEACON	= 0x00000040,	/* beacon handling */
+	IWN_DEBUG_WATCHDOG 	= 0x00000080,	/* watchdog timeout */
+	IWN_DEBUG_INTR		= 0x00000100,	/* ISR */
+	IWN_DEBUG_CALIBRATE	= 0x00000200,	/* periodic calibration */
+	IWN_DEBUG_NODE		= 0x00000400,	/* node management */
+	IWN_DEBUG_LED		= 0x00000800,	/* led management */
+	IWN_DEBUG_CMD		= 0x00001000,	/* cmd submission */
+	IWN_DEBUG_TXRATE	= 0x00002000,	/* TX rate debugging */
+	IWN_DEBUG_PWRSAVE	= 0x00004000,	/* Power save operations */
+	IWN_DEBUG_REGISTER	= 0x20000000,	/* print chipset register */
+	IWN_DEBUG_TRACE		= 0x40000000,	/* Print begin and start driver function */
+	IWN_DEBUG_FATAL		= 0x80000000,	/* fatal errors */
+	IWN_DEBUG_ANY		= 0xffffffff
+};
+
+#define DPRINTF(sc, m, fmt, ...) do {			\
+	if (sc->sc_debug & (m))				\
+		printf(fmt, __VA_ARGS__);		\
+} while (0)
+
+#else
+#define DPRINTF(sc, m, fmt, ...) do { (void) sc; } while (0)
+#endif
+
