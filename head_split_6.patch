@@ -143,21 +143,7 @@ Index: sys/dev/iwn/if_iwn.c
  iwn_newassoc(struct ieee80211_node *ni, int isnew)
  {
  	/* Doesn't do anything at the moment */
-@@ -2668,8 +2660,12 @@
- 		KASSERT(ni != NULL, ("no node"));
- 		KASSERT(m != NULL, ("no mbuf"));
- 
--		ieee80211_tx_complete(ni, m, 1);
-+		if (m->m_flags & M_TXCB)
-+			ieee80211_process_callback(ni, m, 1);
- 
-+		m_freem(m);
-+		ieee80211_free_node(ni);
-+
- 		txq->queued--;
- 		txq->read = (txq->read + 1) % IWN_TX_RING_COUNT;
- 	}
-@@ -2790,6 +2786,7 @@
+@@ -2790,6 +2782,7 @@
  	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
  	struct iwn_calib_state *calib = &sc->calib;
  	struct iwn_stats *stats = (struct iwn_stats *)(desc + 1);
@@ -165,7 +151,7 @@ Index: sys/dev/iwn/if_iwn.c
  	int temp;
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
-@@ -2801,6 +2798,13 @@
+@@ -2801,6 +2794,13 @@
  	    __func__);
  		return;
  	}
@@ -179,68 +165,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	bus_dmamap_sync(sc->rxq.data_dmat, data->map, BUS_DMASYNC_POSTREAD);
  
-@@ -2930,6 +2934,29 @@
- 	ni = data->ni, data->ni = NULL;
- 	vap = ni->ni_vap;
- 
-+	if (m->m_flags & M_TXCB) {
-+		/*
-+		 * Channels marked for "radar" require traffic to be received
-+		 * to unlock before we can transmit.  Until traffic is seen
-+		 * any attempt to transmit is returned immediately with status
-+		 * set to IWN_TX_FAIL_TX_LOCKED.  Unfortunately this can easily
-+		 * happen on first authenticate after scanning.  To workaround
-+		 * this we ignore a failure of this sort in AUTH state so the
-+		 * 802.11 layer will fall back to using a timeout to wait for
-+		 * the AUTH reply.  This allows the firmware time to see
-+		 * traffic so a subsequent retry of AUTH succeeds.  It's
-+		 * unclear why the firmware does not maintain state for
-+		 * channels recently visited as this would allow immediate
-+		 * use of the channel after a scan (where we see traffic).
-+		 */
-+		if (status == IWN_TX_FAIL_TX_LOCKED &&
-+		    ni->ni_vap->iv_state == IEEE80211_S_AUTH)
-+			ieee80211_process_callback(ni, m, 0);
-+		else
-+			ieee80211_process_callback(ni, m,
-+			    (status & IWN_TX_FAIL) != 0);
-+	}
-+
- 	/*
- 	 * Update rate control statistics for the node.
- 	 */
-@@ -2942,28 +2969,9 @@
- 		ieee80211_ratectl_tx_complete(vap, ni,
- 		    IEEE80211_RATECTL_TX_SUCCESS, &ackfailcnt, NULL);
- 	}
-+	m_freem(m);
-+	ieee80211_free_node(ni);
- 
--	/*
--	 * Channels marked for "radar" require traffic to be received
--	 * to unlock before we can transmit.  Until traffic is seen
--	 * any attempt to transmit is returned immediately with status
--	 * set to IWN_TX_FAIL_TX_LOCKED.  Unfortunately this can easily
--	 * happen on first authenticate after scanning.  To workaround
--	 * this we ignore a failure of this sort in AUTH state so the
--	 * 802.11 layer will fall back to using a timeout to wait for
--	 * the AUTH reply.  This allows the firmware time to see
--	 * traffic so a subsequent retry of AUTH succeeds.  It's
--	 * unclear why the firmware does not maintain state for
--	 * channels recently visited as this would allow immediate
--	 * use of the channel after a scan (where we see traffic).
--	 */
--	if (status == IWN_TX_FAIL_TX_LOCKED &&
--	    ni->ni_vap->iv_state == IEEE80211_S_AUTH)
--		ieee80211_tx_complete(ni, m, 0);
--	else
--		ieee80211_tx_complete(ni, m,
--		    (status & IWN_TX_FAIL) != 0);
--
- 	sc->sc_tx_timer = 0;
- 	if (--ring->queued < IWN_TX_RING_LOMARK) {
- 		sc->qfullmsk &= ~(1 << ring->qid);
-@@ -2985,12 +2993,19 @@
+@@ -2985,12 +2985,19 @@
  static void
  iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
  {
@@ -262,21 +187,7 @@ Index: sys/dev/iwn/if_iwn.c
  	data = &ring->data[desc->idx];
  
  	/* If the command was mapped in an mbuf, free it. */
-@@ -3083,8 +3098,12 @@
- 		KASSERT(ni != NULL, ("no node"));
- 		KASSERT(m != NULL, ("no mbuf"));
- 
--		ieee80211_tx_complete(ni, m, 1);
-+		if (m->m_flags & M_TXCB)
-+			ieee80211_process_callback(ni, m, 1);
- 
-+		m_freem(m);
-+		ieee80211_free_node(ni);
-+
- 		ring->queued--;
- 		ring->read = (ring->read + 1) % IWN_TX_RING_COUNT;
- 	}
-@@ -3142,7 +3161,7 @@
+@@ -3142,7 +3149,7 @@
  		    desc->type, iwn_intr_str(desc->type),
  		    le16toh(desc->len));
  
@@ -285,7 +196,7 @@ Index: sys/dev/iwn/if_iwn.c
  			iwn_cmd_done(sc, desc);
  
  		switch (desc->type) {
-@@ -3175,7 +3194,10 @@
+@@ -3175,7 +3182,10 @@
  		{
  			struct iwn_beacon_missed *miss =
  			    (struct iwn_beacon_missed *)(desc + 1);
@@ -297,7 +208,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  			bus_dmamap_sync(sc->rxq.data_dmat, data->map,
  			    BUS_DMASYNC_POSTREAD);
-@@ -3182,17 +3204,31 @@
+@@ -3182,17 +3192,31 @@
  			misses = le32toh(miss->consecutive);
  
  			DPRINTF(sc, IWN_DEBUG_STATE,
@@ -334,7 +245,7 @@ Index: sys/dev/iwn/if_iwn.c
  					IWN_UNLOCK(sc);
  					ieee80211_beacon_miss(ic);
  					IWN_LOCK(sc);
-@@ -3556,6 +3592,7 @@
+@@ -3556,6 +3580,7 @@
  	const struct ieee80211_txparam *tp;
  	struct ieee80211vap *vap = ni->ni_vap;
  	struct ieee80211com *ic = ni->ni_ic;
@@ -342,7 +253,7 @@ Index: sys/dev/iwn/if_iwn.c
  	struct iwn_node *wn = (void *)ni;
  	struct iwn_tx_ring *ring;
  	struct iwn_tx_desc *desc;
-@@ -3588,21 +3625,23 @@
+@@ -3588,21 +3613,23 @@
  		qos = 0;
  		tid = 0;
  	}
@@ -376,7 +287,7 @@ Index: sys/dev/iwn/if_iwn.c
  	desc = &ring->desc[ring->cur];
  	data = &ring->data[ring->cur];
  
-@@ -3695,9 +3734,12 @@
+@@ -3695,9 +3722,12 @@
  	}
  
  	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
@@ -392,7 +303,7 @@ Index: sys/dev/iwn/if_iwn.c
  		tx->id = wn->id;
  
  	if (type == IEEE80211_FC0_TYPE_MGT) {
-@@ -3727,7 +3769,7 @@
+@@ -3727,7 +3757,7 @@
  	tx->data_ntries = 15;
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
  	tx->rate = iwn_rate_to_plcp(sc, ni, rate);
@@ -401,7 +312,7 @@ Index: sys/dev/iwn/if_iwn.c
  		/* Group or management frame. */
  		tx->linkq = 0;
  		/* XXX Alternate between antenna A and B? */
-@@ -3844,7 +3886,7 @@
+@@ -3844,7 +3874,7 @@
  	u_int hdrlen;
  	int ac, totlen, error, pad, nsegs = 0, i, rate;
  	uint8_t ridx, type, txant;
@@ -410,7 +321,7 @@ Index: sys/dev/iwn/if_iwn.c
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
  	IWN_LOCK_ASSERT(sc);
-@@ -3934,7 +3976,10 @@
+@@ -3934,7 +3964,10 @@
  
  	tx->len = htole16(totlen);
  	tx->tid = 0;
@@ -422,7 +333,7 @@ Index: sys/dev/iwn/if_iwn.c
  	tx->rts_ntries = params->ibp_try1;
  	tx->data_ntries = params->ibp_try0;
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
-@@ -4192,16 +4237,16 @@
+@@ -4192,16 +4225,16 @@
  /*
   * Send a command to the firmware.
   */
@@ -442,7 +353,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
-@@ -4208,6 +4253,12 @@
+@@ -4208,6 +4241,12 @@
  	if (async == 0)
  		IWN_LOCK_ASSERT(sc);
  
@@ -455,7 +366,7 @@ Index: sys/dev/iwn/if_iwn.c
  	desc = &ring->desc[ring->cur];
  	data = &ring->data[ring->cur];
  	totlen = 4 + size;
-@@ -5534,6 +5585,8 @@
+@@ -5534,6 +5573,8 @@
  	struct ieee80211com *ic = ifp->if_l2com;
  	struct ieee80211_scan_state *ss = ic->ic_scan;	/*XXX*/
  	struct ieee80211_node *ni = ss->ss_vap->iv_bss;
@@ -464,7 +375,7 @@ Index: sys/dev/iwn/if_iwn.c
  	struct iwn_scan_hdr *hdr;
  	struct iwn_cmd_data *tx;
  	struct iwn_scan_essid *essid;
-@@ -5548,7 +5601,11 @@
+@@ -5548,7 +5589,11 @@
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
@@ -477,7 +388,7 @@ Index: sys/dev/iwn/if_iwn.c
  	buf = malloc(IWN_SCAN_MAXSZ, M_DEVBUF, M_NOWAIT | M_ZERO);
  	if (buf == NULL) {
  		device_printf(sc->sc_dev,
-@@ -5580,7 +5637,11 @@
+@@ -5580,7 +5625,11 @@
  
  	tx = (struct iwn_cmd_data *)(hdr + 1);
  	tx->flags = htole32(IWN_TX_AUTO_SEQ);
@@ -490,7 +401,7 @@ Index: sys/dev/iwn/if_iwn.c
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
  
  	if (IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan)) {
-@@ -5617,7 +5678,7 @@
+@@ -5617,7 +5666,7 @@
  	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
  	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
  	IEEE80211_ADDR_COPY(wh->i_addr1, ifp->if_broadcastaddr);
@@ -499,7 +410,7 @@ Index: sys/dev/iwn/if_iwn.c
  	IEEE80211_ADDR_COPY(wh->i_addr3, ifp->if_broadcastaddr);
  	*(uint16_t *)&wh->i_dur[0] = 0;	/* filled by HW */
  	*(uint16_t *)&wh->i_seq[0] = 0;	/* filled by HW */
-@@ -5769,6 +5830,15 @@
+@@ -5769,6 +5818,15 @@
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
  	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
@@ -515,7 +426,7 @@ Index: sys/dev/iwn/if_iwn.c
  	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
  		/* Link LED blinks while monitoring. */
  		iwn_set_led(sc, IWN_LED_LINK, 5, 5);
-@@ -6408,7 +6478,11 @@
+@@ -6408,7 +6466,11 @@
  	IWN_SETBITS(sc, IWN_FH_TX_CHICKEN, IWN_FH_TX_CHICKEN_SCHED_RETRY);
  
  	/* Enable chain mode for all queues, except command queue. */
@@ -528,7 +439,7 @@ Index: sys/dev/iwn/if_iwn.c
  	iwn_prph_write(sc, IWN5000_SCHED_AGGR_SEL, 0);
  
  	for (qid = 0; qid < IWN5000_NTXQUEUES; qid++) {
-@@ -6428,11 +6502,20 @@
+@@ -6428,11 +6490,20 @@
  	/* Identify TX FIFO rings (0-7). */
  	iwn_prph_write(sc, IWN5000_SCHED_TXFACT, 0xff);
  
@@ -1128,6 +1039,10 @@ Index: sys/dev/iwn/if_iwn_pan.c
 
 Property changes on: sys/dev/iwn/if_iwn_pan.c
 ___________________________________________________________________
+Added: svn:keywords
+## -0,0 +1 ##
++FreeBSD=%H
+\ No newline at end of property
 Added: svn:eol-style
 ## -0,0 +1 ##
 +native
@@ -1135,10 +1050,6 @@ Added: svn:eol-style
 Added: svn:mime-type
 ## -0,0 +1 ##
 +text/plain
-\ No newline at end of property
-Added: svn:keywords
-## -0,0 +1 ##
-+FreeBSD=%H
 \ No newline at end of property
 Index: sys/dev/iwn/if_iwn_pan.h
 ===================================================================
@@ -1183,10 +1094,6 @@ Index: sys/dev/iwn/if_iwn_pan.h
 
 Property changes on: sys/dev/iwn/if_iwn_pan.h
 ___________________________________________________________________
-Added: svn:eol-style
-## -0,0 +1 ##
-+native
-\ No newline at end of property
 Added: svn:mime-type
 ## -0,0 +1 ##
 +text/plain
@@ -1194,6 +1101,10 @@ Added: svn:mime-type
 Added: svn:keywords
 ## -0,0 +1 ##
 +FreeBSD=%H
+\ No newline at end of property
+Added: svn:eol-style
+## -0,0 +1 ##
++native
 \ No newline at end of property
 Index: sys/dev/iwn/if_iwnreg.h
 ===================================================================
