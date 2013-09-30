@@ -9,7 +9,5 @@ You will need at least :
 Activating debug is done by : 
 sysctl dev.iwn.0.debug=0xffffffff
 
-Here is branch split_7:
-Prepare "parameter" mode. This will remove configuration test based on 
-hardware revision and use specific parameter.
-See split_8.
+Here is branch split_8:
+Replace revision test by NIC parameters.

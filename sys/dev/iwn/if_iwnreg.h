@@ -1105,6 +1105,10 @@ struct iwn_enhanced_sensitivity_cmd {
 	uint16_t	reserved;
 } __packed;
 
+/* Define maximal number of calib result send to runtime firmware 
+ * PS: TEMP_OFFSET count for 2 (std and v2)
+ */
+#define IWN5000_PHY_CALIB_MAX_RESULT	8
 /* Structures for command IWN_CMD_PHY_CALIB. */
 struct iwn_phy_calib {
 	uint8_t	code;
@@ -1124,6 +1128,15 @@ struct iwn_phy_calib {
 	uint8_t	ngroups;
 	uint8_t	isvalid;
 } __packed;
+
+#define IWN_BUF_IX_PHY_CALIB_DC				0
+#define IWN_BUF_IX_PHY_CALIB_LO			 	1
+#define IWN_BUF_IX_PHY_CALIB_TX_IQ			2
+#define IWN_BUF_IX_PHY_CALIB_CRYSTAL		3
+#define IWN_BUF_IX_PHY_CALIB_BASE_BAND		4
+#define IWN_BUF_IX_PHY_CALIB_TX_IQ_PERIODIC	5
+#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET	6
+#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2	7
 
 struct iwn5000_phy_calib_crystal {
 	uint8_t	code;
@@ -2104,7 +2117,7 @@ enum {
  * ==========================================================================
  */
 
- /* Flags for managing calibration result. See calib_need
+/* Flags for managing calibration result. See calib_need
  * in iwn_base_params struct
  */
 #define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)

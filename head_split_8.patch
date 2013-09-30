@@ -26,7 +26,15 @@ Index: sys/dev/iwn/if_iwn.c
  static int	iwn4965_add_node(struct iwn_softc *, struct iwn_node_info *,
  		    int);
  static int	iwn5000_add_node(struct iwn_softc *, struct iwn_node_info *,
-@@ -326,40 +325,11 @@
+@@ -292,6 +291,7 @@
+ static int	iwn5000_send_wimax_coex(struct iwn_softc *);
+ static int	iwn5000_crystal_calib(struct iwn_softc *);
+ static int	iwn5000_temp_offset_calib(struct iwn_softc *);
++static int	iwn5000_temp_offset_calibv2(struct iwn_softc *);
+ static int	iwn4965_post_alive(struct iwn_softc *);
+ static int	iwn5000_post_alive(struct iwn_softc *);
+ static int	iwn4965_load_bootcode(struct iwn_softc *, const uint8_t *,
+@@ -326,40 +326,11 @@
  static void	iwn_scan_curchan(struct ieee80211_scan_state *, unsigned long);
  static void	iwn_scan_mindwell(struct ieee80211_scan_state *);
  static void	iwn_hw_reset(void *, int);
@@ -69,7 +77,23 @@ Index: sys/dev/iwn/if_iwn.c
  iwn_intr_str(uint8_t cmd)
  {
  	switch (cmd) {
-@@ -401,8 +371,6 @@
+@@ -398,11 +369,22 @@
+ 	case IWN_CMD_SET_CRITICAL_TEMP:	return "IWN_CMD_SET_CRITICAL_TEMP";
+ 	case IWN_CMD_SET_SENSITIVITY:	return "IWN_CMD_SET_SENSITIVITY";
+ 	case IWN_CMD_PHY_CALIB:		return "IWN_CMD_PHY_CALIB";
++	case IWN_CMD_BT_COEX_PRIOTABLE:	return "IWN_CMD_BT_COEX_PRIOTABLE";
++	case IWN_CMD_BT_COEX_PROT:	return "IWN_CMD_BT_COEX_PROT";
++	case IWN_CMD_BT_COEX_NOTIF:	return "IWN_CMD_BT_COEX_NOTIF";
++		/* PAN commands */
++	case IWN_CMD_WIPAN_PARAMS:	return "IWN_CMD_WIPAN_PARAMS";
++	case IWN_CMD_WIPAN_RXON:	return "IWN_CMD_WIPAN_RXON";
++	case IWN_CMD_WIPAN_RXON_TIMING:	return "IWN_CMD_WIPAN_RXON_TIMING";
++	case IWN_CMD_WIPAN_RXON_ASSOC:	return "IWN_CMD_WIPAN_RXON_ASSOC";
++	case IWN_CMD_WIPAN_QOS_PARAM:	return "IWN_CMD_WIPAN_QOS_PARAM";
++	case IWN_CMD_WIPAN_WEPKEY:	return "IWN_CMD_WIPAN_WEPKEY";
++	case IWN_CMD_WIPAN_P2P_CHANNEL_SWITCH:	return "IWN_CMD_WIPAN_P2P_CHANNEL_SWITCH";
++	case IWN_CMD_WIPAN_NOA_NOTIFICATION:	return "IWN_CMD_WIPAN_NOA_NOTIFICATION";
++	case IWN_CMD_WIPAN_DEACTIVATION_COMPLETE:	return "IWN_CMD_WIPAN_DEACTIVATION_COMPLETE";
  	}
  	return "UNKNOWN INTR NOTIF/CMD";
  }
@@ -78,30 +102,76 @@ Index: sys/dev/iwn/if_iwn.c
  #endif
  
  static device_method_t iwn_methods[] = {
-@@ -788,6 +756,7 @@
- iwn5000_attach(struct iwn_softc *sc, uint16_t pid)
- {
- 	struct iwn_ops *ops = &sc->ops;
-+	int error;
+@@ -778,6 +760,7 @@
+ 	/* Override chains masks, ROM is known to be broken. */
+ 	sc->txchainmask = IWN_ANT_AB;
+ 	sc->rxchainmask = IWN_ANT_ABC;
++	sc->base_params = &iwn_default_base_params; /* !! TODO : Define something may be more specific */
  
- 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
+ 	DPRINTF(sc, IWN_DEBUG_TRACE, "%s: end\n",__func__);
  
-@@ -818,6 +787,14 @@
+@@ -818,59 +801,7 @@
  	sc->reset_noise_gain = IWN5000_PHY_CALIB_RESET_NOISE_GAIN;
  	sc->noise_gain = IWN5000_PHY_CALIB_NOISE_GAIN;
  
-+	/* Nota: this is done before just to minimize changes
-+	 * So only new parameter value will be used.
-+	 * Switch below will be remove in next split.
-+	 */
-+	error = iwn_config_specific(sc,pid);
-+	if (error != 0)
-+		return error;
-+
- 	switch (sc->hw_type) {
- 	case IWN_HW_REV_TYPE_5100:
- 		sc->limits = &iwn5000_sensitivity_limits;
-@@ -919,6 +896,13 @@
+-	switch (sc->hw_type) {
+-	case IWN_HW_REV_TYPE_5100:
+-		sc->limits = &iwn5000_sensitivity_limits;
+-		sc->fwname = "iwn5000fw";
+-		/* Override chains masks, ROM is known to be broken. */
+-		sc->txchainmask = IWN_ANT_B;
+-		sc->rxchainmask = IWN_ANT_AB;
+-		break;
+-	case IWN_HW_REV_TYPE_5150:
+-		sc->limits = &iwn5150_sensitivity_limits;
+-		sc->fwname = "iwn5150fw";
+-		break;
+-	case IWN_HW_REV_TYPE_5300:
+-	case IWN_HW_REV_TYPE_5350:
+-		sc->limits = &iwn5000_sensitivity_limits;
+-		sc->fwname = "iwn5000fw";
+-		break;
+-	case IWN_HW_REV_TYPE_1000:
+-		sc->limits = &iwn1000_sensitivity_limits;
+-		sc->fwname = "iwn1000fw";
+-		break;
+-	case IWN_HW_REV_TYPE_6000:
+-		sc->limits = &iwn6000_sensitivity_limits;
+-		sc->fwname = "iwn6000fw";
+-		if (pid == 0x422c || pid == 0x4239) {
+-			sc->sc_flags |= IWN_FLAG_INTERNAL_PA;
+-			/* Override chains masks, ROM is known to be broken. */
+-			sc->txchainmask = IWN_ANT_BC;
+-			sc->rxchainmask = IWN_ANT_BC;
+-		}
+-		break;
+-	case IWN_HW_REV_TYPE_6050:
+-		sc->limits = &iwn6000_sensitivity_limits;
+-		sc->fwname = "iwn6050fw";
+-		/* Override chains masks, ROM is known to be broken. */
+-		sc->txchainmask = IWN_ANT_AB;
+-		sc->rxchainmask = IWN_ANT_AB;
+-		break;
+-	case IWN_HW_REV_TYPE_6005:
+-		sc->limits = &iwn6000_sensitivity_limits;
+-		if (pid != 0x0082 && pid != 0x0085) {
+-			sc->fwname = "iwn6000g2bfw";
+-			sc->sc_flags |= IWN_FLAG_ADV_BTCOEX;
+-		} else
+-			sc->fwname = "iwn6000g2afw";
+-		break;
+-	default:
+-		device_printf(sc->sc_dev, "adapter type %d not supported\n",
+-		    sc->hw_type);
+-		DPRINTF(sc, IWN_DEBUG_TRACE, "->%s: end in error\n",__func__);
+-		return ENOTSUP;
+-	}
+-	return 0;
++	return iwn_config_specific(sc,pid);
+ }
+ 
+ /*
+@@ -919,6 +850,13 @@
  
  	IEEE80211_ADDR_COPY(mac1, mac);
  
@@ -115,7 +185,7 @@ Index: sys/dev/iwn/if_iwn.c
  	ivp = (struct iwn_vap *) malloc(sizeof(struct iwn_vap),
  	    M_80211_VAP, M_NOWAIT | M_ZERO);
  	if (ivp == NULL)
-@@ -925,13 +909,27 @@
+@@ -925,13 +863,27 @@
  		return NULL;
  	vap = &ivp->iv_vap;
  	ieee80211_vap_setup(ic, vap, name, unit, opmode, flags, bssid, mac1);
@@ -149,7 +219,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	ieee80211_ratectl_init(vap);
  	/* Complete setup. */
-@@ -944,7 +942,11 @@
+@@ -944,7 +896,11 @@
  iwn_vap_delete(struct ieee80211vap *vap)
  {
  	struct iwn_vap *ivp = IWN_VAP(vap);
@@ -161,7 +231,83 @@ Index: sys/dev/iwn/if_iwn.c
  	ieee80211_ratectl_deinit(vap);
  	ieee80211_vap_detach(vap);
  	free(ivp, M_80211_VAP);
-@@ -2317,7 +2319,7 @@
+@@ -1192,7 +1148,7 @@
+ 	iwn_nic_unlock(sc);
+ 
+ 	/* Set auto clock gate disable bit for HW with OTP shadow RAM. */
+-	if (sc->hw_type != IWN_HW_REV_TYPE_1000) {
++	if (sc->base_params->shadow_ram_support) {
+ 		IWN_SETBITS(sc, IWN_DBG_LINK_PWR_MGMT,
+ 		    IWN_RESET_LINK_PWR_MGMT_DIS);
+ 	}
+@@ -1205,11 +1161,11 @@
+ 	 * Find the block before last block (contains the EEPROM image)
+ 	 * for HW without OTP shadow RAM.
+ 	 */
+-	if (sc->hw_type == IWN_HW_REV_TYPE_1000) {
++	if (!(sc->base_params->shadow_ram_support)) {
+ 		/* Switch to absolute addressing mode. */
+ 		IWN_CLRBITS(sc, IWN_OTP_GP, IWN_OTP_GP_RELATIVE_ACCESS);
+ 		base = prev = 0;
+-		for (count = 0; count < IWN1000_OTP_NBLOCKS; count++) {
++		for (count = 0; count < sc->base_params->max_ll_items; count++) {
+ 			error = iwn_read_prom_data(sc, base, &next, 2);
+ 			if (error != 0)
+ 				return error;
+@@ -1218,7 +1174,7 @@
+ 			prev = base;
+ 			base = le16toh(next);
+ 		}
+-		if (count == 0 || count == IWN1000_OTP_NBLOCKS)
++		if (count == 0 || count == sc->base_params->max_ll_items)
+ 			return EIO;
+ 		/* Skip "next" word. */
+ 		sc->prom_base = prev + 1;
+@@ -1854,7 +1810,7 @@
+ {
+ 	struct iwn5000_eeprom_calib_hdr hdr;
+ 	int32_t volt;
+-	uint32_t base, addr;
++	uint32_t base;
+ 	uint16_t val;
+ 	int i;
+ 
+@@ -1867,16 +1823,12 @@
+ 	    sc->eeprom_domain, 4);
+ 
+ 	/* Read the list of authorized channels (20MHz ones only). */
+-	for (i = 0; i < 7; i++) {
+-		if (sc->hw_type >= IWN_HW_REV_TYPE_6000)
+-			addr = base + iwn6000_regulatory_bands[i];
+-		else
+-			addr = base + iwn5000_regulatory_bands[i];
+-		iwn_read_eeprom_channels(sc, i, addr);
++	for (i = 0; i < (IWN_NBANDS - 1); i++) {
++		iwn_read_eeprom_channels(sc, i, base+sc->base_params->regulatory_bands[i]);
+ 	}
+ 
+ 	/* Read enhanced TX power information for 6000 Series. */
+-	if (sc->hw_type >= IWN_HW_REV_TYPE_6000)
++	if (sc->base_params->enhanced_TX_power)
+ 		iwn_read_eeprom_enhinfo(sc);
+ 
+ 	iwn_read_prom_data(sc, IWN5000_EEPROM_CAL, &val, 2);
+@@ -1887,6 +1839,14 @@
+ 	    hdr.version, hdr.pa_type, le16toh(hdr.volt));
+ 	sc->calib_ver = hdr.version;
+ 
++	if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2) {
++		sc->eeprom_voltage = le16toh(hdr.volt);
++		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
++		sc->eeprom_temp_high=le16toh(val);
++		iwn_read_prom_data(sc, base + IWN5000_EEPROM_VOLT, &val, 2);
++		sc->eeprom_temp = le16toh(val);
++	}
++
+ 	if (sc->hw_type == IWN_HW_REV_TYPE_5150) {
+ 		/* Compute temperature offset. */
+ 		iwn_read_prom_data(sc, base + IWN5000_EEPROM_TEMP, &val, 2);
+@@ -2317,7 +2277,7 @@
  #undef	RV
  }
  
@@ -170,7 +316,48 @@ Index: sys/dev/iwn/if_iwn.c
  iwn_newassoc(struct ieee80211_node *ni, int isnew)
  {
  	/* Doesn't do anything at the moment */
-@@ -2790,6 +2792,7 @@
+@@ -2736,29 +2696,30 @@
+ 
+ 	switch (calib->code) {
+ 	case IWN5000_PHY_CALIB_DC:
+-		if ((sc->sc_flags & IWN_FLAG_INTERNAL_PA) == 0 &&
+-		    (sc->hw_type == IWN_HW_REV_TYPE_5150 ||
+-		     sc->hw_type >= IWN_HW_REV_TYPE_6000) &&
+-		     sc->hw_type != IWN_HW_REV_TYPE_6050)
++		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_DC)
+ 			idx = 0;
+ 		break;
+ 	case IWN5000_PHY_CALIB_LO:
+-		idx = 1;
++		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_LO)
++			idx = 1;
+ 		break;
+ 	case IWN5000_PHY_CALIB_TX_IQ:
+-		idx = 2;
++		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TX_IQ)
++			idx = 2;
+ 		break;
+ 	case IWN5000_PHY_CALIB_TX_IQ_PERIODIC:
+-		if (sc->hw_type < IWN_HW_REV_TYPE_6000 &&
+-		    sc->hw_type != IWN_HW_REV_TYPE_5150)
++		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TX_IQ_PERIODIC)
+ 			idx = 3;
+ 		break;
+ 	case IWN5000_PHY_CALIB_BASE_BAND:
+-		idx = 4;
++		if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_BASE_BAND)
++			idx = 4;
+ 		break;
+ 	}
+-	if (idx == -1)	/* Ignore other results. */
++	if (idx == -1)	{	/* Ignore other results. */
++		DPRINTF(sc,IWN_DEBUG_CALIBRATE,"Ignoring calib result %d",calib->code);
+ 		return;
++	}
+ 
+ 	/* Save calibration result. */
+ 	if (sc->calibcmd[idx].buf != NULL)
+@@ -2790,6 +2751,7 @@
  	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
  	struct iwn_calib_state *calib = &sc->calib;
  	struct iwn_stats *stats = (struct iwn_stats *)(desc + 1);
@@ -178,7 +365,7 @@ Index: sys/dev/iwn/if_iwn.c
  	int temp;
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
-@@ -2801,6 +2804,13 @@
+@@ -2801,6 +2763,13 @@
  	    __func__);
  		return;
  	}
@@ -192,7 +379,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	bus_dmamap_sync(sc->rxq.data_dmat, data->map, BUS_DMASYNC_POSTREAD);
  
-@@ -2985,12 +2995,19 @@
+@@ -2985,12 +2954,19 @@
  static void
  iwn_cmd_done(struct iwn_softc *sc, struct iwn_rx_desc *desc)
  {
@@ -214,7 +401,7 @@ Index: sys/dev/iwn/if_iwn.c
  	data = &ring->data[desc->idx];
  
  	/* If the command was mapped in an mbuf, free it. */
-@@ -3142,7 +3159,7 @@
+@@ -3142,7 +3118,7 @@
  		    desc->type, iwn_intr_str(desc->type),
  		    le16toh(desc->len));
  
@@ -223,7 +410,7 @@ Index: sys/dev/iwn/if_iwn.c
  			iwn_cmd_done(sc, desc);
  
  		switch (desc->type) {
-@@ -3175,7 +3192,10 @@
+@@ -3175,7 +3151,10 @@
  		{
  			struct iwn_beacon_missed *miss =
  			    (struct iwn_beacon_missed *)(desc + 1);
@@ -235,7 +422,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  			bus_dmamap_sync(sc->rxq.data_dmat, data->map,
  			    BUS_DMASYNC_POSTREAD);
-@@ -3182,17 +3202,31 @@
+@@ -3182,17 +3161,31 @@
  			misses = le32toh(miss->consecutive);
  
  			DPRINTF(sc, IWN_DEBUG_STATE,
@@ -272,7 +459,7 @@ Index: sys/dev/iwn/if_iwn.c
  					IWN_UNLOCK(sc);
  					ieee80211_beacon_miss(ic);
  					IWN_LOCK(sc);
-@@ -3556,6 +3590,7 @@
+@@ -3556,6 +3549,7 @@
  	const struct ieee80211_txparam *tp;
  	struct ieee80211vap *vap = ni->ni_vap;
  	struct ieee80211com *ic = ni->ni_ic;
@@ -280,7 +467,7 @@ Index: sys/dev/iwn/if_iwn.c
  	struct iwn_node *wn = (void *)ni;
  	struct iwn_tx_ring *ring;
  	struct iwn_tx_desc *desc;
-@@ -3588,21 +3623,23 @@
+@@ -3588,21 +3582,23 @@
  		qos = 0;
  		tid = 0;
  	}
@@ -314,7 +501,7 @@ Index: sys/dev/iwn/if_iwn.c
  	desc = &ring->desc[ring->cur];
  	data = &ring->data[ring->cur];
  
-@@ -3695,9 +3732,12 @@
+@@ -3695,9 +3691,12 @@
  	}
  
  	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
@@ -330,7 +517,7 @@ Index: sys/dev/iwn/if_iwn.c
  		tx->id = wn->id;
  
  	if (type == IEEE80211_FC0_TYPE_MGT) {
-@@ -3727,7 +3767,7 @@
+@@ -3727,7 +3726,7 @@
  	tx->data_ntries = 15;
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
  	tx->rate = iwn_rate_to_plcp(sc, ni, rate);
@@ -339,7 +526,7 @@ Index: sys/dev/iwn/if_iwn.c
  		/* Group or management frame. */
  		tx->linkq = 0;
  		/* XXX Alternate between antenna A and B? */
-@@ -3844,7 +3884,7 @@
+@@ -3844,7 +3843,7 @@
  	u_int hdrlen;
  	int ac, totlen, error, pad, nsegs = 0, i, rate;
  	uint8_t ridx, type, txant;
@@ -348,7 +535,7 @@ Index: sys/dev/iwn/if_iwn.c
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
  	IWN_LOCK_ASSERT(sc);
-@@ -3934,7 +3974,10 @@
+@@ -3934,7 +3933,10 @@
  
  	tx->len = htole16(totlen);
  	tx->tid = 0;
@@ -360,7 +547,7 @@ Index: sys/dev/iwn/if_iwn.c
  	tx->rts_ntries = params->ibp_try1;
  	tx->data_ntries = params->ibp_try0;
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
-@@ -4192,16 +4235,16 @@
+@@ -4192,16 +4194,16 @@
  /*
   * Send a command to the firmware.
   */
@@ -380,7 +567,7 @@ Index: sys/dev/iwn/if_iwn.c
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
-@@ -4208,6 +4251,12 @@
+@@ -4208,6 +4210,12 @@
  	if (async == 0)
  		IWN_LOCK_ASSERT(sc);
  
@@ -393,7 +580,118 @@ Index: sys/dev/iwn/if_iwn.c
  	desc = &ring->desc[ring->cur];
  	data = &ring->data[ring->cur];
  	totlen = 4 + size;
-@@ -5431,19 +5480,21 @@
+@@ -5322,25 +5330,61 @@
+ 		0xc0004000, 0x00004000, 0xf0005000, 0xf0005000,
+ 	};
+ 	struct iwn6000_btcoex_config btconfig;
++	struct iwn2000_btcoex_config btconfig2k;
+ 	struct iwn_btcoex_priotable btprio;
+ 	struct iwn_btcoex_prot btprot;
+ 	int error, i;
++	uint8_t		flags;
+ 
+ 	memset(&btconfig, 0, sizeof btconfig);
+-	btconfig.flags = 145;
+-	btconfig.max_kill = 5;
+-	btconfig.bt3_t7_timer = 1;
+-	btconfig.kill_ack = htole32(0xffff0000);
+-	btconfig.kill_cts = htole32(0xffff0000);
+-	btconfig.sample_time = 2;
+-	btconfig.bt3_t2_timer = 0xc;
+-	for (i = 0; i < 12; i++)
+-		btconfig.lookup_table[i] = htole32(btcoex_3wire[i]);
+-	btconfig.valid = htole16(0xff);
+-	btconfig.prio_boost = 0xf0;
+-	DPRINTF(sc, IWN_DEBUG_RESET,
+-	    "%s: configuring advanced bluetooth coexistence\n", __func__);
+-	error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig, sizeof(btconfig), 1);
++	memset(&btconfig2k, 0, sizeof btconfig2k);
++
++	flags = IWN_BT_FLAG_COEX6000_MODE_3W << IWN_BT_FLAG_COEX6000_MODE_SHIFT; // Done as is in linux kernel 3.2
++
++	if (sc->base_params->bt_sco_disable)
++		flags &= ~IWN_BT_FLAG_SYNC_2_BT_DISABLE; 
++	else
++		flags |= IWN_BT_FLAG_SYNC_2_BT_DISABLE; 
++
++	flags |= IWN_BT_FLAG_COEX6000_CHAN_INHIBITION;
++
++
++	/* Default flags result is 145 as old value */
++
++	/* Flags value has to be review. Values must change if we which to disable it */
++	if (sc->base_params->bt_session_2) {
++		btconfig2k.flags = flags; 
++		btconfig2k.max_kill = 5;
++		btconfig2k.bt3_t7_timer = 1;
++		btconfig2k.kill_ack = htole32(0xffff0000);
++		btconfig2k.kill_cts = htole32(0xffff0000);
++		btconfig2k.sample_time = 2;
++		btconfig2k.bt3_t2_timer = 0xc;
++
++		for (i = 0; i < 12; i++)
++			btconfig2k.lookup_table[i] = htole32(btcoex_3wire[i]);
++		btconfig2k.valid = htole16(0xff);
++		btconfig2k.prio_boost = htole32(0xf0);
++		DPRINTF(sc, IWN_DEBUG_RESET,
++			"%s: configuring advanced bluetooth coexistence session 2, flags : 0X%x\n", __func__,flags);
++		error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig2k, sizeof(btconfig2k), 1);
++	} else {
++		btconfig.flags = flags;
++		btconfig.max_kill = 5;
++		btconfig.bt3_t7_timer = 1;
++		btconfig.kill_ack = htole32(0xffff0000);
++		btconfig.kill_cts = htole32(0xffff0000);
++		btconfig.sample_time = 2;
++		btconfig.bt3_t2_timer = 0xc;
++
++		for (i = 0; i < 12; i++)
++			btconfig.lookup_table[i] = htole32(btcoex_3wire[i]);
++		btconfig.valid = htole16(0xff);
++		btconfig.prio_boost = 0xf0;
++		DPRINTF(sc, IWN_DEBUG_RESET,
++			"%s: configuring advanced bluetooth coexistence, flags : 0X%x\n", __func__,flags);
++		error = iwn_cmd(sc, IWN_CMD_BT_COEX, &btconfig, sizeof(btconfig), 1);
++	}
+ 	if (error != 0)
+ 		return error;
+ 
+@@ -5395,8 +5439,18 @@
+ 
+ 	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
+ 
+-	if (sc->hw_type == IWN_HW_REV_TYPE_6005) {
+-		/* Set radio temperature sensor offset. */
++	if ((sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET)
++	&& (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2)) {
++		device_printf(sc->sc_dev,"%s: temp_offset and temp_offsetv2 are"
++			" exclusive each together. Review NIC config file. Conf"
++			" :  0x%08x Flags :  0x%08x  \n", __func__,
++			sc->base_params->calib_need,
++			(IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET |
++		 	 IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2));
++		return EINVAL;
++	}
++	/* Compute temperature calib if needed. Will be send by send calib */
++	if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSET) {
+ 		error = iwn5000_temp_offset_calib(sc);
+ 		if (error != 0) {
+ 			device_printf(sc->sc_dev,
+@@ -5403,6 +5457,13 @@
+ 			    "%s: could not set temperature offset\n", __func__);
+ 			return error;
+ 		}
++	} else if (sc->base_params->calib_need & IWN_FLG_NEED_PHY_CALIB_TEMP_OFFSETv2) {
++		error = iwn5000_temp_offset_calibv2(sc);
++		if (error != 0) {
++			device_printf(sc->sc_dev,
++				"%s: could not compute temperature offset v2\n", __func__);
++			return error;
++		}
+ 	}
+ 
+ 	if (sc->hw_type == IWN_HW_REV_TYPE_6050) {
+@@ -5431,19 +5492,21 @@
  		}
  	}
  
@@ -409,7 +707,7 @@ Index: sys/dev/iwn/if_iwn.c
 -		return error;
 +	/* Configure bluetooth coexistence if needed. */
 +	if (sc->base_params->bt_mode != NONE) {
-+		if (sc->sc_flags & IWN_FLAG_ADV_BTCOEX)
++		if (sc->base_params->bt_mode == ADVANCED)
 +			error = iwn_send_advanced_btcoex(sc);
 +		else
 +			error = iwn_send_btcoex(sc);
@@ -426,7 +724,7 @@ Index: sys/dev/iwn/if_iwn.c
  	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
  	memset(sc->rxon, 0, sizeof (struct iwn_rxon));
  	IEEE80211_ADDR_COPY(sc->rxon->myaddr, IF_LLADDR(ifp));
-@@ -5534,6 +5585,8 @@
+@@ -5534,6 +5597,8 @@
  	struct ieee80211com *ic = ifp->if_l2com;
  	struct ieee80211_scan_state *ss = ic->ic_scan;	/*XXX*/
  	struct ieee80211_node *ni = ss->ss_vap->iv_bss;
@@ -435,7 +733,7 @@ Index: sys/dev/iwn/if_iwn.c
  	struct iwn_scan_hdr *hdr;
  	struct iwn_cmd_data *tx;
  	struct iwn_scan_essid *essid;
-@@ -5548,7 +5601,11 @@
+@@ -5548,7 +5613,11 @@
  
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
@@ -448,7 +746,7 @@ Index: sys/dev/iwn/if_iwn.c
  	buf = malloc(IWN_SCAN_MAXSZ, M_DEVBUF, M_NOWAIT | M_ZERO);
  	if (buf == NULL) {
  		device_printf(sc->sc_dev,
-@@ -5580,7 +5637,11 @@
+@@ -5580,7 +5649,11 @@
  
  	tx = (struct iwn_cmd_data *)(hdr + 1);
  	tx->flags = htole32(IWN_TX_AUTO_SEQ);
@@ -461,7 +759,7 @@ Index: sys/dev/iwn/if_iwn.c
  	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
  
  	if (IEEE80211_IS_CHAN_5GHZ(ic->ic_curchan)) {
-@@ -5617,7 +5678,7 @@
+@@ -5617,7 +5690,7 @@
  	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
  	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
  	IEEE80211_ADDR_COPY(wh->i_addr1, ifp->if_broadcastaddr);
@@ -470,7 +768,7 @@ Index: sys/dev/iwn/if_iwn.c
  	IEEE80211_ADDR_COPY(wh->i_addr3, ifp->if_broadcastaddr);
  	*(uint16_t *)&wh->i_dur[0] = 0;	/* filled by HW */
  	*(uint16_t *)&wh->i_seq[0] = 0;	/* filled by HW */
-@@ -5769,6 +5830,15 @@
+@@ -5769,6 +5842,15 @@
  	DPRINTF(sc, IWN_DEBUG_TRACE, "->%s begin\n", __func__);
  
  	sc->rxon = &sc->rx_on[IWN_RXON_BSS_CTX];
@@ -486,7 +784,59 @@ Index: sys/dev/iwn/if_iwn.c
  	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
  		/* Link LED blinks while monitoring. */
  		iwn_set_led(sc, IWN_LED_LINK, 5, 5);
-@@ -6408,7 +6478,11 @@
+@@ -6244,9 +6326,15 @@
+ {
+ 	int idx, error;
+ 
+-	for (idx = 0; idx < 5; idx++) {
+-		if (sc->calibcmd[idx].buf == NULL)
+-			continue;	/* No results available. */
++	for (idx = 0; idx < IWN5000_PHY_CALIB_MAX_RESULT  ; idx++) {
++		if (!(sc->base_params->calib_need & (1<<idx))) {
++			DPRINTF(sc,IWN_DEBUG_CALIBRATE, "No need of calib %d\n",idx);
++			continue; /* no need for this calib */
++		}
++		if (sc->calibcmd[idx].buf == NULL) {
++			DPRINTF(sc, IWN_DEBUG_CALIBRATE, "Need calib idx : %d but no available data\n",idx);
++			continue;
++		}
+ 		DPRINTF(sc, IWN_DEBUG_CALIBRATE,
+ 		    "send calibration result idx=%d len=%d\n", idx,
+ 		    sc->calibcmd[idx].len);
+@@ -6323,6 +6411,32 @@
+ 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
+ }
+ 
++static int
++iwn5000_temp_offset_calibv2(struct iwn_softc *sc)
++{
++	struct iwn5000_phy_calib_temp_offsetv2 cmd;
++
++	memset(&cmd, 0, sizeof cmd);
++	cmd.code = IWN5000_PHY_CALIB_TEMP_OFFSET;
++	cmd.ngroups = 1;
++	cmd.isvalid = 1;
++	if (sc->eeprom_temp != 0) {
++		cmd.offset_low = htole16(sc->eeprom_temp);
++		cmd.offset_high = htole16(sc->eeprom_temp_high);
++	} else {
++		cmd.offset_low = htole16(IWN_DEFAULT_TEMP_OFFSET);
++		cmd.offset_high = htole16(IWN_DEFAULT_TEMP_OFFSET);
++	}
++	cmd.burnt_voltage_ref = htole16(sc->eeprom_voltage);
++
++	DPRINTF(sc, IWN_DEBUG_CALIBRATE, "setting radio sensor low offset to %d, high offset to %d, voltage to %d\n",
++	    le16toh(cmd.offset_low),
++		le16toh(cmd.offset_high),
++		le16toh(cmd.burnt_voltage_ref));
++
++	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 0);
++}
++
+ /*
+  * This function is called after the runtime firmware notifies us of its
+  * readiness (called in a process context).
+@@ -6408,7 +6522,11 @@
  	IWN_SETBITS(sc, IWN_FH_TX_CHICKEN, IWN_FH_TX_CHICKEN_SCHED_RETRY);
  
  	/* Enable chain mode for all queues, except command queue. */
@@ -499,7 +849,7 @@ Index: sys/dev/iwn/if_iwn.c
  	iwn_prph_write(sc, IWN5000_SCHED_AGGR_SEL, 0);
  
  	for (qid = 0; qid < IWN5000_NTXQUEUES; qid++) {
-@@ -6428,11 +6502,20 @@
+@@ -6428,11 +6546,20 @@
  	/* Identify TX FIFO rings (0-7). */
  	iwn_prph_write(sc, IWN5000_SCHED_TXFACT, 0xff);
  
@@ -525,7 +875,54 @@ Index: sys/dev/iwn/if_iwn.c
  	}
  	iwn_nic_unlock(sc);
  
-@@ -7527,6 +7610,428 @@
+@@ -6444,7 +6571,7 @@
+ 		    __func__, error);
+ 		return error;
+ 	}
+-	if (sc->hw_type != IWN_HW_REV_TYPE_5150) {
++	if (!(sc->base_params->no_crystal_calibration)) {
+ 		/* Perform crystal calibration. */
+ 		error = iwn5000_crystal_calib(sc);
+ 		if (error != 0) {
+@@ -6945,9 +7072,8 @@
+ 	else
+ 		IWN_CLRBITS(sc, IWN_GIO, IWN_GIO_L0S_ENA);
+ 
+-	if (sc->hw_type != IWN_HW_REV_TYPE_4965 &&
+-	    sc->hw_type <= IWN_HW_REV_TYPE_1000)
+-		IWN_SETBITS(sc, IWN_ANA_PLL, IWN_ANA_PLL_INIT);
++	if (sc->base_params->pll_cfg_val)
++		IWN_SETBITS(sc, IWN_ANA_PLL, sc->base_params->pll_cfg_val);
+ 
+ 	/* Wait for clock stabilization before accessing prph. */
+ 	if ((error = iwn_clock_wait(sc)) != 0)
+@@ -7059,13 +7185,12 @@
+ 		/* Use internal power amplifier only. */
+ 		IWN_WRITE(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_RADIO_2X2_IPA);
+ 	}
+-	if ((sc->hw_type == IWN_HW_REV_TYPE_6050 ||
+-	     sc->hw_type == IWN_HW_REV_TYPE_6005) && sc->calib_ver >= 6) {
++	if (sc->base_params->additional_nic_config && sc->calib_ver >= 6) {
+ 		/* Indicate that ROM calibration version is >=6. */
+ 		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_CALIB_VER6);
+ 	}
+-	if (sc->hw_type == IWN_HW_REV_TYPE_6005)
+-		IWN_SETBITS(sc, IWN_GP_DRIVER, IWN_GP_DRIVER_6050_1X2);
++	if (sc->base_params->additional_gp_drv_bit) 
++		IWN_SETBITS(sc, IWN_GP_DRIVER, sc->base_params->additional_gp_drv_bit);
+ 	return 0;
+ }
+ 
+@@ -7200,7 +7325,7 @@
+ 	IWN_WRITE(sc, IWN_UCODE_GP1_CLR, IWN_UCODE_GP1_RFKILL);
+ 
+ 	/* Enable shadow registers. */
+-	if (sc->hw_type >= IWN_HW_REV_TYPE_6000)
++	if (sc->base_params->shadow_reg_enable)
+ 		IWN_SETBITS(sc, IWN_SHADOW_REG_CTRL, 0x800fffff);
+ 
+ 	if ((error = ops->load_firmware(sc)) != 0) {
+@@ -7527,6 +7652,427 @@
  	iwn_init(sc);
  	ieee80211_notify_radio(ic, 1);
  }
@@ -788,7 +1185,7 @@ Index: sys/dev/iwn/if_iwn.c
 +				return ENOTSUP;
 +		}
 +		break;
-+#ifdef notyet
++
 +/* 2x00 Series */
 +	case IWN_DID_2x00_1:
 +	case IWN_DID_2x00_2:
@@ -833,7 +1230,6 @@ Index: sys/dev/iwn/if_iwn.c
 +				return ENOTSUP;
 +		}
 +		break;
-+#endif
 +/* 5x00 Series */
 +	case IWN_DID_5x00_1:
 +	case IWN_DID_5x00_2:
@@ -1551,10 +1947,6 @@ Index: sys/dev/iwn/if_iwn_pan.c
 
 Property changes on: sys/dev/iwn/if_iwn_pan.c
 ___________________________________________________________________
-Added: svn:eol-style
-## -0,0 +1 ##
-+native
-\ No newline at end of property
 Added: svn:mime-type
 ## -0,0 +1 ##
 +text/plain
@@ -1562,6 +1954,10 @@ Added: svn:mime-type
 Added: svn:keywords
 ## -0,0 +1 ##
 +FreeBSD=%H
+\ No newline at end of property
+Added: svn:eol-style
+## -0,0 +1 ##
++native
 \ No newline at end of property
 Index: sys/dev/iwn/if_iwn_pan.h
 ===================================================================
@@ -1639,7 +2035,34 @@ Index: sys/dev/iwn/if_iwnreg.h
  
  /* Possible flags for register IWN_UCODE_GP1_CLR. */
  #define IWN_UCODE_GP1_RFKILL		(1 << 1)
-@@ -1731,6 +1734,16 @@
+@@ -1102,6 +1105,10 @@
+ 	uint16_t	reserved;
+ } __packed;
+ 
++/* Define maximal number of calib result send to runtime firmware 
++ * PS: TEMP_OFFSET count for 2 (std and v2)
++ */
++#define IWN5000_PHY_CALIB_MAX_RESULT	8
+ /* Structures for command IWN_CMD_PHY_CALIB. */
+ struct iwn_phy_calib {
+ 	uint8_t	code;
+@@ -1122,6 +1129,15 @@
+ 	uint8_t	isvalid;
+ } __packed;
+ 
++#define IWN_BUF_IX_PHY_CALIB_DC				0
++#define IWN_BUF_IX_PHY_CALIB_LO			 	1
++#define IWN_BUF_IX_PHY_CALIB_TX_IQ			2
++#define IWN_BUF_IX_PHY_CALIB_CRYSTAL		3
++#define IWN_BUF_IX_PHY_CALIB_BASE_BAND		4
++#define IWN_BUF_IX_PHY_CALIB_TX_IQ_PERIODIC	5
++#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSET	6
++#define IWN_BUF_IX_PHY_CALIB_TEMP_OFFSETv2	7
++
+ struct iwn5000_phy_calib_crystal {
+ 	uint8_t	code;
+ 	uint8_t	group;
+@@ -1731,6 +1747,16 @@
  	IWN5000_EEPROM_NO_HT40,
  };
  
@@ -1656,7 +2079,7 @@ Index: sys/dev/iwn/if_iwnreg.h
  #define IWN_CHAN_BANDS_COUNT	 7
  #define IWN_MAX_CHAN_PER_BAND	14
  static const struct iwn_chan_band {
-@@ -1757,8 +1770,8 @@
+@@ -1757,8 +1783,8 @@
  static const uint8_t iwn_pan_ac_to_queue[] = {
  	5, 4, 6, 7,
  };
@@ -1667,7 +2090,7 @@ Index: sys/dev/iwn/if_iwnreg.h
  #define IWN6050_OTP_NBLOCKS	7
  
  /* HW rate indices. */
-@@ -2052,3 +2065,320 @@
+@@ -2052,3 +2078,320 @@
  #define IWN_BARRIER_READ_WRITE(sc)					\
  	bus_space_barrier((sc)->sc_st, (sc)->sc_sh, 0, (sc)->sc_sz,	\
  	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
@@ -1710,7 +2133,7 @@ Index: sys/dev/iwn/if_iwnreg.h
 + * ==========================================================================
 + */
 +
-+ /* Flags for managing calibration result. See calib_need
++/* Flags for managing calibration result. See calib_need
 + * in iwn_base_params struct
 + */
 +#define IWN_FLG_NEED_PHY_CALIB_DC				(1<<0)
