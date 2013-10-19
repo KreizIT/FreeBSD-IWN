@@ -122,6 +122,8 @@ static const struct iwn_ident iwn_ident_table[] = {
 	{ 0x8086, IWN_DID_5x50_4, "Intel WiMAX/WiFi Link 5150"			},
 	{ 0x8086, IWN_DID_6035_1, "Centrino Advanced-N 6235"		},
 	{ 0x8086, IWN_DID_6035_2, "Centrino Advanced-N 6235"		},
+	{ 0x8086, IWN_DID_7260_1, "Intel(R) Dual Band Wireless N 7260"		},
+	{ 0x8086, IWN_DID_3160_1, "Intel(R) Dual Band Wireless N 3160"		},
 #ifdef IWN_4965
 	{ 0x8086, IWN_DID_4965_1, "Intel Wireless WiFi Link 4965"		},
 	{ 0x8086, IWN_DID_4965_2, "Intel Wireless WiFi Link 4965"		},
@@ -7847,6 +7849,41 @@ iwn_config_specific(struct iwn_softc *sc,uint16_t pid)
 				break;
 			default:
 				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id : 0x%04x rev %d not supported (subdevice) \n",pid,sc->subdevice_id,sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 7260 Series */
+	case IWN_DID_7260_1:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_7260_1:
+			case IWN_SDID_7260_2:
+			case IWN_SDID_7260_3:
+			//iwl7260_2ac_cfg
+				sc->limits = &iwn2030_sensitivity_limits;
+				sc->base_params = &iwnxx60_base_params; 
+				sc->fwname = "iwn7260fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice) \n",
+				    pid, sc->subdevice_id, sc->hw_type);
+				return ENOTSUP;
+		}
+		break;
+/* 3160 Series */
+	case IWN_DID_3160_1:
+		switch(sc->subdevice_id) {
+			case IWN_SDID_3160_1:
+			case IWN_SDID_3160_2:
+			//iwl3160_ac_cfg
+				sc->limits = &iwn2030_sensitivity_limits;
+				sc->base_params = &iwnxx60_base_params; 
+				sc->fwname = "iwn3160fw";
+				break;
+			default:
+				device_printf(sc->sc_dev, "adapter type id : 0x%04x sub id :"
+				    "0x%04x rev %d not supported (subdevice) \n",
+				    pid, sc->subdevice_id, sc->hw_type);
 				return ENOTSUP;
 		}
 		break;
