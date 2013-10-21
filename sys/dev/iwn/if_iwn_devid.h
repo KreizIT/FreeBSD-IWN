@@ -299,10 +299,12 @@
  * --------------------------------------------------------------------------
  */
 #define	IWN_DID_7260_1		0x08B1
+#define	IWN_DID_7260_2		0x08B2
 /* SubDevice ID */
 #define	IWN_SDID_7260_1		0x4070
 #define	IWN_SDID_7260_2		0x4062
 #define	IWN_SDID_7260_3		0xC070
+#define	IWN_SDID_7260_4		0xC260
 /*
  * --------------------------------------------------------------------------
  * Device ID for 3160 Series
